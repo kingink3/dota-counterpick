@@ -78,6 +78,28 @@ export interface HeroTags {
   pos: number[];
   reliance: Record<string, number>;
   tool: Record<string, number>;
+  /** what this hero ENDURES (third axis, ADR-020): resistance code -> weight. */
+  resist?: Record<string, number>;
+}
+
+/** a hero property that blunts an enemy TOOL (Mana Shield vs health-based damage). */
+export interface Resistance {
+  code: string;
+  label: string;
+  hook: string;
+  /** attacker tools that bypass this resistance (mana burn vs Mana Shield,
+   *  break vs passives, piercing disables vs own debuff immunity). */
+  pierced_by?: string[];
+}
+
+/** resistance -> enemy threat it blunts (the mirror of an Edge, ADR-020).
+ *  Exactly one of `tool` (enemy tool tag) or `reliance` (enemy damage source). */
+export interface ResistEdge {
+  resistance: string;
+  tool?: string;
+  reliance?: string;
+  mechanism: string;
+  weight: number;
 }
 
 /** taxonomy.yaml top-level shape (only the parts the engine consumes). */
@@ -88,6 +110,8 @@ export interface Taxonomy {
   special_cases: SpecialCase[];
   edges: Edge[];
   hero_tags: Record<string, HeroTags>;
+  resistance?: Resistance[];
+  resist_edges?: ResistEdge[];
 }
 
 // ---------------------------------------------------------------------------
@@ -228,7 +252,11 @@ export interface Reason {
    *  synergy reason, the allied partner. */
   enemy: string;
   /** how it applies: counter (edge/enrichment/defense) or synergy with an ally. */
-  basis: "edge" | "hero_edge" | "item_edge" | "defense" | "synergy";
+  /** resist = the candidate endures this enemy's tool; risk = the enemy's tool hits a
+   *  reliance of the candidate (negative contribution). ADR-020. */
+  basis: "edge" | "hero_edge" | "item_edge" | "defense" | "synergy" | "resist" | "risk";
+  /** resist basis: the candidate's resistance code. */
+  resistance?: string;
   /** tool tag used: subject's tool (edge) or the enemy's threat tool (defense). */
   tool?: string;
   /** target-side reliance tag hit (edge basis only). */
@@ -245,6 +273,10 @@ export interface Reason {
     /** defense basis: the enemy's tool weight and the defensive item's weight. */
     threatWeight?: number;
     defenseWeight?: number;
+    /** resist basis: how central the resistance is to the candidate. */
+    resistWeight?: number;
+    /** resist/risk basis: weight of the ENEMY's tool, reliance or resistance. */
+    enemyWeight?: number;
   };
   /** any guard notes (e.g. "BKB-pierced via bkb_piercing_disable"). */
   notes?: string[];
@@ -265,6 +297,8 @@ export interface Recommendation {
   coverage: string[];
   /** distinct allied codes this candidate synergises with (when allies are picked). */
   synergyWith?: string[];
+  /** enemies whose tools hit a reliance of this candidate (risk reasons). */
+  risks?: string[];
   /** dominant damage school of this candidate's counter route (if any). */
   school?: DamageSchool;
   /** stat layer (Phase 2, ADR-005): games-weighted win rate (0..1) vs the enemy

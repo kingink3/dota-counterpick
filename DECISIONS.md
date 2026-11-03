@@ -355,6 +355,51 @@ Aghanim's…) внесены с пустым `tool` и строкой fit: от�
 
 ---
 
+## ADR-020 — Двусторонняя оценка героя: offense + resist − risk
+
+**Контекст.** Оценка кандидата была однонаправленной: «мой tool бьёт его reliance».
+Поэтому герой без атакующих tool-тегов (Medusa, Lifestealer, Juggernaut,
+Bristleback, Abaddon, Dazzle…) не мог появиться в предложениях вообще, а тот факт,
+что *вражеский* арсенал на кандидата не работает (Feast/Maledict против Mana Shield)
+или, наоборот, бьёт ровно в его слабость (mana burn против Medusa), не учитывался.
+Ручное «добавить Медузу против LS» — антипаттерн (точечная заплатка вместо правила).
+
+**Решение.** Третья ось в таксономии — что герой *выдерживает*:
+- `resistance:` — словарь (mana_shield, self_debuff_immunity, magic_resistance,
+  physical_damage_block, cheat_death, self_dispel) с `pierced_by` — инструменты
+  атакующего, которые эту защиту обходят (mana_burn → Mana Shield,
+  bkb_piercing_disable → собственный BKB, break → пассивки).
+- `resist_edges:` — resistance → вражеский `tool` **или** `reliance` (источник урона,
+  напр. attack_reliant) с весом и механизмом.
+- `hero_tags.<hero>.resist` — веса защит героя; новый tool `health_based_damage`
+  (Feast, Maledict, Life Break, Scythe, Midnight Pulse…), у него нет атакующих рёбер —
+  он существует как угроза.
+
+Скоринг (resolver `scoreTwoSided`), на каждого врага:
+- **resist (+)** = resist героя × вес ребра × вес вражеского tool/reliance;
+  нет кредита против врага, который несёт `pierced_by`;
+- **risk (−, ×0.5)** = существующие рёбра в обратную сторону: tool врага × reliance
+  кандидата (min_targets-рёбра пропускаются — это командный гейт);
+- **blunted (−, ×0.6)** = tool кандидата в resistance врага (Huskar/LS в Medusa);
+  не применяется, если кандидат несёт `pierced_by` (Nyx с mana burn);
+- кэпы на врага: resist ≤ 1.0, risk+blunted ≤ 0.8 — длинный список reliance не хоронит
+  героя; герой без единого аргумента «за» не предлагается; coverage = только
+  положительные причины; школа урона — только по offense-рёбрам.
+UI: «Mana Shield shrugs off …» зелёным, «− exposed: … / … blunted by …» красным,
+в мета карточки «risky vs X».
+
+**Проверено.** LS + WD → Medusa #3 только через общие правила (без hero_edge);
+Medusa vs AM — штраф за mana burn, кредита Mana Shield нет; vs Medusa ведут AM и Nyx,
+LS уходит в конец списка; vs Zeus+Lina+Lion хрупкие мидеры (Skywrath, Puck, QoP)
+опускаются, наверх выходят Pudge/ES/Tusk. Тесты: 4 новых (57 всего).
+
+**Границы.** Веса resist-рёбер — экспертная оценка, не калиброваны статистикой
+(Medusa vs LS+WD по публичным матчам ~44% WR — механика и статистика расходятся,
+бейдж WR это показывает). Resistances размечены у 15 героев — это стартовый набор,
+ревью остальных — в очереди патч-ревью (B5).
+
+---
+
 ## Дорожная карта (фазы)
 
 1. **MVP (KB-only):** парсер `taxonomy.yaml` → rule-engine (резолвер edges +

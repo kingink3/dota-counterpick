@@ -73,7 +73,12 @@ recommend({ enemyHeroes, myRole?, myHero? }) -> { heroes[], items[], uncovered[]
 4. **Hero → hero enrichment (ADR-012 §3)** - point overrides from
    [`data/hero_edges.yaml`](data/hero_edges.yaml) layered on top of the tag basis,
    for matchups the tag vocabulary can't express (ships with AA → Huskar).
-5. **Explainability (ADR-012 §4)** - every point of score is backed by a `Reason`
+5. **Two-sided scoring (ADR-020)** - a candidate is also judged by what it
+   *endures*: `resistance` + `resist_edges` (Mana Shield vs health-based damage,
+   own debuff immunity vs silences, …) add score; enemy tools that hit the
+   candidate's own reliances (edges reversed) and candidate tools blunted by an
+   enemy resistance subtract it (scaled, capped per enemy, `pierced_by` exceptions).
+6. **Explainability (ADR-012 §4)** - every point of score is backed by a `Reason`
    with its mechanism string; nothing scores silently.
 
 **Heroes ∪ items.** Items are just subjects that carry `tool` tags

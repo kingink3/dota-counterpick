@@ -378,3 +378,56 @@ test("unavailable items (left the shop) are never recommended", () => {
   const r = engine.recommend({ enemyHeroes: ["invoker", "lina", "zeus", "skywrath_mage", "leshrac"] }); // magic-heavy -> defense items
   for (const rec of [...r.items, ...r.defense]) assert.ok(!gone.has(rec.code), `${rec.code} is unavailable`);
 });
+
+// ---------------------------------------------------------------------------
+//  ADR-020: two-sided scoring (resist / risk / blunted)
+// ---------------------------------------------------------------------------
+
+test("resist: Medusa surfaces vs health-based damage (Lifestealer + Witch Doctor) without a hero edge", () => {
+  const r = engine.recommend({ enemyHeroes: ["lifestealer", "witch_doctor"] });
+  const i = r.heroes.findIndex((h) => h.code === "medusa");
+  assert.ok(i >= 0 && i < 5, `Medusa should be top-5, got rank ${i + 1}`);
+  const med = r.heroes[i]!;
+  for (const enemy of ["lifestealer", "witch_doctor"]) {
+    assert.ok(
+      med.reasons.some((x) => x.basis === "resist" && x.resistance === "mana_shield" && x.tool === "health_based_damage" && x.enemy === enemy),
+      `Mana Shield vs health-based damage from ${enemy}`,
+    );
+  }
+  assert.ok(!med.reasons.some((x) => x.basis === "hero_edge"), "carried by the general rule, not a point edge");
+});
+
+test("risk: Medusa is exposed to mana burn and gets no Mana Shield credit vs Anti-Mage", () => {
+  const r = engine.recommend({ enemyHeroes: ["anti_mage", "witch_doctor"] });
+  const med = rec(r.heroes, "medusa")!;
+  assert.ok(med, "still listed (resist vs Witch Doctor)");
+  assert.ok(med.reasons.some((x) => x.basis === "risk" && x.enemy === "anti_mage" && x.tool === "mana_burn" && x.contribution < 0));
+  assert.ok(!med.reasons.some((x) => x.basis === "resist" && x.enemy === "anti_mage"), "mana_shield is pierced_by mana_burn");
+  assert.deepEqual(med.risks, ["anti_mage"]);
+});
+
+test("blunted: health-based damage is penalised into Medusa, but mana burn pierces the shield", () => {
+  const r = engine.recommend({ enemyHeroes: ["medusa", "rubick"] });
+  const ls = rec(r.heroes, "lifestealer")!;
+  assert.ok(ls?.reasons.some((x) => x.basis === "risk" && x.resistance === "mana_shield" && x.tool === "health_based_damage"));
+  assert.ok(r.heroes.indexOf(ls) > r.heroes.length / 2, "Feast into Mana Shield ranks low");
+  const nyx = rec(r.heroes, "nyx_assassin");
+  assert.ok(nyx, "Nyx recommended vs Medusa");
+  assert.ok(!nyx.reasons.some((x) => x.basis === "risk" && x.resistance === "mana_shield"), "Nyx carries mana_burn -> not blunted");
+  const top = r.heroes.slice(0, 5).map((h) => h.code);
+  assert.ok(top.includes("anti_mage") && top.includes("nyx_assassin"), `mana burners lead vs Medusa: ${top}`);
+});
+
+test("two-sided terms are capped per enemy and never make coverage", () => {
+  const r = engine.recommend({ enemyHeroes: ["zeus", "lina", "lion"] });
+  for (const h of r.heroes) {
+    for (const enemy of ["zeus", "lina", "lion"]) {
+      const neg = h.reasons.filter((x) => x.enemy === enemy && x.contribution < 0).reduce((s, x) => s + x.contribution, 0);
+      const res = h.reasons.filter((x) => x.enemy === enemy && x.basis === "resist").reduce((s, x) => s + x.contribution, 0);
+      assert.ok(neg >= -0.8 - 1e-6, `${h.code} risk vs ${enemy} capped (${neg})`);
+      assert.ok(res <= 1.0 + 1e-6, `${h.code} resist vs ${enemy} capped (${res})`);
+    }
+    assert.ok(h.reasons.some((x) => x.contribution > 0), `${h.code} has an argument for it`);
+    for (const c of h.coverage) assert.ok(h.reasons.some((x) => x.enemy === c && x.contribution > 0));
+  }
+});

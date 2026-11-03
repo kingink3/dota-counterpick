@@ -670,7 +670,7 @@ function archetypeLabel(a: Archetype, attack?: AttackType): string {
 
 /** the single strongest counter reason (synergy shown in meta instead). */
 function leadReason(rec: Recommendation): Reason | undefined {
-  const counters = rec.reasons.filter((r) => r.basis !== "synergy");
+  const counters = rec.reasons.filter((r) => r.basis !== "synergy" && r.contribution > 0);
   return (counters.length ? counters : rec.reasons).slice().sort((a, b) => b.contribution - a.contribution)[0];
 }
 
@@ -696,6 +696,10 @@ function recCard(rec: Recommendation): HTMLElement {
   if (isHero && rec.pos) meta.push(`Pos ${rec.pos.join("/")}`);
   if (rec.school && rec.school !== "neutral") meta.push(`<span class="${rec.school}">${rec.school}</span>`);
   if (rec.synergyWith?.length) meta.push(`works with ${rec.synergyWith.map((c) => esc(labelFor(c))).join(", ")}`);
+  if (rec.risks?.length) {
+    const tip = "Their kit hits a weakness of this pick (or blunts its damage) - score already lowered";
+    meta.push(`<span class="off" title="${tip}">risky vs ${rec.risks.map((c) => esc(labelFor(c))).join(", ")}</span>`);
+  }
   if (rec.fit && rec.fit.mult < 0.5) {
     card.classList.add("off-build");
     meta.push(`<span class="off" title="Counters them, but rarely built by this archetype (score x${rec.fit.mult})">unusual for a ${archetypeLabel(rec.fit.archetype, rec.fit.attack)}</span>`);
@@ -743,6 +747,19 @@ function mechanismText(reason: Reason, rec: Recommendation): string {
   return m;
 }
 
+const toolLabel = (c?: string) => (c ? kb.toolByCode.get(c)?.label ?? c : "");
+const relLabel = (c?: string) => (c ? kb.relianceByCode.get(c)?.label ?? c : "");
+const resistLabel = (c?: string) => (c ? kb.taxonomy.resistance?.find((r) => r.code === c)?.label ?? c : "");
+/** what the enemy throws at the candidate (resist reasons): a tool or a damage source. */
+const threatLabel = (r: Reason) => (r.tool ? toolLabel(r.tool) : relLabel(r.reliance));
+
+/** risk reason head: exposure "their tool → my weakness" or blunted "my tool into their resistance". */
+function riskHead(r: Reason): string {
+  return r.resistance
+    ? `${esc(toolLabel(r.tool))} blunted by ${esc(resistLabel(r.resistance))}`
+    : `exposed: ${esc(toolLabel(r.tool))} → ${esc(relLabel(r.reliance))}`;
+}
+
 /** one-line lead: "<tool → reliance> vs <enemy>: mechanism". */
 function reasonSummary(reason: Reason, rec: Recommendation): string {
   const who = esc(labelFor(reason.enemy));
@@ -756,6 +773,9 @@ function reasonSummary(reason: Reason, rec: Recommendation): string {
   if (reason.basis === "defense") {
     const threat = reason.tool ? kb.toolByCode.get(reason.tool)?.label ?? reason.tool : "";
     return `<span class="lead">Blocks ${esc(threat)}</span> from ${who}: ${mech}`;
+  }
+  if (reason.basis === "resist") {
+    return `<span class="lead">${esc(resistLabel(reason.resistance))} shrugs off ${esc(threatLabel(reason))}</span> from ${who}: ${mech}`;
   }
   return `<span class="lead">vs ${who}:</span> ${mech}`;
 }
@@ -781,6 +801,12 @@ function reasonItem(reason: Reason, rec: Recommendation): HTMLElement {
     const threat = reason.tool ? kb.toolByCode.get(reason.tool)?.label ?? reason.tool : "";
     const head = `<span class="block">blocks ${esc(threat)}</span> `;
     body = head + esc(mechanismText(reason, rec));
+  } else if (reason.basis === "resist") {
+    const head = `<span class="block">${esc(resistLabel(reason.resistance))} vs ${esc(threatLabel(reason))}</span> `;
+    body = head + esc(mechanismText(reason, rec));
+  } else if (reason.basis === "risk") {
+    li.classList.add("risk");
+    body = `<span class="risk">− ${riskHead(reason)}</span> ` + esc(mechanismText(reason, rec));
   } else {
     const tool = reason.tool ? kb.toolByCode.get(reason.tool)?.label : "";
     const rel = reason.reliance ? kb.relianceByCode.get(reason.reliance)?.label : "";
@@ -797,6 +823,8 @@ function reasonItem(reason: Reason, rec: Recommendation): HTMLElement {
       f.relianceWeight !== undefined ? `reliance ${f.relianceWeight}` : "",
       f.threatWeight !== undefined ? `threat ${f.threatWeight}` : "",
       f.defenseWeight !== undefined ? `defense ${f.defenseWeight}` : "",
+      f.resistWeight !== undefined ? `resist ${f.resistWeight}` : "",
+      f.enemyWeight !== undefined ? `enemy ${f.enemyWeight}` : "",
     ].filter(Boolean);
     const fac = document.createElement("span");
     fac.className = "factors";

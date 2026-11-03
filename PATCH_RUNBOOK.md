@@ -33,7 +33,12 @@
      diff с прошлым снапшотом) → **очередь ревью** для B5;
    - смена типа атаки (melee/ranged);
    - герои ростера без записи в `hero_tags` (новый герой = затемнён в UI, не
-     предлагается в пик) → обязательный пункт B5.
+     предлагается в пик) → обязательный пункт B5;
+   - тексты комбо и wiki-рёбер, где упомянута способность, которой больше нет в игре
+     (многословные имена способностей из `abilities.json`, отсутствующие у текущих
+     героев/фасетов/предметов). Исключения — `data/constants-map.yaml →
+     abilities_still_current` (способности юнитов: Brewmaster, Spirit Bear, нейтралы) и
+     `mechanic_terms` (Spell Immunity, True Strike).
    Снапшот констант сохранять в `data/constants-snapshot.json`, чтобы следующий diff
    был от него.
 2. **Ростер и портреты:** `npm run build:roster` (+ attack), `npm run fetch:portraits`.
@@ -46,7 +51,8 @@
 
 ## B. Экспертное ревью (по очереди из отчёта A1)
 
-5. **Герои с изменёнными способностями** → `taxonomy.yaml` hero_tags: теги и веса,
+5. **Герои с изменёнными способностями** → `taxonomy.yaml` hero_tags: теги и веса
+   (включая `resist` и `pierced_by` — ADR-020: новая защита/обход защиты),
    `special_cases` (ловушки вроде Shadow Dance ≠ invis), `hero_edges.yaml`,
    `item_fit.yaml` → `archetype_override`, если сменилась роль.
 6. **Предметы:**

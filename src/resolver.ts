@@ -34,6 +34,9 @@ interface Subject {
   pos?: number[];
   /** tool code -> weight. */
   toolTable: Record<string, number>;
+  /** heroes only (ADR-020): what the candidate endures / what it depends on. */
+  resist?: Record<string, number>;
+  tags?: HeroTags;
 }
 
 export function resolve(kb: KnowledgeBase, draft: DraftState): EngineResult {
@@ -108,6 +111,8 @@ function heroCandidates(
       label: prettifyHero(code),
       pos: tags.pos,
       toolTable: tags.tool ?? {},
+      resist: tags.resist ?? {},
+      tags,
     });
   }
   return subjects;
@@ -338,7 +343,9 @@ function rankSubjects(
         factors: { edgeWeight: SYNERGY_WEIGHT },
       });
     }
-    if (reasons.length === 0) continue;
+    // a candidate needs at least one argument FOR it; resilience/exposure alone
+    // only re-rank (a hero with nothing but risks is simply not suggested)
+    if (!reasons.some((r) => r.contribution > 0)) continue;
     const rec = finalizeRec(subject.kind, subject.code, subject.label, subject.pos, reasons);
     if (subject.kind === "hero") attachWinrate(rec, kb, census);
     recs.push(rec);
@@ -356,8 +363,11 @@ function finalizeRec(
 ): Recommendation {
   const score = reasons.reduce((s, r) => s + r.contribution, 0);
   const school = dominantSchool(reasons);
-  const coverage = [...new Set(reasons.filter((r) => r.basis !== "synergy").map((r) => r.enemy))];
+  const coverage = [
+    ...new Set(reasons.filter((r) => r.basis !== "synergy" && r.contribution > 0).map((r) => r.enemy)),
+  ];
   const synergyWith = [...new Set(reasons.filter((r) => r.basis === "synergy").map((r) => r.enemy))];
+  const risks = [...new Set(reasons.filter((r) => r.contribution < 0).map((r) => r.enemy))];
   return {
     kind,
     code,
@@ -366,13 +376,15 @@ function finalizeRec(
     score: round(score),
     coverage,
     ...(synergyWith.length ? { synergyWith } : {}),
+    ...(risks.length ? { risks } : {}),
     ...(school ? { school } : {}),
-    // counter reasons first (by contribution), synergy reasons at the bottom
+    // counter/resist reasons first (by contribution), then synergy, then risks
     reasons: reasons
       .slice()
       .sort((a, b) => {
-        const as = a.basis === "synergy" ? 1 : 0;
-        const bs = b.basis === "synergy" ? 1 : 0;
+        const rank = (r: Reason) => (r.contribution < 0 ? 2 : r.basis === "synergy" ? 1 : 0);
+        const as = rank(a);
+        const bs = rank(b);
         if (as !== bs) return as - bs;
         return b.contribution - a.contribution;
       })
@@ -385,6 +397,7 @@ function dominantSchool(reasons: Reason[]): DamageSchool | undefined {
   let phys = 0;
   let magic = 0;
   for (const r of reasons) {
+    if (r.basis !== "edge") continue; // school = what the candidate DEALS
     const school = r.tool ? TOOL_SCHOOL[r.tool] : undefined;
     if (school === "physical") phys += r.contribution;
     else if (school === "magic") magic += r.contribution;
@@ -513,7 +526,115 @@ function scoreSubject(
     }
   }
 
+  scoreTwoSided(subject, kb, census, reasons);
   return reasons;
+}
+
+// ---------------------------------------------------------------------------
+//  Two-sided scoring (ADR-020): a pick is also judged by what it ENDURES and by
+//  what in the enemy lineup hits ITS weaknesses - not only by what it deals.
+//
+//    resist  (+) candidate resistance x enemy tool / damage source   (resist_edges)
+//    risk    (-) enemy tool x candidate reliance                     (edges, reversed)
+//    blunted (-) candidate tool x enemy resistance                   (resist_edges, reversed)
+//
+//  Offense stays the backbone: penalties are scaled down (a risk is a reason to
+//  play carefully, not a hard veto) and capped per enemy so a long reliance list
+//  doesn't bury a hero.
+// ---------------------------------------------------------------------------
+
+const RESIST_WEIGHT = 1.0;
+const RISK_WEIGHT = 0.5;
+const BLUNT_WEIGHT = 0.6;
+/** max |sum| per enemy for each two-sided term. */
+const RESIST_CAP = 1.0;
+const RISK_CAP = 0.8;
+
+function scoreTwoSided(subject: Subject, kb: KnowledgeBase, census: Census, out: Reason[]): void {
+  for (const enemy of census.enemies) {
+    const enemyTags = census.tagsOf(enemy)!;
+    const enemyTools = enemyTags.tool ?? {};
+    const enemyRel = enemyTags.reliance ?? {};
+    const resist: Reason[] = [];
+    const risk: Reason[] = [];
+
+    // resist: what the candidate endures (heroes only)
+    for (const [code, rw] of Object.entries(subject.resist ?? {})) {
+      if (rw <= 0) continue;
+      // this enemy carries the answer to the resistance -> no credit vs them
+      if ((kb.resistPiercedBy.get(code) ?? []).some((t) => (enemyTools[t] ?? 0) > 0)) continue;
+      for (const re of kb.resistEdgesBy.get(code) ?? []) {
+        const ew = re.tool ? (enemyTools[re.tool] ?? 0) : (enemyRel[re.reliance!] ?? 0);
+        if (ew <= 0) continue;
+        resist.push({
+          enemy,
+          basis: "resist",
+          resistance: code,
+          ...(re.tool ? { tool: re.tool } : { reliance: re.reliance }),
+          mechanism: re.mechanism,
+          contribution: RESIST_WEIGHT * rw * re.weight * ew,
+          factors: { resistWeight: rw, edgeWeight: re.weight, enemyWeight: ew },
+        });
+      }
+    }
+
+    // risk: the enemy's tools hit the candidate's reliances (heroes only)
+    if (subject.tags) {
+      const myRel = subject.tags.reliance ?? {};
+      const enemyHasTool = (t: string) => (enemyTools[t] ?? 0) > 0;
+      for (const [toolCode, tw] of Object.entries(enemyTools)) {
+        if (tw <= 0) continue;
+        for (const edge of kb.edgesByTool.get(toolCode) ?? []) {
+          const cw = myRel[edge.target] ?? 0;
+          if (cw <= 0) continue;
+          if (edge.conditions?.min_targets !== undefined) continue; // team-level gate, not 1:1
+          const guard = evaluateConditions(edge.conditions, subject.tags, enemyHasTool, census, edge.target);
+          if (!guard.ok) continue;
+          risk.push({
+            enemy,
+            basis: "risk",
+            tool: toolCode,
+            reliance: edge.target,
+            mechanism: edge.mechanism,
+            contribution: -RISK_WEIGHT * tw * edge.weight * cw,
+            factors: { toolWeight: tw, edgeWeight: edge.weight, relianceWeight: cw },
+          });
+        }
+      }
+    }
+
+    // blunted: the candidate's tool is weak into this enemy's resistance (heroes + items)
+    for (const [code, ew] of Object.entries(enemyTags.resist ?? {})) {
+      if (ew <= 0) continue;
+      // the candidate brings the answer (Nyx's mana burn vs Mana Shield) -> not blunted
+      if ((kb.resistPiercedBy.get(code) ?? []).some((t) => (subject.toolTable[t] ?? 0) > 0)) continue;
+      for (const [toolCode, tw] of Object.entries(subject.toolTable)) {
+        if (tw <= 0) continue;
+        for (const re of kb.resistEdgesByTool.get(toolCode) ?? []) {
+          if (re.resistance !== code) continue;
+          risk.push({
+            enemy,
+            basis: "risk",
+            tool: toolCode,
+            resistance: code,
+            mechanism: re.mechanism,
+            contribution: -BLUNT_WEIGHT * tw * re.weight * ew,
+            factors: { toolWeight: tw, edgeWeight: re.weight, enemyWeight: ew },
+          });
+        }
+      }
+    }
+
+    out.push(...capped(resist, RESIST_CAP), ...capped(risk, RISK_CAP));
+  }
+}
+
+/** scale a group of same-sign reasons so |sum| <= cap (keeps the mix, bounds the total). */
+function capped(rs: Reason[], cap: number): Reason[] {
+  const total = Math.abs(rs.reduce((s, r) => s + r.contribution, 0));
+  if (total <= cap) return rs;
+  const k = cap / total;
+  return rs.map((r) => ({ ...r, contribution: r.contribution * k, notes: [...(r.notes ?? []), `capped x${round(k)}`] }));
 }
 
 // ---------------------------------------------------------------------------

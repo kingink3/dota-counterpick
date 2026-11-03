@@ -18,6 +18,7 @@ import type {
   ItemEdge,
   ItemFitTable,
   Reliance,
+  ResistEdge,
   Taxonomy,
   Tool,
 } from "./types.js";
@@ -61,6 +62,12 @@ export interface KnowledgeBase {
   toolByCode: Map<string, Tool>;
   /** edges grouped by their tool code - the resolver's primary lookup. */
   edgesByTool: Map<string, Edge[]>;
+  /** resist edges grouped by resistance code (ADR-020). */
+  resistEdgesBy: Map<string, ResistEdge[]>;
+  /** resistance code -> attacker tools that bypass it. */
+  resistPiercedBy: Map<string, string[]>;
+  /** resist edges that name an enemy TOOL, grouped by that tool (blunted term). */
+  resistEdgesByTool: Map<string, ResistEdge[]>;
   knownReliance: Set<string>;
   knownTools: Set<string>;
 
@@ -144,8 +151,31 @@ export function indexKB(raw: RawKB): KnowledgeBase {
   // Witch Doctor. Their hero codes are validated against the full roster at build
   // time (scripts/build-web.ts), not here.
 
+  // third axis (ADR-020): what a candidate endures
+  const knownResist = new Set((taxonomy.resistance ?? []).map((r) => r.code));
+  const resistEdgesBy = new Map<string, ResistEdge[]>();
+  const resistEdgesByTool = new Map<string, ResistEdge[]>();
+  const resistPiercedBy = new Map<string, string[]>();
+  for (const r of taxonomy.resistance ?? []) {
+    for (const t of r.pierced_by ?? []) {
+      if (!knownTools.has(t)) warnings.push(`resistance "${r.code}" pierced_by unknown tool "${t}"`);
+    }
+    resistPiercedBy.set(r.code, r.pierced_by ?? []);
+  }
+  for (const re of taxonomy.resist_edges ?? []) {
+    if (!knownResist.has(re.resistance)) warnings.push(`resist edge references unknown resistance "${re.resistance}"`);
+    if (!re.tool === !re.reliance) warnings.push(`resist edge ${re.resistance}: needs exactly one of tool / reliance`);
+    if (re.tool && !knownTools.has(re.tool)) warnings.push(`resist edge references unknown tool "${re.tool}"`);
+    if (re.reliance && !knownReliance.has(re.reliance)) warnings.push(`resist edge references unknown reliance "${re.reliance}"`);
+    resistEdgesBy.set(re.resistance, [...(resistEdgesBy.get(re.resistance) ?? []), re]);
+    if (re.tool) resistEdgesByTool.set(re.tool, [...(resistEdgesByTool.get(re.tool) ?? []), re]);
+  }
+
   for (const [hero, tags] of Object.entries(taxonomy.hero_tags)) {
     validateHeroTags(hero, tags, knownReliance, knownTools, warnings);
+    for (const code of Object.keys(tags.resist ?? {})) {
+      if (!knownResist.has(code)) warnings.push(`hero "${hero}" has unknown resistance "${code}"`);
+    }
   }
 
   return {
@@ -160,6 +190,9 @@ export function indexKB(raw: RawKB): KnowledgeBase {
     relianceByCode,
     toolByCode,
     edgesByTool,
+    resistEdgesBy,
+    resistEdgesByTool,
+    resistPiercedBy,
     knownReliance,
     knownTools,
     warnings,
