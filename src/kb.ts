@@ -169,6 +169,30 @@ const WIKI_ITEM_ALIAS: Record<string, string> = {
   eye_of_skadi: "eye_of_skadi",
 };
 
+/** Ability names the wiki still uses but the game no longer has. Written by
+ *  `npm run patch:check` (data/retired-abilities.json); optional. */
+export function loadRetiredAbilities(root: string = REPO_ROOT): string[] {
+  try {
+    const doc = JSON.parse(readFileSync(join(root, "data", "retired-abilities.json"), "utf8")) as { names?: string[] };
+    return doc.names ?? [];
+  } catch {
+    return [];
+  }
+}
+
+/** matcher for "this text names a retired ability" (whole words, case-sensitive). */
+export function retiredMatcher(names: string[]): (text: string) => string[] {
+  if (!names.length) return () => [];
+  const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const rx = new RegExp(`(?<![A-Za-z])(${[...names].sort((a, b) => b.length - a.length).map(esc).join("|")})(?![A-Za-z])`, "g");
+  return (text) => [...new Set(text.match(rx) ?? [])];
+}
+
+/** first wiki note that names no retired ability; undefined = all are out of date. */
+function freshNote(notes: string[], stale: (t: string) => string[]): string | undefined {
+  return notes.find((n) => stale(n).length === 0);
+}
+
 function loadWiki(
   root: string,
   heroTags: Record<string, unknown>,
@@ -182,6 +206,9 @@ function loadWiki(
     return { heroEdges: [], itemEdges: [], combos: [] }; // optional layer
   }
   const pages = doc.pages ?? {};
+  // a line that names a removed ability (Poison Nova, Tar Bomb) describes an older
+  // kit: take the hero's next note, or drop the wiki point until the wiki is refreshed
+  const stale = retiredMatcher(loadRetiredAbilities(root));
 
   const heroKeys = new Set(curatedHero.map((e) => `${e.subject}>${e.target}`));
   const itemKeys = new Set(curatedItem.map((e) => `${e.item}>${e.target}`));
@@ -197,18 +224,19 @@ function loadWiki(
       if (nHero >= WIKI_HERO_CAP) break;
       const subject = e.code;
       if (!subject || subject.includes("=") || !heroTags[subject]) continue;
-      if (!e.notes.length) continue;
+      const note = freshNote(e.notes, stale);
+      if (!note) continue;
       const key = `${subject}>${target}`;
       if (heroKeys.has(key)) continue;
       heroKeys.add(key);
       nHero++;
-      heroEdges.push({ subject, target, mechanism: clipSentence(e.notes[0]!, 260), weight: 0.5, source: "wiki" });
+      heroEdges.push({ subject, target, mechanism: clipSentence(note, 260), weight: 0.5, source: "wiki" });
     }
 
     let nItem = 0;
     for (const it of page.items ?? []) {
       if (nItem >= WIKI_ITEM_CAP) break;
-      if (!it.slug || !it.note) continue;
+      if (!it.slug || !it.note || stale(it.note).length) continue;
       const slug = WIKI_ITEM_ALIAS[it.slug] ?? it.slug;
       const key = `${slug}>${target}`;
       if (itemKeys.has(key)) continue;
@@ -220,12 +248,13 @@ function loadWiki(
     for (const s of page.synergy ?? []) {
       const partner = s.code;
       if (!partner || partner.includes("=") || partner === target) continue;
-      if (!s.notes.length) continue;
+      const note = freshNote(s.notes, stale);
+      if (!note) continue;
       const pair: [string, string] = [target, partner];
       const key = pairKey(pair);
       const existing = comboMap.get(key);
       if (existing) existing.strength++; // mentioned on both heroes' pages -> mutual
-      else comboMap.set(key, { pair, mechanism: clipSentence(s.notes[0]!, 320), strength: 1 });
+      else comboMap.set(key, { pair, mechanism: clipSentence(note, 320), strength: 1 });
     }
   }
 

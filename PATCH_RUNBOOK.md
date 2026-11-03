@@ -34,11 +34,15 @@
    - смена типа атаки (melee/ranged);
    - герои ростера без записи в `hero_tags` (новый герой = затемнён в UI, не
      предлагается в пик) → обязательный пункт B5;
-   - тексты комбо и wiki-рёбер, где упомянута способность, которой больше нет в игре
-     (многословные имена способностей из `abilities.json`, отсутствующие у текущих
-     героев/фасетов/предметов). Исключения — `data/constants-map.yaml →
-     abilities_still_current` (способности юнитов: Brewmaster, Spirit Bear, нейтралы) и
-     `mechanic_terms` (Spell Immunity, True Strike).
+   - устаревшие способности в wiki-текстах: многословные имена из `abilities.json`,
+     которых нет у текущих героев, фасетов, талантов, предметов и нейтралов
+     (`neutral_abilities.json`). Скрипт пишет найденные имена в
+     `data/retired-abilities.json`; KB показывает следующую актуальную заметку героя
+     или убирает wiki-пункт, если актуальной нет (Poison Nova, Tar Bomb → автоматически).
+     Отчёт: сколько заметок затронуто + страховка «что реально показывается».
+     Новые устаревшие имена → пункт «re-scrape the wiki». Исключения —
+     `data/constants-map.yaml → abilities_still_current` (Brewmaster, Spirit Bear,
+     Golem) и `mechanic_terms` (Spell Immunity, True Strike, Spell Block).
    Снапшот констант сохранять в `data/constants-snapshot.json`, чтобы следующий diff
    был от него.
 2. **Ростер и портреты:** `npm run build:roster` (+ attack), `npm run fetch:portraits`.

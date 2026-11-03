@@ -366,9 +366,10 @@ Bristleback, Abaddon, Dazzle…) не мог появиться в предло�
 
 **Решение.** Третья ось в таксономии — что герой *выдерживает*:
 - `resistance:` — словарь (mana_shield, self_debuff_immunity, magic_resistance,
-  physical_damage_block, cheat_death, self_dispel) с `pierced_by` — инструменты
+  physical_damage_block, passive_damage_reduction, active_damage_reduction,
+  evades_attacks, cheat_death, self_dispel) с `pierced_by` — инструменты
   атакующего, которые эту защиту обходят (mana_burn → Mana Shield,
-  bkb_piercing_disable → собственный BKB, break → пассивки).
+  bkb_piercing_disable → собственный BKB, break → пассивки, true_strike → уклонение).
 - `resist_edges:` — resistance → вражеский `tool` **или** `reliance` (источник урона,
   напр. attack_reliant) с весом и механизмом.
 - `hero_tags.<hero>.resist` — веса защит героя; новый tool `health_based_damage`
@@ -393,10 +394,19 @@ Medusa vs AM — штраф за mana burn, кредита Mana Shield нет; v
 LS уходит в конец списка; vs Zeus+Lina+Lion хрупкие мидеры (Skywrath, Puck, QoP)
 опускаются, наверх выходят Pudge/ES/Tusk. Тесты: 4 новых (57 всего).
 
+**Разметка (v2, 2026-11-03).** 28 героев с `resist`, 13 носителей
+`health_based_damage` (+ Rupture, Noxious Plague, Culling Blade). Каждая метка сверена
+с описаниями способностей 7.41 из dotaconstants (не по памяти): напр. Repel и Rolling
+Thunder дают debuff immunity, Berserker's Blood и Corrosive Skin — маг. резист,
+Bristleback режет урон всех типов (поэтому passive, а не physical), Kraken Shell и
+Bulwark — только атаки. Активное и пассивное снижение урона разведены, потому что
+break снимает только пассивное.
+
 **Границы.** Веса resist-рёбер — экспертная оценка, не калиброваны статистикой
 (Medusa vs LS+WD по публичным матчам ~44% WR — механика и статистика расходятся,
-бейдж WR это показывает). Resistances размечены у 15 героев — это стартовый набор,
-ревью остальных — в очереди патч-ревью (B5).
+бейдж WR это показывает). Не размечены сознательно: Necrophos Ghost Shroud, Void
+Time Walk, Dark Willow Shadow Realm, Puck Phase Shift — механика «увернуться/уйти»,
+а не «выдержать»; её место в reliance/mobility, а не в resist.
 
 ---
 

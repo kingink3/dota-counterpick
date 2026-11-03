@@ -32,7 +32,7 @@ import { heroValveName } from "../src/web/hero-art.js";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SNAPSHOT = join(ROOT, "data", "constants-snapshot.json");
 const REPORT = join(ROOT, "patch-report.md");
-const FILES = ["heroes.json", "items.json", "abilities.json", "hero_abilities.json", "patch.json"] as const;
+const FILES = ["heroes.json", "items.json", "abilities.json", "hero_abilities.json", "neutral_abilities.json", "patch.json"] as const;
 
 const argv = process.argv.slice(2);
 const opt = (name: string) => {
@@ -57,13 +57,19 @@ interface DCItem {
   attrib?: Array<{ key: string; value: unknown }>;
 }
 interface DCAbility { dname?: string; desc?: string; attrib?: Array<{ key: string; value: unknown }>; cd?: unknown; mc?: unknown; dmg_type?: string; bkbpierce?: string; behavior?: unknown }
-interface DCHeroAbilities { abilities: string[]; facets?: Array<{ name?: string; title?: string; description?: string }> }
+interface DCHeroAbilities {
+  abilities: string[];
+  talents?: Array<{ name?: string; level?: number }>;
+  facets?: Array<{ name?: string; title?: string; description?: string }>;
+}
 interface Constants {
   version: string;
   heroes: Record<string, DCHero>;
   items: Record<string, DCItem>;
   abilities: Record<string, DCAbility>;
   heroAbilities: Record<string, DCHeroAbilities>;
+  /** neutral creep abilities in the current game (keys -> abilities.json). */
+  neutralAbilities: Record<string, unknown>;
   patches: Array<{ name: string; date: string }>;
 }
 
@@ -127,6 +133,7 @@ async function loadConstants(): Promise<Constants> {
     items: json("items.json"),
     abilities: json("abilities.json"),
     heroAbilities: json("hero_abilities.json"),
+    neutralAbilities: json("neutral_abilities.json"),
     patches: json("patch.json"),
   };
 }
@@ -328,13 +335,23 @@ async function main(): Promise<void> {
       if (d) current.add(d.toLowerCase());
     }
     for (const f of ha.facets ?? []) if (typeof f?.title === "string") current.add(f.title.toLowerCase());
+    // current talents ("Doom applies Mute") are names the wiki may quote too
+    for (const t of ha.talents ?? []) {
+      const d = typeof t?.name === "string" ? dn(c.abilities[t.name]) : undefined;
+      if (d) current.add(d.toLowerCase());
+    }
   }
   for (const it of Object.values(c.items)) {
     if (it.dname) current.add(it.dname.toLowerCase());
     for (const a of it.abilities ?? []) if (typeof a.title === "string") current.add(a.title.toLowerCase());
   }
-  // summon / sub-unit abilities (Brewmaster spirits, Spirit Bear, neutral creeps) are
-  // not in the hero kits but still exist - curated in data/constants-map.yaml
+  // neutral creeps still in the game (Doom's Devour / Chen / Enchantress use them)
+  for (const k of Object.keys(c.neutralAbilities)) {
+    const d = dn(c.abilities[k]);
+    if (d) current.add(d.toLowerCase());
+  }
+  // summon / sub-unit abilities (Brewmaster spirits, Spirit Bear) are not in the hero
+  // kits but still exist - curated in data/constants-map.yaml
   for (const a of mapDoc.abilities_still_current ?? []) current.add(a.toLowerCase());
   // game terms that happen to match old ability names ("Spell Immunity", "True Strike")
   for (const a of mapDoc.mechanic_terms ?? []) current.add(a.toLowerCase());
@@ -347,13 +364,46 @@ async function main(): Promise<void> {
         .filter((d): d is string => !!d && /\s/.test(d.trim()) && !current.has(d.toLowerCase()) && !/\bpierces\b/i.test(d)),
     ),
   ].sort((a, b) => b.length - a.length);
-  const texts: Array<{ kind: string; who: string; text: string }> = [
-    ...raw.combos.map((x) => ({ kind: "combo", who: x.pair.join(" + "), text: x.mechanism })),
-    ...raw.heroEdges.filter((e) => e.source === "wiki").map((e) => ({ kind: "counter", who: `${e.subject} vs ${e.target}`, text: e.mechanism })),
-    ...raw.itemEdges.filter((e) => e.source === "wiki").map((e) => ({ kind: "item", who: `${e.item} vs ${e.target}`, text: e.mechanism })),
-  ];
+  // 1) which retired names does the scraped wiki still use (any note, not just the
+  //    displayed one)? -> data/retired-abilities.json, read by the KB loader, which
+  //    then shows a hero's next clean note or drops the point (src/kb.ts freshNote)
   const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const rx = gone.length ? new RegExp(`(?<![A-Za-z])(${gone.map(esc).join("|")})(?![A-Za-z])`, "g") : undefined;
+  const wikiPath = join(ROOT, "data", "wiki-counters.json");
+  type Page = Record<string, Array<{ notes?: string[]; note?: string }> | undefined>;
+  const pages: Record<string, Page> = existsSync(wikiPath) ? (JSON.parse(readFileSync(wikiPath, "utf8")).pages ?? {}) : {};
+  const used = new Map<string, number>();
+  for (const page of Object.values(pages)) {
+    for (const list of Object.values(page)) {
+      for (const e of list ?? []) {
+        for (const t of [...(e.notes ?? []), ...(e.note ? [e.note] : [])]) {
+          for (const m of new Set(rx ? t.match(rx) ?? [] : [])) used.set(m, (used.get(m) ?? 0) + 1);
+        }
+      }
+    }
+  }
+  const retired = [...used.keys()].sort();
+  const retiredPath = join(ROOT, "data", "retired-abilities.json");
+  const prevRetired = existsSync(retiredPath) ? (JSON.parse(readFileSync(retiredPath, "utf8")).names ?? []) as string[] : [];
+  writeFileSync(
+    retiredPath,
+    JSON.stringify({ note: "written by npm run patch:check - ability names in wiki-counters.json that are not in the current game", constants: c.version, names: retired }, null, 2) + "\n",
+  );
+  lines.push(
+    `- the scraped wiki names **${retired.length}** retired abilit${retired.length === 1 ? "y" : "ies"} in ${[...used.values()].reduce((a, b) => a + b, 0)} note(s): ` +
+      (retired.slice(0, 12).map((n) => `${n} ×${used.get(n)}`).join(", ") || "none") + (retired.length > 12 ? ", …" : ""),
+  );
+  lines.push("  - handled automatically: the KB shows the hero's next note that is up to date, or drops that wiki point (data/retired-abilities.json)");
+  const newlyRetired = retired.filter((n) => !prevRetired.includes(n));
+  if (newlyRetired.length) actions.push(`re-scrape the wiki (A4): it still describes ${newlyRetired.length} newly retired abilit${newlyRetired.length === 1 ? "y" : "ies"} (${newlyRetired.slice(0, 5).join(", ")})`);
+
+  // 2) safety net: what the app will actually DISPLAY after that fallback
+  const shown = readRawKB(ROOT);
+  const texts: Array<{ kind: string; who: string; text: string }> = [
+    ...shown.combos.map((x) => ({ kind: "combo", who: x.pair.join(" + "), text: x.mechanism })),
+    ...shown.heroEdges.filter((e) => e.source === "wiki").map((e) => ({ kind: "counter", who: `${e.subject} vs ${e.target}`, text: e.mechanism })),
+    ...shown.itemEdges.filter((e) => e.source === "wiki").map((e) => ({ kind: "item", who: `${e.item} vs ${e.target}`, text: e.mechanism })),
+  ];
   const stale = new Map<string, string[]>();
   for (const t of texts) {
     for (const m of new Set(rx ? t.text.match(rx) ?? [] : [])) {
@@ -362,16 +412,16 @@ async function main(): Promise<void> {
   }
   if (stale.size) {
     const n = new Set([...stale.values()].flat()).size;
-    lines.push(`- **${n} text(s)** name ${stale.size} ability name(s) that are not in any current hero kit or item:`);
+    lines.push(`- **${n} displayed text(s)** still name ${stale.size} retired abilit${stale.size === 1 ? "y" : "ies"}:`);
     for (const [name, where] of [...stale].sort((a, b) => b[1].length - a[1].length)) {
       lines.push(`  - "${name}" ×${where.length}: ${where.slice(0, 4).join("; ")}${where.length > 4 ? "; …" : ""}`);
     }
     lines.push(
-      "  - fix: re-scrape the wiki (A4) or correct the text; if the ability still exists (a summon's / neutral's), add it to `abilities_still_current` in data/constants-map.yaml",
+      "  - fix: curated text (combos/hero_edges/item_edges yaml) - correct it; if the ability still exists (a summon's), add it to `abilities_still_current` in data/constants-map.yaml",
     );
-    actions.push(`${n} wiki text(s) mention ${stale.size} ability name(s) no longer in the game (rename / re-scrape)`);
+    actions.push(`${n} displayed text(s) mention ${stale.size} ability name(s) no longer in the game`);
   } else {
-    lines.push("- none");
+    lines.push("- displayed texts: none name a retired ability");
   }
 
   // ---- other layers -------------------------------------------------------------

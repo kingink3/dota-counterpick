@@ -46,10 +46,11 @@ abilities_still_current:
   - Hurl Boulder        # Brewmaster: Earth spirit
   - Dispel Magic        # Brewmaster: Storm spirit
   - Entangling Claws    # Lone Druid: Spirit Bear
-  - War Stomp           # neutral Centaur Conqueror (Doom can Devour it)
+  - Permanent Immolation  # Warlock: Golem; Brewmaster: Fire spirit
 
 # Game mechanic terms that also match the name of an old ability - not stale when a
 # wiki text uses them ("goes through Spell Immunity", "gives True Strike").
 mechanic_terms:
   - Spell Immunity
   - True Strike
+  - Spell Block         # Linken's Sphere mechanic (also Roshan's)

@@ -84,7 +84,7 @@ test("Faceless Void: true_strike is NOT offered vs backtrack, but break IS", () 
   const r = engine.recommend({ enemyHeroes: ["faceless_void"] });
   // MKB / Bloodthorn (true_strike) must never be suggested vs backtrack (ADR-010).
   assert.equal(rec(r.items, "monkey_king_bar"), undefined);
-  assert.equal(rec(r.heroes, "phantom_assassin")?.reasons.some((x) => x.tool === "true_strike"), undefined);
+  assert.ok(!rec(r.heroes, "phantom_assassin")?.reasons.some((x) => x.tool === "true_strike" && x.contribution > 0));
   // break (Silver Edge) is the real answer - it removes the Backtrack passive.
   const silver = rec(r.items, "silver_edge");
   assert.ok(silver, "Silver Edge (break) recommended vs Void");
@@ -430,4 +430,19 @@ test("two-sided terms are capped per enemy and never make coverage", () => {
     assert.ok(h.reasons.some((x) => x.contribution > 0), `${h.code} has an argument for it`);
     for (const c of h.coverage) assert.ok(h.reasons.some((x) => x.enemy === c && x.contribution > 0));
   }
+});
+
+test("wiki layer never displays a line naming a retired ability (data/retired-abilities.json)", async () => {
+  const { readRawKB, loadRetiredAbilities, retiredMatcher } = await import("../src/kb.js");
+  const names = loadRetiredAbilities();
+  assert.ok(names.includes("Poison Nova"), "retired list present");
+  const stale = retiredMatcher(names);
+  const raw = readRawKB();
+  const shown = [
+    ...raw.combos.map((c) => c.mechanism),
+    ...raw.heroEdges.filter((e) => e.source === "wiki").map((e) => e.mechanism),
+    ...raw.itemEdges.filter((e) => e.source === "wiki").map((e) => e.mechanism),
+  ];
+  const bad = shown.filter((t) => stale(t).length);
+  assert.deepEqual(bad, []);
 });
