@@ -1,0 +1,41 @@
+# =============================================================================
+#  Our ids -> Valve/OpenDota internal ids (dotaconstants keys), for patch:check.
+#  Only ids that DIFFER need a line; everything else is looked up as-is.
+#  Heroes need no map: roster `valve` == dotaconstants hero name minus prefix.
+# =============================================================================
+
+items:
+  euls_scepter: cyclone
+  scythe_of_vyse: sheepstick
+  battlefury: bfury
+  eye_of_skadi: skadi
+  linkens_sphere: sphere
+  blink_dagger: blink
+  gem_of_true_sight: gem
+  dust_of_appearance: dust
+  sentry_ward: ward_sentry
+  observer_ward: ward_observer
+  pipe_of_insight: pipe
+  assault_cuirass: assault
+  town_portal_scroll: tpscroll
+  boots_of_travel: travel_boots
+  boots_of_travel_2: travel_boots_2
+  manta_style: manta
+  heart_of_tarrasque: heart
+  book_of_the_dead: demonicon
+  revenant_s_brooch: revenants_brooch
+  skull_basher: basher
+  shadow_blade: invis_sword
+  ghost_scepter: ghost
+  infused_raindrops: infused_raindrop
+  morbid_mask: lifesteal
+  gleipnir: gungir
+  # v0.7 (patch 7.41)
+  aghanims_scepter: ultimate_scepter
+  armlet_of_mordiggian: armlet
+  crystalys: lesser_crit
+  daedalus: greater_crit
+  divine_rapier: rapier
+  parasma: devastator
+  refresher_orb: refresher
+  vladmirs_offering: vladmir

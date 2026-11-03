@@ -1,0 +1,75 @@
+# =============================================================================
+#  Hero->hero enrichment - POINT overrides on top of the tag->tag basis.
+# =============================================================================
+#  ADR-007 / ADR-012 section 3: hero->hero rules are targeted enrichment over the
+#  tool->reliance basis, NOT the primary input path. Use them for specific
+#  matchups whose nuance the shared tag vocabulary cannot capture at the right
+#  granularity (the ADR-008 "single carrier => it's a hero rule, not a tag" case).
+#
+#  Schema (one list entry per matchup):
+#    subject:   candidate hero code (the pick we may recommend)  [key in hero_tags]
+#    target:    enemy hero code this enrichment fires against    [key in hero_tags]
+#    mechanism: the explanation string (ADR-012 section 4 - required)
+#    weight:    score multiplier; sits alongside edge contributions
+#    conditions (optional): same shape as edge conditions (BKB-guards, min_targets)
+#
+#  This file ships with ONE illustrative-but-real entry so the enrichment path is
+#  exercised end-to-end. The tag layer already links healing_reduction <->
+#  sustain_dependent generically; this entry shows how a hero-specific rule adds a
+#  sharper mechanism and a heavier weight than the generic tag edge can justify.
+# =============================================================================
+
+hero_edges:
+  - subject: ancient_apparition
+    target: huskar
+    mechanism: >
+      Ice Blast applies an un-dispellable healing block from range - Huskar loses
+      the Inner Fire / Berserker's Blood regen his whole tank mechanic rests on;
+      the lower his HP, the worse the trap. A point hard-counter that goes beyond
+      the generic healing_reduction <-> sustain_dependent link.
+    weight: 1.6
+
+  # --- v0.3: well-known hero counters the tag layer doesn't capture ---
+  - subject: huskar
+    target: anti_mage
+    mechanism: >
+      Huskar's Burning Spears and Life Break are HP-cost and %-HP based, so AM's
+      mana burn does nothing; Huskar bullies the lane and denies AM the farm window
+      he needs. A classic early-mid counter-pick.
+    weight: 1.5
+
+  - subject: bloodseeker
+    target: anti_mage
+    mechanism: >
+      Rupture punishes every Blink and Blood Rite stops the blink escape - AM
+      cannot run, and Bloodseeker's map pressure starves his farm.
+    weight: 1.4
+
+  - subject: bloodseeker
+    target: storm_spirit
+    mechanism: >
+      Rupture shreds Storm for every Ball Lightning hop - his core mobility becomes
+      a liability and he bleeds out mid-combo.
+    weight: 1.2
+
+  - subject: muerta
+    target: necrophos
+    mechanism: >
+      On Pierce the Veil her attacks deal pure damage and she becomes spectral, so
+      Necro's Ghost Shroud / physical-immunity window does not save him - she bursts
+      him straight through it.
+    weight: 1.4
+
+  - subject: doom
+    target: tinker
+    mechanism: >
+      Doom is a BKB-piercing silence + disable with no item that dodges it - it
+      removes Tinker from the fight entirely, and he has no escape once Doomed.
+    weight: 1.3
+
+  - subject: nyx_assassin
+    target: invoker
+    mechanism: >
+      Mana Burn punishes Invoker's huge mana pool and Spiked Carapace reflects and
+      stuns him mid-combo - a single Carapace can turn his own burst back on him.
+    weight: 1.2

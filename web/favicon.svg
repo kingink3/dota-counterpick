@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="cpe-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1c2532"/>
+      <stop offset="1" stop-color="#0c1016"/>
+    </linearGradient>
+    <g id="cpe-sword">
+      <path d="M-1.25 4 L-1.25 -2 L0 -11.4 L1.25 -2 L1.25 4 Z"/>
+      <rect x="-3.7" y="3.1" width="7.4" height="1.7" rx="0.7"/>
+      <rect x="-0.85" y="4.6" width="1.7" height="4.3" rx="0.55"/>
+      <circle cx="0" cy="9.7" r="1.75"/>
+    </g>
+  </defs>
+  <rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="url(#cpe-bg)" stroke="#2c3644"/>
+  <circle cx="16" cy="16" r="11" fill="none" stroke="#58a6ff" stroke-width="0.8" stroke-opacity="0.28" stroke-dasharray="1.6 3"/>
+  <g transform="translate(16 16.4)" stroke="#0b0e13" stroke-width="0.9" stroke-linejoin="round">
+    <g transform="rotate(40)"><use href="#cpe-sword" fill="#58a6ff"/></g>
+    <g transform="rotate(-40)"><use href="#cpe-sword" fill="#f85149"/></g>
+  </g>
+</svg>

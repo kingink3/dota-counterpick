@@ -1,0 +1,89 @@
+# =============================================================================
+#  Defensive layer - enemy TOOL (threat) -> item you BUILD to survive it.
+# =============================================================================
+#  The OFFENSIVE layer (taxonomy edges + items.yaml) answers "what does the enemy
+#  RELY on, and what hits it". This layer answers the mirror question every Dota
+#  player asks while building: "what is the enemy's THREAT, and what blocks it".
+#
+#  Resolution: each entry's `threat` is an enemy TOOL tag. The engine counts the
+#  enemy team's tool census; an item scores per enemy that carries the threat
+#  (enemyToolWeight x weight), with a mechanism explanation (ADR-012 section 4).
+#
+#  Honesty (ADR-004): threats with no clean item answer (break, healing_reduction,
+#  raw mana_burn, detection vs your invis, true_strike vs your evasion) are left
+#  OUT rather than mapped to weak/aspirational items. BKB is deliberately ABSENT
+#  from the bkb_piercing_disable block - those disables go through it on purpose.
+#
+#  Schema per entry (give EITHER `threat` or `school`):
+#    threat:    enemy tool tag that creates the danger   [must exist in taxonomy.tool]
+#    school:    "physical" | "magic" - gate on the enemy team's overall damage school
+#               (physical = right-clickers/attack_reliant; magic = casters/spell_reliant)
+#    item:      defensive item id (own namespace; need not be in items.yaml)
+#    label:     display name
+#    mechanism: why it neutralises the threat (required)
+#    weight:    score multiplier
+#    min_threat (optional): only recommend if >= N enemies carry the threat / deal school
+# =============================================================================
+
+defense:
+  # ---- enemy deals MAGIC damage (casters + nukers) ----
+  - { school: magic, item: black_king_bar, label: "Black King Bar",
+      mechanism: "spell immunity eats their magic damage and combos for its duration", weight: 1.3 }
+  - { school: magic, item: pipe_of_insight, label: "Pipe of Insight",
+      mechanism: "team magic barrier soaks the incoming magic across all five", weight: 1.0, min_threat: 2 }
+  - { school: magic, item: eternal_shroud, label: "Eternal Shroud",
+      mechanism: "magic resist plus a barrier; incoming magic is converted to mana", weight: 0.9 }
+  - { school: magic, item: hood_of_defiance, label: "Hood of Defiance",
+      mechanism: "cheap early magic resist + barrier to survive the nuke-heavy lineup", weight: 0.85, min_threat: 2 }
+  - { school: magic, item: glimmer_cape, label: "Glimmer Cape",
+      mechanism: "magic resist plus invis throws off the nuker's aim and saves a single target", weight: 0.8 }
+  - { school: magic, item: lotus_orb, label: "Lotus Orb",
+      mechanism: "reflects a single-target nuke back at the caster and dispels debuffs", weight: 0.7 }
+
+  - { school: magic, item: consecrated_wraps, label: "Consecrated Wraps",
+      mechanism: "+15% magic resist and a damage barrier (up to 360) that pops on the first hit of a burst", weight: 0.7 }
+
+  # ---- enemy deals PHYSICAL damage (right-click cores) ----
+  - { school: physical, item: crellas_crozier, label: "Crella's Crozier",
+      mechanism: "Rite of Rumusque: 4s ghost form, immune to physical damage (but takes 30% more magic)", weight: 0.8 }
+  - { school: physical, item: ghost_scepter, label: "Ghost Scepter",
+      mechanism: "ethereal form nullifies all physical damage during the carry's window", weight: 1.1 }
+  - { school: physical, item: shivas_guard, label: "Shiva's Guard",
+      mechanism: "plus armor and the minus-attack-speed aura cut the physical cores' DPS", weight: 1.0 }
+  - { school: physical, item: crimson_guard, label: "Crimson Guard",
+      mechanism: "area physical-damage block soaks right-click damage across the team", weight: 1.0, min_threat: 2 }
+  - { school: physical, item: assault_cuirass, label: "Assault Cuirass",
+      mechanism: "plus armor for you and the team vs physical damage (and minus armor on them)", weight: 0.9 }
+  - { school: physical, item: heavens_halberd, label: "Heaven's Halberd",
+      mechanism: "disarm shuts off the carry's right-click for 4s - survive its window", weight: 0.9 }
+  - { school: physical, item: blade_mail, label: "Blade Mail",
+      mechanism: "damage return punishes a carry that commits onto you", weight: 0.7 }
+
+  # ---- enemy SILENCE (Silencer / Drow / Orchid / Bloodthorn / Disruptor) ----
+  - { threat: silence, item: disperser, label: "Disperser",
+      mechanism: "Suppress dispels you as well as the target - a basic dispel removes the silence", weight: 0.6 }
+  - { threat: silence, item: black_king_bar, label: "Black King Bar",
+      mechanism: "immunity means you cannot be silenced - your casts stay available", weight: 1.1 }
+  - { threat: silence, item: manta_style, label: "Manta Style",
+      mechanism: "illusions remove a basic-dispellable silence from yourself (Manta dispel)", weight: 1.0 }
+  - { threat: silence, item: euls_scepter, label: "Eul's Scepter",
+      mechanism: "cyclone on yourself dispels the silence and gives 2.5s of invulnerability", weight: 0.8 }
+  - { threat: silence, item: lotus_orb, label: "Lotus Orb",
+      mechanism: "dispel clears the silence, reflect returns a single-target cast", weight: 0.7 }
+
+  # ---- enemy LOCKDOWN / ROOT (Naga Ensnare / Batrider Lasso / Hex / Shackles) ----
+  - { threat: lockdown_root, item: black_king_bar, label: "Black King Bar",
+      mechanism: "immunity blocks a magical root/lasso - the escape works again", weight: 1.2 }
+  - { threat: lockdown_root, item: linkens_sphere, label: "Linken's Sphere",
+      mechanism: "absorbs a single-target disable (Ensnare/Lasso/Hex) before it lands", weight: 1.0 }
+  - { threat: lockdown_root, item: lotus_orb, label: "Lotus Orb",
+      mechanism: "reflects a single-target root back at the initiator", weight: 0.7 }
+
+  # ---- enemy BKB-PIERCING disable (Doom / Chrono / Black Hole / Roar / Duel) ----
+  #      NOTE: BKB does NOT save you here - the disables pierce immunity.
+  - { threat: bkb_piercing_disable, item: linkens_sphere, label: "Linken's Sphere",
+      mechanism: "blocks a SINGLE-target piercing disable (Doom/Duel/Roar) - BKB does not hold them", weight: 1.1 }
+  - { threat: bkb_piercing_disable, item: aeon_disk, label: "Aeon Disk",
+      mechanism: "survives the burst after being caught in Chrono/Black Hole, where immunity is useless", weight: 1.0 }
+  - { threat: bkb_piercing_disable, item: lotus_orb, label: "Lotus Orb",
+      mechanism: "reflects a single-target piercing disable back at the caster", weight: 0.6 }

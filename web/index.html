@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <title>Dota Counter-Pick</title>
+    <style>
+      /* Barlow / Barlow Condensed - SIL OFL 1.1, self-hosted in web/fonts (see OFL.txt) */
+      @font-face { font-family: "Barlow"; font-weight: 400; font-display: swap; src: url(./fonts/barlow-latin-400-normal.woff2) format("woff2"); }
+      @font-face { font-family: "Barlow"; font-weight: 500; font-display: swap; src: url(./fonts/barlow-latin-500-normal.woff2) format("woff2"); }
+      @font-face { font-family: "Barlow Condensed"; font-weight: 600; font-display: swap; src: url(./fonts/barlow-condensed-latin-600-normal.woff2) format("woff2"); }
+      @font-face { font-family: "Barlow Condensed"; font-weight: 700; font-display: swap; src: url(./fonts/barlow-condensed-latin-700-normal.woff2) format("woff2"); }
+
+      /* Draft Table: night-ink base, team colours carry meaning (ally green / enemy red),
+         gold only for "the hero you play", orange/blue only for physical/magic. */
+      :root {
+        --night: #151b24; --deep: #10151c; --panel: #1d2531; --panel2: #242e3c; --line: #2f3a4a; --line2: #3a4658;
+        --text: #e9e4d8; --text2: #cfc9bc; --muted: #8d96a3;
+        --ally: #7fb13f; --enemy: #c9472f; --gold: #d2ae62; --phys: #e0904a; --magic: #7aa4ec;
+        --good: #6fbf5a; --bad: #d8644c;
+        --str: #d1593f; --agi: #5faa4c; --int: #4f97d6; --all: #b679c8;
+        --cond: "Barlow Condensed", "Arial Narrow", sans-serif;
+        --top-h: 52px;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; }
+      body { background: var(--night); color: var(--text); font: 15px/1.45 Barlow, system-ui, -apple-system, "Segoe UI", sans-serif; }
+      button { font: inherit; color: inherit; }
+      button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+      .muted { color: var(--muted); }
+      code { background: var(--panel2); padding: 1px 5px; border-radius: 3px; }
+
+      /* ---------- top bar ---------- */
+      .top { height: var(--top-h); display: flex; align-items: center; gap: 18px; padding: 0 18px;
+        background: var(--deep); border-bottom: 1px solid var(--line); }
+      .brand { display: flex; align-items: center; gap: 10px; }
+      .logo { width: 28px; height: 28px; flex: none; }
+      .brand h1 { margin: 0; font: 700 19px/1 var(--cond); letter-spacing: .01em; }
+      .mode-nav { display: flex; gap: 2px; }
+      .mode-btn { background: none; border: 0; color: var(--muted); font: 600 16px/1 var(--cond);
+        padding: 17px 10px 15px; border-bottom: 2px solid transparent; cursor: pointer; }
+      .mode-btn:hover { color: var(--text); }
+      .mode-btn.active { color: var(--text); border-bottom-color: var(--gold); }
+      .auto-box { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 13px; }
+      #auto-btn { background: var(--panel); border: 1px solid var(--line); color: var(--muted);
+        border-radius: 3px; padding: 4px 10px; font: 600 14px/1.2 var(--cond); cursor: pointer; }
+      #auto-btn.on { color: var(--text); border-color: var(--ally); }
+      #auto-status, #screen-status { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 26vw; }
+      #screen-btn { background: var(--panel); border: 1px solid var(--line); color: var(--text);
+        border-radius: 3px; padding: 4px 10px; font: 600 14px/1.2 var(--cond); cursor: pointer; }
+      #screen-btn.on { border-color: var(--ally); background: #26341b; }
+      #screen-status:empty { display: none; }
+      #screen-status::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--line2); }
+      #screen-status[data-kind="live"]::before { background: var(--good); box-shadow: 0 0 6px var(--good); }
+      #screen-status[data-kind="waiting"]::before, #screen-status[data-kind="starting"]::before { background: var(--gold); }
+      #screen-status[data-kind="note"]::before { background: var(--magic); }
+      .link { background: none; border: 0; color: var(--muted); font-size: 13px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 0; }
+      .link:hover { color: var(--text); }
+      .sep { width: 1px; height: 20px; background: var(--line); }
+      #auto-status::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+        margin-right: 6px; background: var(--line2); }
+      #auto-status[data-kind="connecting"]::before { background: var(--enemy); }
+      #auto-status[data-kind="waiting"]::before { background: var(--gold); }
+      #auto-status[data-kind="live"]::before { background: var(--good); box-shadow: 0 0 6px var(--good); }
+
+      /* ---------- match band (the memorable thing) ---------- */
+      .band { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        background: linear-gradient(var(--deep), var(--night)); border-bottom: 1px solid var(--line); }
+      .team { padding: 12px 18px 0; min-width: 0; }
+      .team-l { font: 700 14px/1 var(--cond); letter-spacing: .04em; margin-bottom: 8px; display: flex; gap: 8px; align-items: baseline; }
+      .team.ally .team-l { color: var(--ally); }
+      .team.enemy .team-l { color: var(--enemy); justify-content: flex-end; }
+      .team-l .count { color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
+      .team-l .count.full { color: var(--text); }
+      .slots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; max-width: 640px; }
+      .team.enemy .slots { margin-left: auto; }
+      .slot { position: relative; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; min-width: 0; }
+      .slot .p { display: block; aspect-ratio: 16/9; border-radius: 3px 3px 0 0; overflow: hidden; background: #0d1117; outline: 1px solid #ffffff12; }
+      .slot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .slot .bar { display: block; height: 4px; background: var(--line2); }
+      .team.ally .slot.filled .bar { background: var(--ally); }
+      .team.enemy .slot.filled .bar { background: var(--enemy); }
+      .slot .nm { display: block; font: 600 14px/1.1 var(--cond); padding: 6px 1px 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .slot.open .p { background: repeating-linear-gradient(135deg, #1a212c 0 6px, #161c25 6px 12px); outline: 1px dashed var(--line2); }
+      .slot.open .nm { color: var(--muted); }
+      .slot.open.target .p { outline-color: var(--text2); }
+      .slot.open:hover .nm { color: var(--text); }
+      .slot.unknown .p { outline: 1px dashed var(--gold); display: grid; place-items: center; }
+      .slot.unknown .q { font: 700 30px/1 var(--cond); color: var(--gold); }
+      .slot.unknown .nm { color: var(--gold); }
+      .slot.unknown.assigning .p { outline: 2px solid var(--gold); outline-offset: -2px; }
+      .slot.filled .rm { position: absolute; top: 3px; right: 5px; font-weight: 700; color: #fff; text-shadow: 0 0 4px #000; opacity: 0; }
+      .slot.filled:hover .rm, .slot.filled:focus-visible .rm { opacity: 1; }
+      .slot.untagged img { filter: grayscale(.6) brightness(.7); }
+      .slot.no-art img { display: none; }
+      .slot.mine .p { outline: 2px solid var(--gold); outline-offset: -2px; }
+      .slot.mine .bar { background: var(--gold) !important; }
+      .slot .star { position: absolute; top: 2px; left: 3px; font-size: 19px; line-height: 1; color: var(--gold);
+        text-shadow: 0 0 4px #000, 0 0 2px #000; cursor: pointer; padding: 1px 2px; opacity: .75; }
+      .slot .star.on, .slot .star:hover { opacity: 1; }
+
+      .vs { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 12px 18px; }
+      .vs b { font: 700 30px/1 var(--cond); color: var(--muted); }
+      .pos-l { font-size: 12px; color: var(--muted); }
+      .pos { display: flex; gap: 2px; }
+      .role-btn { width: 32px; height: 30px; background: var(--panel); border: 1px solid var(--line); color: var(--muted);
+        font: 700 16px/1 var(--cond); cursor: pointer; }
+      .role-btn:first-child { border-radius: 3px 0 0 3px; } .role-btn:last-child { border-radius: 0 3px 3px 0; }
+      .role-btn:hover { color: var(--text); }
+      .role-btn.active { background: var(--gold); border-color: var(--gold); color: #1d1606; }
+      #pos-hint { font-size: 12px; color: var(--muted); min-height: 17px; }
+      .side { display: flex; align-items: center; gap: 2px; }
+      .side .pos-l { margin-right: 6px; }
+      .side-btn { background: var(--panel); border: 1px solid var(--line); color: var(--muted); font: 600 14px/1 var(--cond);
+        padding: 6px 10px; cursor: pointer; }
+      .side-btn:first-of-type { border-radius: 3px 0 0 3px; } .side-btn:last-of-type { border-radius: 0 3px 3px 0; }
+      .side-btn.active { background: var(--ally); border-color: var(--ally); color: #0d1406; }
+      .side.ask .side-btn { border-color: var(--gold); color: var(--text); }
+      .side.ask .pos-l { color: var(--gold); }
+
+      /* ---------- body: picker | recommendations ---------- */
+      .body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(400px, 34vw); align-items: start; }
+      .picker { padding: 14px 18px 32px; min-width: 0; }
+      .tools { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; margin-bottom: 12px; }
+      #hero-search { flex: 1 1 220px; max-width: 360px; background: var(--panel); border: 1px solid var(--line); border-radius: 3px;
+        color: var(--text); padding: 7px 11px; font: inherit; }
+      #hero-search::placeholder, #combos-search::placeholder { color: var(--muted); }
+      .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 3px; overflow: hidden; }
+      .tgl { background: none; border: 0; color: var(--muted); font: 600 15px/1 var(--cond); padding: 8px 12px; cursor: pointer; }
+      .tgl:hover { color: var(--text); }
+      .tgl.active[data-target="enemy"] { background: var(--enemy); color: #fff; }
+      .tgl.active[data-target="ally"] { background: var(--ally); color: #0d1406; }
+      #clear-btn { margin-left: auto; background: none; border: 1px solid var(--line); border-radius: 3px; color: var(--muted);
+        font: 600 15px/1 var(--cond); padding: 8px 12px; cursor: pointer; }
+      #clear-btn:hover { color: var(--text); border-color: var(--line2); }
+      #no-match { color: var(--muted); }
+
+      .roster { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; align-items: start; }
+      .attr-head { margin: 0 0 6px; font: 600 15px/1 var(--cond); color: var(--muted); display: flex; gap: 7px; align-items: center; }
+      .attr-head .dot { width: 8px; height: 8px; border-radius: 50%; }
+      .attr-str .dot { background: var(--str); } .attr-agi .dot { background: var(--agi); }
+      .attr-int .dot { background: var(--int); } .attr-all .dot { background: var(--all); }
+      .attr-head .count { margin-left: auto; }
+      .col-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 3px; }
+      .hero-tile { position: relative; padding: 0; aspect-ratio: 16/9; cursor: pointer; overflow: hidden;
+        border: 0; border-radius: 2px; background: #0d1117; }
+      .hero-tile img { width: 100%; height: 100%; object-fit: cover; display: block; filter: saturate(.85); }
+      .hero-tile .nm { position: absolute; inset: auto 0 0 0; font: 600 11px/1.05 var(--cond); color: #fff; padding: 8px 3px 2px;
+        background: linear-gradient(transparent, rgba(0,0,0,.9)); opacity: 0; }
+      .hero-tile:hover .nm, .hero-tile:focus-visible .nm { opacity: 1; }
+      .hero-tile:hover img { filter: none; }
+      .hero-tile.picked-enemy::after, .hero-tile.picked-ally::after { content: ""; position: absolute; inset: 0;
+        box-shadow: inset 0 0 0 2px var(--enemy), inset 0 -5px 0 var(--enemy); pointer-events: none; }
+      .hero-tile.picked-ally::after { box-shadow: inset 0 0 0 2px var(--ally), inset 0 -5px 0 var(--ally); }
+      .hero-tile.picked-enemy img, .hero-tile.picked-ally img { filter: brightness(.45) saturate(.5); }
+      .hero-tile.untagged img { filter: grayscale(.75) brightness(.5); }
+      .hero-tile.untagged:hover img { filter: grayscale(.3) brightness(.8); }
+      .hero-tile.no-art img { display: none; }
+      .hero-tile.no-art .nm { opacity: 1; position: static; background: none; display: grid; place-items: center; height: 100%; }
+      .hero-tile.locked { opacity: .3; cursor: not-allowed; }
+
+      .recs { position: sticky; top: 0; max-height: 100vh; overflow-y: auto; background: var(--panel);
+        border-left: 1px solid var(--line); padding: 14px 20px 32px; }
+      .tabs { display: flex; gap: 18px; border-bottom: 1px solid var(--line); margin-bottom: 10px; }
+      .tab { background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted);
+        font: 600 18px/1 var(--cond); padding: 4px 0 9px; cursor: pointer; }
+      .tab:hover { color: var(--text); }
+      .tab.active { color: var(--text); border-bottom-color: var(--gold); }
+      .tab.disabled { opacity: .45; }
+      .tab-count { font: 500 12px Barlow; color: var(--muted); margin-left: 4px; }
+      .damage-read { font-size: 13.5px; color: var(--muted); margin: 0 0 6px; }
+      .damage-read b { font-weight: 500; }
+      .physical { color: var(--phys); } .magic { color: var(--magic); }
+      .build-banner { border-left: 3px solid var(--gold); background: var(--panel2); padding: 8px 12px; margin: 0 0 12px; font-size: 14px; }
+      .build-banner b { color: var(--gold); font-weight: 500; }
+      .empty { color: var(--muted); }
+      .recs > #results > .empty { margin-top: 4px; }
+
+      .card { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 4px 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+      .card.item { grid-template-columns: minmax(0, 1fr) auto; }
+      .card .pt { aspect-ratio: 16/9; border-radius: 3px; overflow: hidden; background: #0d1117; }
+      .card .pt img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .card h3 { margin: 0; font: 700 21px/1.1 var(--cond); }
+      .card .meta { font-size: 12.5px; color: var(--muted); }
+      .card .meta .physical, .card .meta .magic { font-weight: 500; }
+      .card .meta .off { color: var(--bad); }
+      .card.off-build h3, .card.off-build .why { opacity: .6; }
+      .card .ans { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 6px; }
+      .card .ans img { width: 36px; aspect-ratio: 16/9; object-fit: cover; border-radius: 2px; border-bottom: 2px solid var(--enemy); display: block; }
+      .card .ans img.ally { border-bottom-color: var(--ally); }
+      .card .sc { text-align: right; }
+      .card .sc b { font: 700 25px/1 var(--cond); font-variant-numeric: tabular-nums; }
+      .card .sc .wr { display: block; font-size: 12px; color: var(--muted); margin-top: 3px; cursor: help; }
+      .card .sc .wr.good { color: var(--good); } .card .sc .wr.bad { color: var(--bad); }
+      .card .why { grid-column: 2 / -1; margin: 6px 0 0; font-size: 14px; color: var(--text2); }
+      .card.item .why { grid-column: 1 / -1; }
+      .why .lead { color: var(--gold); }
+      .card details { grid-column: 2 / -1; font-size: 13.5px; color: var(--text2); }
+      .card.item details { grid-column: 1 / -1; }
+      .card summary { cursor: pointer; color: var(--muted); font-size: 12.5px; list-style: none; padding: 2px 0; }
+      .card summary::-webkit-details-marker { display: none; }
+      .card summary::before { content: "+ "; } .card details[open] summary::before { content: "− "; }
+      ul.reasons { margin: 4px 0 0; padding: 0; list-style: none; display: grid; gap: 5px; }
+      ul.reasons .vs { color: var(--muted); }
+      ul.reasons .edge, ul.reasons .badge { color: var(--gold); }
+      ul.reasons .block { color: var(--good); }
+      ul.reasons .syn { color: var(--ally); }
+      .factors { color: var(--muted); font-variant-numeric: tabular-nums; }
+      .guard-note { color: var(--gold); font-size: 12.5px; margin: 1px 0 0 2px; opacity: .85; }
+      .gaps { margin-top: 14px; font-size: 13.5px; color: var(--text2); border-left: 3px solid var(--line2); padding: 4px 10px; }
+
+      /* ---------- combos view ---------- */
+      .combos { padding: 16px 18px 40px; max-width: 1400px; }
+      .combos h2 { margin: 0 0 4px; font: 700 24px/1.1 var(--cond); }
+      .combos .lede { margin: 0 0 12px; color: var(--muted); }
+      #combos-search { width: 320px; max-width: 100%; background: var(--panel); border: 1px solid var(--line); border-radius: 3px;
+        color: var(--text); padding: 7px 11px; font: inherit; margin-bottom: 12px; }
+      #combo-roster { max-height: 40vh; overflow: auto; margin-bottom: 16px; }
+      #combo-roster .hero-tile.picked-ally img { filter: none; }
+      .combo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 28px; }
+      .card.combo { display: block; }
+      .combo-head { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+      .combo-hero { display: flex; align-items: center; gap: 8px; font: 700 18px/1 var(--cond); }
+      .combo-hero img { width: 72px; aspect-ratio: 16/9; object-fit: cover; border-radius: 2px; }
+      .combo-hero.no-art img { display: none; }
+      .combo-strong { margin-left: auto; font-size: 12px; color: var(--gold); }
+      .combo-mech { font-size: 14px; color: var(--text2); }
+      .credits { padding: 14px 18px 22px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); }
+      .credits a { color: var(--muted); }
+
+      /* ---------- responsive ---------- */
+      @media (max-width: 1180px) {
+        .body { grid-template-columns: 1fr; }
+        .recs { position: static; max-height: none; border-left: 0; border-top: 1px solid var(--line); }
+        .roster { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+      @media (max-width: 860px) {
+        .band { grid-template-columns: 1fr; }
+        .vs { order: 3; flex-direction: row; flex-wrap: wrap; justify-content: flex-start; padding: 4px 18px 12px; }
+        .vs b { display: none; }
+        .team.enemy .team-l { justify-content: flex-start; }
+        .team.enemy .slots { margin-left: 0; }
+        .combo-grid { grid-template-columns: 1fr; }
+        #auto-status, #screen-status, #screen-test, .sep { display: none; }
+      }
+      @media (max-width: 560px) {
+        .top { gap: 10px; padding: 0 12px; } .brand h1 { display: none; }
+        .team, .picker, .recs { padding-left: 12px; padding-right: 12px; }
+        .roster { grid-template-columns: 1fr; }
+        .card { grid-template-columns: 72px minmax(0, 1fr) auto; }
+      }
+      @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
+          <defs>
+            <linearGradient id="lg-bg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#1c2532"/><stop offset="1" stop-color="#0c1016"/>
+            </linearGradient>
+            <g id="lg-sword">
+              <path d="M-1.25 4 L-1.25 -2 L0 -11.4 L1.25 -2 L1.25 4 Z"/>
+              <rect x="-3.7" y="3.1" width="7.4" height="1.7" rx="0.7"/>
+              <rect x="-0.85" y="4.6" width="1.7" height="4.3" rx="0.55"/>
+              <circle cx="0" cy="9.7" r="1.75"/>
+            </g>
+          </defs>
+          <rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="url(#lg-bg)" stroke="#2c3644"/>
+          <g transform="translate(16 16.4)" stroke="#0b0e13" stroke-width="0.9" stroke-linejoin="round">
+            <g transform="rotate(40)"><use href="#lg-sword" fill="#7fb13f"/></g>
+            <g transform="rotate(-40)"><use href="#lg-sword" fill="#c9472f"/></g>
+          </g>
+        </svg>
+        <h1>Counter-Pick</h1>
+      </div>
+      <nav class="mode-nav">
+        <button class="mode-btn active" data-mode="counter">Draft</button>
+        <button class="mode-btn" data-mode="combo">Combos</button>
+      </nav>
+      <div class="auto-box">
+        <button id="screen-btn" type="button" title="Share the Dota screen: heroes are read from the top bar. Nothing touches the game.">Read screen</button>
+        <span id="screen-status" data-kind="off"></span>
+        <button id="screen-test" type="button" class="link" title="Check recognition on a saved screenshot of the draft">Test a screenshot</button>
+        <input id="screen-file" type="file" accept="image/*" hidden />
+        <span class="sep" aria-hidden="true"></span>
+        <button id="auto-btn" type="button" title="Optional: Dota Game State Integration via the local bridge">GSI: off</button>
+        <span id="auto-status" data-kind="off">manual input</span>
+      </div>
+    </header>
+
+    <!-- ===================== DRAFT VIEW ===================== -->
+    <div id="counter-view">
+      <section class="band" aria-label="Draft">
+        <div class="team ally">
+          <div class="team-l">Your team <span id="ally-count" class="count">0/5</span></div>
+          <div id="ally-strip" class="slots"></div>
+        </div>
+        <div class="vs">
+          <b>VS</b>
+          <span class="pos-l" id="pos-label">Your position</span>
+          <div id="role-bar" class="pos" role="group" aria-labelledby="pos-label"></div>
+          <span id="pos-hint"></span>
+          <div id="side-bar" class="side" role="group" aria-label="Your side of the top bar" hidden>
+            <span class="pos-l">Your side</span>
+            <button class="side-btn" data-side="left" title="Your team is the left block (Radiant)">Left</button>
+            <button class="side-btn" data-side="right" title="Your team is the right block (Dire)">Right</button>
+          </div>
+        </div>
+        <div class="team enemy">
+          <div class="team-l">Enemy team <span id="enemy-count" class="count">0/5</span></div>
+          <div id="enemy-strip" class="slots"></div>
+        </div>
+      </section>
+
+      <div class="body">
+        <section class="picker" aria-label="Hero picker">
+          <div class="tools">
+            <input id="hero-search" type="search" placeholder="Find a hero" autocomplete="off" aria-label="Find a hero" />
+            <div class="seg" role="group" aria-label="Clicking a hero adds to">
+              <button class="tgl active" data-target="enemy">Add to enemy</button>
+              <button class="tgl" data-target="ally">Add to my team</button>
+            </div>
+            <button id="clear-btn">Clear draft</button>
+          </div>
+          <p id="no-match" style="display:none">No hero matches that name.</p>
+          <div id="roster" class="roster"></div>
+        </section>
+        <aside class="recs" aria-label="Recommendations">
+          <div id="results"></div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- ===================== COMBOS VIEW ===================== -->
+    <div id="combo-view" hidden>
+      <section class="combos">
+        <h2>Hero combos</h2>
+        <p class="lede">Synergies from the Fandom wiki. Pick a hero to see who works well with them.</p>
+        <input id="combos-search" type="search" placeholder="Find a hero" autocomplete="off" aria-label="Find a hero for combos" />
+        <div id="combo-roster" class="roster"></div>
+        <div id="combos-panel"></div>
+      </section>
+    </div>
+
+    <footer class="credits">
+      Hero counters, item notes and synergies: <a href="https://dota2.fandom.com" rel="noopener">Dota 2 Wiki</a> (Fandom), CC BY-SA.
+      Win rates and game constants: <a href="https://www.opendota.com" rel="noopener">OpenDota</a>.
+      Dota 2 and its hero art are the property of Valve. Unofficial fan tool.
+    </footer>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

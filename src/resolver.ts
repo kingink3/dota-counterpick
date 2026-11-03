@@ -1,0 +1,541 @@
+// =============================================================================
+//  Resolver - the rule engine core (ADR-012 §1-§4).
+//
+//  For each candidate subject (hero OR item) it produces a scored Recommendation
+//  whose every point of score is backed by a Reason carrying a mechanism string:
+//
+//    edge basis      subject.tool[T] × edge(T→R).weight × enemy.reliance[R]
+//                    guarded by conditions (BKB-guards, traps, census min_targets)
+//    hero_edge basis hero_edge.weight                      (point enrichment)
+//
+//  Nothing scores without an explanation - that asymmetry IS the product (ADR-012 §4).
+// =============================================================================
+
+import { buildCensus, type Census } from "./census.js";
+import { evaluateConditions } from "./conditions.js";
+import { TOOL_SCHOOL, type KnowledgeBase } from "./knowledge.js";
+import { ARCHETYPES } from "./types.js";
+import type {
+  Archetype,
+  AttackType,
+  DamageRead,
+  DamageSchool,
+  DraftState,
+  EngineResult,
+  HeroTags,
+  Reason,
+  Recommendation,
+} from "./types.js";
+
+interface Subject {
+  kind: "hero" | "item";
+  code: string;
+  label: string;
+  pos?: number[];
+  /** tool code -> weight. */
+  toolTable: Record<string, number>;
+}
+
+export function resolve(kb: KnowledgeBase, draft: DraftState): EngineResult {
+  const census = buildCensus(kb, draft.enemyHeroes);
+  const allies = new Set(draft.allyHeroes ?? []);
+  const synergy = buildSynergyIndex(kb, allies);
+
+  const heroLocked = Boolean(draft.myHero);
+  const heroes = heroLocked
+    ? []
+    : rankSubjects(heroCandidates(kb, draft, census, allies), kb, census, synergy);
+  // item builds tailored to the hero you play: a counter item that does not belong in
+  // that hero's build (Eul's on a carry Sniper) sinks instead of topping the list.
+  const fit = itemFitFor(kb, draft);
+  const items = rankItems(kb, census, fit);
+  const defense = resolveDefense(kb, census, fit);
+  const damage = readDamage(census);
+
+  // Honest gap reporting (ADR-004): which enemies did nothing answer - offensively
+  // OR defensively? (a pure threat we can itemise against is not a blind spot.)
+  const answered = new Set<string>();
+  for (const rec of [...heroes, ...items, ...defense]) {
+    for (const e of rec.coverage) answered.add(e);
+  }
+  // an enemy (tagged OR untagged) is a gap only if nothing - including the wiki
+  // layer - answered it.
+  const uncovered = census.allSelected.filter((e) => !answered.has(e));
+
+  return { heroes, items, defense, combos: kb.combos, damage, uncovered, input: draft };
+}
+
+// ---------------------------------------------------------------------------
+//  Candidate pools
+// ---------------------------------------------------------------------------
+
+/** synergy index: candidate code -> ally partners it combos with (+ mechanism). */
+type SynergyIndex = Map<string, Array<{ partner: string; mechanism: string }>>;
+
+function buildSynergyIndex(kb: KnowledgeBase, allies: Set<string>): SynergyIndex {
+  const index: SynergyIndex = new Map();
+  if (allies.size === 0) return index;
+  for (const c of kb.combos) {
+    const [a, b] = c.pair;
+    let cand: string | undefined;
+    let partner: string | undefined;
+    if (allies.has(a) && !allies.has(b)) [cand, partner] = [b, a];
+    else if (allies.has(b) && !allies.has(a)) [cand, partner] = [a, b];
+    else continue;
+    const arr = index.get(cand) ?? [];
+    if (!arr.some((x) => x.partner === partner)) arr.push({ partner, mechanism: c.mechanism });
+    index.set(cand, arr);
+  }
+  return index;
+}
+
+function heroCandidates(
+  kb: KnowledgeBase,
+  draft: DraftState,
+  census: Census,
+  allies: Set<string>,
+): Subject[] {
+  const enemySet = new Set(census.enemies);
+  const subjects: Subject[] = [];
+  for (const [code, tags] of Object.entries(kb.taxonomy.hero_tags)) {
+    if (enemySet.has(code)) continue; // can't pick an enemy
+    if (allies.has(code)) continue; // already on your team
+    if (draft.myHero && code === draft.myHero) continue;
+    if (draft.myRole !== undefined && !tags.pos.includes(draft.myRole)) continue;
+    subjects.push({
+      kind: "hero",
+      code,
+      label: prettifyHero(code),
+      pos: tags.pos,
+      toolTable: tags.tool ?? {},
+    });
+  }
+  return subjects;
+}
+
+function itemCandidates(kb: KnowledgeBase): Subject[] {
+  return kb.items.map((item) => ({
+    kind: "item" as const,
+    code: item.code,
+    label: item.label,
+    toolTable: item.tool,
+  }));
+}
+
+/** How well an item suits the hero you play (data/item_fit.yaml, ADR-018). */
+interface ItemFit {
+  mult(code: string): number;
+  info?: { archetype: Archetype; attack?: AttackType };
+}
+
+/** Archetype of the hero you play: your selected position wins, else the hero's
+ *  first listed position (2 splits into right-click mid vs caster), with curated
+ *  overrides for the heroes the heuristic gets wrong. */
+export function archetypeOf(kb: KnowledgeBase, myHero?: string, myRole?: number): Archetype | undefined {
+  const tags = myHero ? kb.taxonomy.hero_tags[myHero] : undefined;
+  const override = myHero ? kb.itemFit?.override[myHero] : undefined;
+  const pos = myRole ?? tags?.pos[0];
+  if (pos === 4 || pos === 5) return "support";
+  if (override) return override;
+  if (pos === 1) return "carry";
+  if (pos === 3) return "offlane";
+  if (pos === 2) {
+    if (!tags) return undefined; // a mid we know nothing about: don't guess
+    return (tags.reliance.attack_reliant ?? 0) >= 0.6 ? "carry" : "caster";
+  }
+  return undefined;
+}
+
+function itemFitFor(kb: KnowledgeBase, draft: DraftState): ItemFit {
+  const table = kb.itemFit;
+  const archetype = archetypeOf(kb, draft.myHero, draft.myRole);
+  if (!table || !archetype) return { mult: () => 1 };
+  const attack = draft.myHero ? kb.heroAttack?.[draft.myHero] : undefined;
+  const col = ARCHETYPES.indexOf(archetype);
+  const meleeOnly = new Set(table.meleeOnly);
+  const rangedOnly = new Set(table.rangedOnly);
+  return {
+    info: { archetype, ...(attack ? { attack } : {}) },
+    mult: (code) => {
+      let m = table.fit[code]?.[col] ?? 1;
+      if (attack === "ranged" && meleeOnly.has(code)) m = Math.min(m, table.wrongAttack);
+      if (attack === "melee" && rangedOnly.has(code)) m = Math.min(m, table.wrongAttack);
+      return m;
+    },
+  };
+}
+
+/** finalize an item rec with its fit multiplier applied (and recorded for the UI). */
+function finalizeItem(code: string, label: string, reasons: Reason[], fit: ItemFit): Recommendation {
+  const m = fit.mult(code);
+  const rec = finalizeRec("item", code, label, undefined, scaleReasons(reasons, m));
+  if (fit.info) rec.fit = { ...fit.info, mult: m };
+  return rec;
+}
+
+function scaleReasons(reasons: Reason[], m: number): Reason[] {
+  return m === 1 ? reasons : reasons.map((r) => ({ ...r, contribution: r.contribution * m }));
+}
+
+/** How much damage of a given school a single hero deals (right-clickers = physical
+ *  via attack_reliant; casters = magic via spell_reliant; burst tools add on top). */
+function schoolDamage(tags: HeroTags, school: "physical" | "magic"): number {
+  const rel = tags.reliance ?? {};
+  const tool = tags.tool ?? {};
+  return school === "physical"
+    ? (rel.attack_reliant ?? 0) + (tool.physical_burst ?? 0)
+    : (rel.spell_reliant ?? 0) + (tool.magic_burst ?? 0);
+}
+
+// ---------------------------------------------------------------------------
+//  Defensive layer: enemy threat tools -> defensive items (mirror of edges)
+// ---------------------------------------------------------------------------
+
+function resolveDefense(
+  kb: KnowledgeBase,
+  census: Census,
+  fit: ItemFit,
+): Recommendation[] {
+  const byItem = new Map<string, { label: string; reasons: Reason[] }>();
+
+  for (const d of kb.defenseEdges) {
+    // per-enemy threat magnitude: a specific tool, or the broad damage school.
+    const threatOf = (enemy: string): number => {
+      const tags = census.tagsOf(enemy)!;
+      if (d.school) return schoolDamage(tags, d.school);
+      return tags.tool?.[d.threat!] ?? 0;
+    };
+    // census gate: how many enemies carry the threat / deal that school.
+    if (d.min_threat !== undefined) {
+      const carriers = census.enemies.filter((e) => threatOf(e) > 0).length;
+      if (carriers < d.min_threat) continue;
+    }
+    const label = d.school ? `${d.school} damage` : d.threat;
+    for (const enemy of census.enemies) {
+      const threatWeight = threatOf(enemy);
+      if (threatWeight <= 0) continue;
+
+      const entry = byItem.get(d.item) ?? { label: d.label, reasons: [] };
+      entry.reasons.push({
+        enemy,
+        basis: "defense",
+        tool: label,
+        mechanism: d.mechanism,
+        contribution: threatWeight * d.weight,
+        factors: { threatWeight, defenseWeight: d.weight },
+      });
+      byItem.set(d.item, entry);
+    }
+  }
+
+  const recs = [...byItem.entries()].map(([code, { label, reasons }]) =>
+    finalizeItem(code, label, reasons, fit),
+  );
+  return recs.sort(rankCompare);
+}
+
+// ---------------------------------------------------------------------------
+//  Offensive item layer: tag-derived recs + item_edges enrichment
+// ---------------------------------------------------------------------------
+
+function rankItems(
+  kb: KnowledgeBase,
+  census: Census,
+  fit: ItemFit,
+): Recommendation[] {
+  const acc = new Map<string, { label: string; reasons: Reason[] }>();
+
+  // tag-based: items carrying tool tags, scored through the same edges
+  for (const subject of itemCandidates(kb)) {
+    const reasons = scoreSubject(subject, kb, census);
+    if (reasons.length) acc.set(subject.code, { label: subject.label, reasons });
+  }
+
+  // item->hero point counters (e.g. Nullifier vs Necrophos, + wiki items) merged on top
+  const selected = new Set(census.allSelected);
+  for (const ie of kb.itemEdges) {
+    if (!selected.has(ie.target)) continue;
+    const entry = acc.get(ie.item) ?? { label: ie.label, reasons: [] };
+    entry.reasons.push({
+      enemy: ie.target,
+      basis: "item_edge",
+      mechanism: ie.mechanism.trim(),
+      contribution: ie.weight,
+      factors: { edgeWeight: ie.weight },
+      ...(ie.source ? { source: ie.source } : {}),
+    });
+    acc.set(ie.item, entry);
+  }
+
+  const recs = [...acc.entries()].map(([code, { label, reasons }]) =>
+    finalizeItem(code, label, reasons, fit),
+  );
+  return recs.sort(rankCompare);
+}
+
+// ---------------------------------------------------------------------------
+//  Scoring
+// ---------------------------------------------------------------------------
+
+/** synergy contribution per allied combo (modest, so counters still lead). */
+const SYNERGY_WEIGHT = 0.6;
+
+/** Attach the candidate's public-match win rate vs the selected enemies (stat layer,
+ *  ADR-005). Games-weighted aggregate is far steadier than any single small-sample pair. */
+function attachWinrate(rec: Recommendation, kb: KnowledgeBase, census: Census): void {
+  const mu = kb.matchups?.[rec.code];
+  if (!mu) return;
+  const breakdown: Array<{ enemy: string; wr: number; n: number }> = [];
+  let weighted = 0;
+  let games = 0;
+  for (const enemy of census.allSelected) {
+    const pair = mu[enemy];
+    if (!pair) continue;
+    const [wr, n] = pair;
+    breakdown.push({ enemy, wr, n });
+    weighted += wr * n;
+    games += n;
+  }
+  if (games === 0) return;
+  const winrate = weighted / games;
+  rec.winrate = Math.round(winrate * 1000) / 1000;
+  rec.winrateGames = games;
+  rec.matchups = breakdown.sort((a, b) => a.wr - b.wr);
+
+  // Blend the stat into the rank: a confidence-weighted tilt around 50% so a hero
+  // that performs well in practice rises and a theory-only counter (good mechanism,
+  // bad win rate) sinks. Small samples barely move; KB mechanics still dominate.
+  const deviation = winrate - 0.5;
+  const confidence = Math.min(1, games / WINRATE_FULL_CONF);
+  const factor = clamp(1 + WINRATE_TILT * deviation * confidence, 0.94, 1.06);
+  rec.score = round(rec.score * factor);
+}
+
+// Light tiebreaker: win rate only nudges near-tied counters; KB mechanics still lead.
+const WINRATE_TILT = 0.8; // gentle tilt strength
+const WINRATE_FULL_CONF = 150; // games for full confidence in the tilt
+
+function clamp(x: number, lo: number, hi: number): number {
+  return Math.max(lo, Math.min(hi, x));
+}
+
+function rankSubjects(
+  subjects: Subject[],
+  kb: KnowledgeBase,
+  census: Census,
+  synergy: SynergyIndex,
+): Recommendation[] {
+  const recs: Recommendation[] = [];
+  for (const subject of subjects) {
+    const reasons = scoreSubject(subject, kb, census);
+    // synergy with allied team (only when picking a hero)
+    for (const s of synergy.get(subject.code) ?? []) {
+      reasons.push({
+        enemy: s.partner,
+        basis: "synergy",
+        mechanism: s.mechanism.trim(),
+        contribution: SYNERGY_WEIGHT,
+        factors: { edgeWeight: SYNERGY_WEIGHT },
+      });
+    }
+    if (reasons.length === 0) continue;
+    const rec = finalizeRec(subject.kind, subject.code, subject.label, subject.pos, reasons);
+    if (subject.kind === "hero") attachWinrate(rec, kb, census);
+    recs.push(rec);
+  }
+  return recs.sort(rankCompare);
+}
+
+/** Build a Recommendation from raw reasons: score, coverage, synergy, school, sorted reasons. */
+function finalizeRec(
+  kind: "hero" | "item",
+  code: string,
+  label: string,
+  pos: number[] | undefined,
+  reasons: Reason[],
+): Recommendation {
+  const score = reasons.reduce((s, r) => s + r.contribution, 0);
+  const school = dominantSchool(reasons);
+  const coverage = [...new Set(reasons.filter((r) => r.basis !== "synergy").map((r) => r.enemy))];
+  const synergyWith = [...new Set(reasons.filter((r) => r.basis === "synergy").map((r) => r.enemy))];
+  return {
+    kind,
+    code,
+    label,
+    ...(pos ? { pos } : {}),
+    score: round(score),
+    coverage,
+    ...(synergyWith.length ? { synergyWith } : {}),
+    ...(school ? { school } : {}),
+    // counter reasons first (by contribution), synergy reasons at the bottom
+    reasons: reasons
+      .slice()
+      .sort((a, b) => {
+        const as = a.basis === "synergy" ? 1 : 0;
+        const bs = b.basis === "synergy" ? 1 : 0;
+        if (as !== bs) return as - bs;
+        return b.contribution - a.contribution;
+      })
+      .map((r) => ({ ...r, contribution: round(r.contribution) })),
+  };
+}
+
+/** Pick the candidate's damage school by summing contribution per tool school. */
+function dominantSchool(reasons: Reason[]): DamageSchool | undefined {
+  let phys = 0;
+  let magic = 0;
+  for (const r of reasons) {
+    const school = r.tool ? TOOL_SCHOOL[r.tool] : undefined;
+    if (school === "physical") phys += r.contribution;
+    else if (school === "magic") magic += r.contribution;
+  }
+  if (phys === 0 && magic === 0) return undefined;
+  if (phys > magic * 1.25) return "physical";
+  if (magic > phys * 1.25) return "magic";
+  return undefined; // mixed / neutral -> no badge
+}
+
+// ---------------------------------------------------------------------------
+//  Magic vs physical damage read of the enemy team
+// ---------------------------------------------------------------------------
+
+function readDamage(census: Census): DamageRead {
+  let physicalVuln = 0;
+  let magicVuln = 0;
+  let physThreat = 0;
+  let magicThreat = 0;
+  for (const enemy of census.enemies) {
+    const tags = census.tagsOf(enemy)!;
+    const rel = tags.reliance ?? {};
+    const tool = tags.tool ?? {};
+    // what to bring against them (defensive weakness): low_armor -> physical,
+    // magic_burst_vulnerable / high_armor (physical mitigated) -> magic, and
+    // squishy_to_burst dies to either.
+    const anySquish = 0.5 * (rel.squishy_to_burst ?? 0);
+    physicalVuln += (rel.low_armor ?? 0) + anySquish;
+    magicVuln += (rel.magic_burst_vulnerable ?? 0) + (rel.high_armor ?? 0) + anySquish;
+    // what they deal: right-clickers (attack_reliant) deal physical; spell-reliant
+    // casters deal magic. The dedicated burst tools add on top.
+    physThreat += (rel.attack_reliant ?? 0) + (tool.physical_burst ?? 0);
+    magicThreat += (rel.spell_reliant ?? 0) + (tool.magic_burst ?? 0);
+  }
+  return {
+    physicalVuln: round(physicalVuln),
+    magicVuln: round(magicVuln),
+    offenseLean: lean(physicalVuln, magicVuln),
+    physThreat: round(physThreat),
+    magicThreat: round(magicThreat),
+    defenseLean: lean(physThreat, magicThreat),
+  };
+}
+
+function lean(phys: number, magic: number): "physical" | "magic" | "mixed" {
+  if (phys === 0 && magic === 0) return "mixed";
+  if (phys > magic * 1.3) return "physical";
+  if (magic > phys * 1.3) return "magic";
+  return "mixed";
+}
+
+function scoreSubject(
+  subject: Subject,
+  kb: KnowledgeBase,
+  census: Census,
+): Reason[] {
+  const reasons: Reason[] = [];
+  const subjectHasTool = (toolCode: string) =>
+    (subject.toolTable[toolCode] ?? 0) > 0;
+
+  // --- edge basis: tag -> tag ---------------------------------------------
+  for (const [toolCode, toolWeight] of Object.entries(subject.toolTable)) {
+    if (toolWeight <= 0) continue;
+    const edges = kb.edgesByTool.get(toolCode);
+    if (!edges) continue;
+
+    for (const edge of edges) {
+      for (const enemy of census.enemies) {
+        const enemyTags = census.tagsOf(enemy)!;
+        const relianceWeight = enemyTags.reliance?.[edge.target] ?? 0;
+        if (relianceWeight <= 0) continue;
+
+        const guard = evaluateConditions(
+          edge.conditions,
+          enemyTags,
+          subjectHasTool,
+          census,
+          edge.target,
+        );
+        if (!guard.ok) continue;
+
+        const contribution = toolWeight * edge.weight * relianceWeight;
+        reasons.push({
+          enemy,
+          basis: "edge",
+          tool: toolCode,
+          reliance: edge.target,
+          mechanism: edge.mechanism,
+          contribution,
+          factors: {
+            toolWeight,
+            edgeWeight: edge.weight,
+            relianceWeight,
+          },
+          ...(guard.notes.length ? { notes: guard.notes } : {}),
+        });
+      }
+    }
+  }
+
+  // --- hero_edge basis: point enrichment on top of the basis --------------
+  // Matches ALL selected enemies (incl. untagged), so wiki edges cover heroes
+  // outside hero_tags. Conditions are only evaluable on tagged targets.
+  if (subject.kind === "hero") {
+    const selected = new Set(census.allSelected);
+    for (const he of kb.heroEdges) {
+      if (he.subject !== subject.code) continue;
+      if (!selected.has(he.target)) continue;
+      let notes: string[] = [];
+      if (he.conditions) {
+        const enemyTags = census.tagsOf(he.target);
+        if (!enemyTags) continue; // can't evaluate conditions on an untagged target
+        const guard = evaluateConditions(he.conditions, enemyTags, subjectHasTool, census, "");
+        if (!guard.ok) continue;
+        notes = guard.notes;
+      }
+      reasons.push({
+        enemy: he.target,
+        basis: "hero_edge",
+        mechanism: he.mechanism.trim(),
+        contribution: he.weight,
+        factors: { edgeWeight: he.weight },
+        ...(notes.length ? { notes } : {}),
+        ...(he.source ? { source: he.source } : {}),
+      });
+    }
+  }
+
+  return reasons;
+}
+
+// ---------------------------------------------------------------------------
+//  Helpers
+// ---------------------------------------------------------------------------
+
+function rankCompare(a: Recommendation, b: Recommendation): number {
+  if (b.score !== a.score) return b.score - a.score;
+  if (b.coverage.length !== a.coverage.length) {
+    return b.coverage.length - a.coverage.length;
+  }
+  return a.label.localeCompare(b.label);
+}
+
+/** hero codes are snake_case; render a readable label (no hero-name table in MVP). */
+function prettifyHero(code: string): string {
+  return code
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+function round(n: number): number {
+  return Math.round(n * 1000) / 1000;
+}

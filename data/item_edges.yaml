@@ -1,0 +1,57 @@
+# =============================================================================
+#  Item->hero enrichment - POINT item counters tied to a specific enemy hero.
+# =============================================================================
+#  The mirror of hero_edges, but the subject is an ITEM. Used for famous item
+#  counters whose reason is hero-specific and the generic tool->reliance edges
+#  cannot express (the item carries no clean reusable tool tag, or the interaction
+#  is unique to one hero's mechanic).
+#
+#  These surface in the "Counter items" tab alongside the tag-derived item recs.
+#
+#  Schema (one list entry per matchup):
+#    item:      item id (own namespace; need not be in items.yaml)
+#    label:     display name
+#    target:    enemy hero code this counter fires against   [key in hero_tags]
+#    mechanism: the explanation string (required)
+#    weight:    score multiplier
+# =============================================================================
+
+item_edges:
+  - item: nullifier
+    label: "Nullifier"
+    target: necrophos
+    mechanism: >
+      Nullifier's debuff renders Ghost Shroud useless and mutes Necro's sustain /
+      escape items - it strips his main defensive window and opens him for the kill.
+      The first-pick item answer to Necrophos.
+    weight: 1.6
+
+  - item: nullifier
+    label: "Nullifier"
+    target: morphling
+    mechanism: >
+      Nullifier mutes Morphling's items and stops him kiting with Ethereal Blade /
+      Eul's; with his escape muted and buffs dispelled he gets caught and bursted.
+    weight: 1.2
+
+  # Slark: Shadow Dance is HIDDEN, not invisible (taxonomy special_cases:
+  # shadow_dance_is_not_invisibility) - detection items do nothing. Silence is the
+  # item answer: a silenced Slark cannot cast Shadow Dance, Pounce or Dark Pact.
+  - item: orchid
+    label: "Orchid Malevolence"
+    target: slark
+    mechanism: >
+      Shadow Dance hides Slark even from True Sight, so Dust / Sentry / Gem do
+      nothing - silence is the answer. Orchid on Slark BEFORE he dances denies
+      Shadow Dance, Pounce and Dark Pact for the whole duration (a Dark Pact that is
+      already pulsing will still purge it - land it first).
+    weight: 1.3
+
+  - item: bloodthorn
+    label: "Bloodthorn"
+    target: slark
+    mechanism: >
+      The late-game Orchid: same pre-Dance silence (no Shadow Dance / Pounce /
+      Dark Pact) plus amplified damage to burst him inside the window. True Sight
+      items are useless against Shadow Dance - this is the item counter.
+    weight: 1.3

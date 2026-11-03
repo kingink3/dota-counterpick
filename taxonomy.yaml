@@ -1,0 +1,591 @@
+# =============================================================================
+#  Dota Counter-Pick Knowledge Base - Taxonomy (source of truth, versioned)
+# =============================================================================
+#  Structure:
+#    reliance[]    - what the target can be grabbed by (target-side)
+#    tool[]        - what negates it (subject-side: a hero OR an item)
+#    special_cases - traps where the naive taxonomy lies (see the guards)
+#    edges[]       - canonical tool->reliance rules (the rule base)
+#    hero_tags[]   - membership: which reliance/tool a hero carries, with weight
+#
+#  IMPORTANT (honest confidence flag):
+#  The membership below reflects knowledge as of the ~early-2026 patch. Hero
+#  reworks and new heroes after that point are NOT accounted for. Re-check
+#  against the live patch before prod, especially recently reworked heroes. This
+#  is domain assertion, not computed data - treat it as an expert draft.
+#
+#  Tag validity criterion (granularity test):
+#    a tag is valid IF a tool exists that reliably beats EVERY carrier of the
+#    tag. Works on only some carriers -> split the tag / lower the weight /
+#    attach a condition guard.
+# =============================================================================
+
+meta:
+  schema_version: 0.1
+  # patch the KB was reviewed against (patch:check compares this with dotaconstants)
+  patch: "7.41"
+  reviewed: "2026-11-03: full pass on supports/flex (v0.6); cores carried over from the early-2026 draft"
+  weight_semantics: >
+    Membership is almost binary. weight (0.0-1.0) encodes how CENTRAL the tag is
+    to the hero: 1.0 = the hero's whole identity rests on it, 0.5 = one of several
+    tools. The engine multiplies by weight when scoring.
+
+# -----------------------------------------------------------------------------
+#  RELIANCE / VULNERABILITY  (target-side - what we grab onto)
+# -----------------------------------------------------------------------------
+reliance:
+  - code: mana_dependent
+    label: "Mana-dependent"
+    hook: "Abilities/shields break when mana is emptied"
+    answered_by: [mana_burn]
+
+  - code: relies_on_invisibility
+    label: "Relies on invisibility"
+    hook: "Invis is the key to initiation or escape"
+    answered_by: [detection]
+
+  - code: illusion_based
+    label: "Illusion-based"
+    hook: "Illusions are cleared by AoE; the real hero is exposed"
+    answered_by: [aoe_clear, illusion_detection]
+
+  - code: summon_clearable          # see special_cases: NOT all summons
+    label: "Relies on fragile summons"
+    hook: "Eidolons/treants/spiderlings/familiars die to AoE"
+    answered_by: [aoe_clear]
+
+  - code: evasion                   # see special_cases: backtrack != evasion
+    label: "Evasion (miss chance)"
+    hook: "Physical damage misses while evasion is up"
+    answered_by: [true_strike, break]
+
+  - code: channeling_ultimate
+    label: "Channeled ultimate/ability"
+    hook: "The effect is cancelled by an interrupt before it lands"
+    answered_by: [interrupt, bkb_piercing_disable]
+
+  - code: sustain_dependent
+    label: "Sustain/lifesteal-dependent"
+    hook: "Cutting healing collapses survivability"
+    answered_by: [healing_reduction]
+
+  - code: low_armor
+    label: "Low armor"
+    hook: "Minus armor multiplies physical damage on the target"
+    answered_by: [armor_reduction, physical_burst]
+
+  - code: high_armor
+    label: "High armor / physical-resistant"
+    hook: "Physical is mitigated - bring magic damage (ignores armor) or shred the armor"
+    answered_by: [magic_damage, magic_burst, armor_reduction]
+
+  - code: magic_burst_vulnerable
+    label: "Fragile to magic burst"
+    hook: "Low HP/MR with no escape - dies to the combo before acting"
+    answered_by: [magic_burst]
+
+  - code: mobility_dependent
+    label: "Mobility/blink-escape dependent"
+    hook: "Root/leash cancels the escape; a BKB-piercing lock catches it even under immunity"
+    answered_by: [lockdown_root, bkb_piercing_disable]
+
+  - code: snowball_dependent
+    label: "Snowball / weak late"
+    hook: "Needs early kills; a stalled tempo = losing on scaling"
+    answered_by: [lockdown_early, out_scales]     # strategic answer
+
+  - code: greedy_farmer
+    label: "Greedy farmer / late hypercarry"
+    hook: "Needs time/space; vulnerable to early pressure and pickoffs"
+    answered_by: [early_pressure, pickoff]        # strategic answer
+
+  - code: spell_reliant
+    label: "Relies on active casts"
+    hook: "Silence shuts the hero off as a fighting unit"
+    answered_by: [silence, bkb_piercing_disable]
+
+  # --- axes forced by expanding to cores ---
+  - code: attack_reliant
+    label: "Auto-attack reliant (right-clicker)"
+    hook: "Disarm/blind/evasion cancel the DPS; a steroid passive can be broken"
+    answered_by: [disarm, evasion, break]
+
+  - code: melee_commit
+    label: "Melee carry, must enter attack range"
+    hook: "Kite/control deny the damage; vulnerable on the dive"
+    answered_by: [kite, lockdown_root, bkb_piercing_disable]
+
+  - code: low_mobility
+    label: "No escape/blink"
+    hook: "Gets pinned and focused; a slow hero is kited"
+    answered_by: [pickoff, kite, lockdown_early]
+
+  - code: squishy_to_burst
+    label: "Low effective HP (any damage)"
+    hook: "Dies to focus before doing its job, physical OR magical"
+    answered_by: [magic_burst, physical_burst, pickoff]
+
+  - code: summon_tanky
+    label: "Relies on TANKY summons (not AoE-cleared)"
+    hook: "Bear/Golem have real HP - hit the owner / focus-fire the unit"
+    answered_by: [break, lockdown_root, focus_summon]   # NOT aoe_clear
+
+  - code: dodge_backtrack
+    label: "Backtrack dodge (NOT evasion)"
+    hook: "true_strike does NOT pierce; needs a passive break / control / burst"
+    answered_by: [break, bkb_piercing_disable, magic_burst, silence]   # NOT true_strike
+
+  - code: key_passive
+    label: "Relies on a key passive"
+    hook: "A defining passive (Reactive Armor/Warpath/Dispersion) - break turns the hero off"
+    answered_by: [break]
+
+  - code: bkb_reliant
+    label: "[FLAG] Regularly buys BKB"
+    hook: "Used ONLY in rule guards, never as a recommendation target"
+    answered_by: [bkb_piercing_disable]
+
+# -----------------------------------------------------------------------------
+#  TOOL  (subject-side - what we hit with). mechanical = resolved by item/skill.
+#         strategic = a draft/composition property, not a point tool.
+# -----------------------------------------------------------------------------
+tool:
+  - code: mana_burn
+    class: mechanical
+    label: "Mana burn"
+    sources_hint: ["Anti-Mage", "Nyx", "Invoker(?)", "Diffusal Blade", "Lion(drain)"]
+  - code: detection
+    class: mechanical
+    label: "Invisibility detection"
+    sources_hint: ["Sentry", "Dust", "Gem", "Slardar(amplify)", "Bounty(track)", "Zeus", "Necrophos(?)"]
+  - code: aoe_clear
+    class: mechanical
+    label: "AoE illusion/summon clear"
+    sources_hint: ["Earthshaker", "Crystal Maiden", "Sven(cleave)", "Battlefury", "Mjollnir"]
+  - code: illusion_detection
+    class: mechanical
+    label: "Reveal the real hero"
+    sources_hint: ["MKB(true)", "Manta-aware play", "spot heal/poison logic"]
+  - code: true_strike
+    class: mechanical
+    label: "Guaranteed hit (vs evasion)"
+    sources_hint: ["MKB", "Bloodthorn", "Heaven's Halberd(?)"]
+  - code: break
+    class: mechanical
+    label: "Disable passives (break)"
+    sources_hint: ["Silver Edge", "Doom", "Spirit Breaker(?)", "Viper(shard?)"]
+  - code: interrupt
+    class: mechanical
+    label: "Channel interrupt"
+    sources_hint: ["Eul's", "Hex", "knockback", "Faceless Void(Chrono)", "any stun"]
+  - code: healing_reduction
+    class: mechanical
+    label: "Healing reduction"
+    sources_hint: ["Spirit Vessel", "Ancient Apparition(Ice Blast)", "Skadi", "Necrophos(?)"]
+  - code: armor_reduction
+    class: mechanical
+    label: "Armor reduction"
+    sources_hint: ["Slardar", "Vengeful Spirit", "Desolator", "Solar Crest"]
+  - code: physical_burst
+    class: mechanical
+    label: "Physical burst"
+    sources_hint: ["Sven", "PA", "Troll", "Ursa"]
+  - code: bkb_piercing_disable
+    class: mechanical
+    label: "BKB-piercing disable"
+    sources_hint: ["Doom", "Primal Roar(Beastmaster)", "Chronosphere", "Black Hole", "Global Silence", "Fiend's Grip", "Duel", "Naga(Song)"]
+  - code: lockdown_root
+    class: mechanical
+    label: "Root/leash vs mobility"
+    sources_hint: ["Naga(Ensnare)", "Batrider(Lasso)", "Treant", "Hoodwink", "Shadow Shaman(Shackles)"]
+  - code: magic_burst
+    class: mechanical
+    label: "Magic burst combo"
+    sources_hint: ["Lina", "Lion", "Zeus", "Tinker", "Skywrath"]
+  - code: magic_damage
+    class: mechanical
+    label: "Magic damage (ignores armor)"
+    sources_hint: ["Revenant's Brooch", "Veil of Discord", "Dagon", "Ethereal Blade"]
+  - code: silence
+    class: mechanical
+    label: "Silence"
+    sources_hint: ["Silencer(Global)", "Drow", "Night Stalker", "Orchid", "Disruptor(Glimpse-tempo)"]
+  - code: lockdown_early
+    class: strategic
+    label: "Early lane control/ganks"
+  - code: early_pressure
+    class: strategic
+    label: "Early map pressure"
+  - code: pickoff
+    class: strategic
+    label: "Single-target pickoff"
+  - code: out_scales
+    class: strategic
+    label: "Out-scales late"
+  - code: disarm
+    class: mechanical
+    label: "Disarm / attack denial"
+    sources_hint: ["Heaven's Halberd", "Bane(Nightmare)", "Snapfire(?)", "Hoodwink(?)"]
+  - code: kite
+    class: mechanical
+    label: "Kite melee carry (mobility + slow + force)"
+    sources_hint: ["Force Staff", "Eul's", "Glimmer", "Hurricane Pike", "Kiting comp"]
+  - code: focus_summon
+    class: strategic
+    label: "Focus-fire a tanky summon (Bear/Golem)"
+
+# -----------------------------------------------------------------------------
+#  SPECIAL CASES - traps where naive tag->tag lies. Encoded as guards.
+# -----------------------------------------------------------------------------
+special_cases:
+
+  - id: backtrack_is_not_evasion
+    trap: >
+      Backtrack (Faceless Void) is a DODGE, not miss chance. true_strike (MKB)
+      does NOT pierce it. You cannot tag Void with evasion.
+    encoding: >
+      A separate reliance tag dodge_backtrack, answered_by [break, lockdown,
+      burst_through]. The true_strike tool does NOT apply to it.
+    affected_heroes: [faceless_void]
+
+  - id: tanky_summons_not_clearable
+    trap: >
+      AoE clear kills FRAGILE summons (eidolons, treants, spiderlings,
+      familiars). BUT Spirit Bear (Lone Druid), Golem (Warlock), Tombstone
+      zombies have real HP and are NOT cleared like illusions. Do not tag them
+      summon_clearable.
+    encoding: >
+      summon_clearable is fragile-only. Tanky summons = a separate tag
+      summon_tanky (answered_by: focus_summon / break / lockdown the owner).
+    affected_heroes: [lone_druid, warlock]
+
+  - id: bkb_guard_on_disable_rules
+    trap: >
+      The rule "interrupt/lockdown counters channeling/mobility" is false if the
+      target pops BKB and the tool is magical and does not pierce immunity.
+    encoding: >
+      Every rule with a tool in [interrupt, lockdown_root, magic_burst, silence]
+      carries condition: { unless_target_tag: bkb_reliant, or_tool_tag: bkb_piercing_disable }
+    note: >
+      bkb_reliant is a flag tag (not a counter-pick axis), put on heroes that
+      regularly buy BKB. Used ONLY in guards, never as a recommendation target.
+
+  - id: shadow_dance_is_not_invisibility
+    trap: >
+      Shadow Dance (Slark) makes him HIDDEN, not invisible: he cannot be seen or
+      targeted even with True Sight. Sentry / Dust / Gem do nothing against it, so
+      tagging Slark relies_on_invisibility makes the detection edge recommend
+      useless items.
+    encoding: >
+      Slark carries NO relies_on_invisibility. A shadow_dance tag would have a
+      single carrier (ADR-008 -> hero rule, not a tag), so the real answers are
+      point enrichment in data/item_edges.yaml (Orchid / Bloodthorn: silence stops
+      the Dance from being cast) plus the wiki hero edges (vision-based answers).
+    affected_heroes: [slark]
+
+# -----------------------------------------------------------------------------
+#  EDGES - canonical tool->reliance rules (the base). hero->hero rules are
+#          written SEPARATELY as point enrichment on top of this basis.
+# -----------------------------------------------------------------------------
+edges:
+  - tool: detection
+    target: relies_on_invisibility
+    mechanism: "detection strips invis - breaks initiation/escape"
+    weight: 1.3
+  - tool: mana_burn
+    target: mana_dependent
+    mechanism: "draining mana shuts off abilities/shield"
+    weight: 1.2
+  - tool: aoe_clear
+    target: illusion_based
+    mechanism: "AoE clears illusions, exposing the real hero"
+    weight: 1.2
+  - tool: aoe_clear
+    target: summon_clearable
+    mechanism: "AoE wipes fragile summons"
+    weight: 1.0
+  - tool: true_strike
+    target: evasion
+    mechanism: "a guaranteed hit ignores miss chance"
+    weight: 1.3
+    conditions: { exclude_target_tag: dodge_backtrack }   # see special_cases
+  - tool: healing_reduction
+    target: sustain_dependent
+    mechanism: "cutting healing collapses survivability"
+    weight: 1.3
+  - tool: interrupt
+    target: channeling_ultimate
+    mechanism: "the interrupt cancels the channel before the effect"
+    weight: 1.4
+    conditions: { unless_target_tag: bkb_reliant, or_tool_tag: bkb_piercing_disable }
+  - tool: lockdown_root
+    target: mobility_dependent
+    mechanism: "root cancels the blink-escape and pins for focus"
+    weight: 1.2
+    conditions: { unless_target_tag: bkb_reliant, or_tool_tag: bkb_piercing_disable }
+  - tool: armor_reduction
+    target: low_armor
+    mechanism: "minus armor multiplies physical damage"
+    weight: 1.0
+  - tool: magic_damage
+    target: high_armor
+    mechanism: "magic damage (Brooch turns right-clicks magical) ignores their armor entirely"
+    weight: 1.2
+  - tool: armor_reduction
+    target: high_armor
+    mechanism: "strip the armor (Deso/AC/Solar/Slardar) so physical damage lands again"
+    weight: 0.9
+  - tool: magic_burst
+    target: high_armor
+    mechanism: "magic combo ignores armor - armor stacking does nothing against it"
+    weight: 0.8
+    conditions: { unless_target_tag: bkb_reliant }
+  - tool: magic_burst
+    target: magic_burst_vulnerable
+    mechanism: "the magic combo kills before the target acts"
+    weight: 1.1
+    conditions: { unless_target_tag: bkb_reliant }
+  - tool: silence
+    target: spell_reliant
+    mechanism: "silence shuts the hero off as a fighting unit"
+    weight: 1.1
+    conditions: { unless_target_tag: bkb_reliant, or_tool_tag: bkb_piercing_disable }
+
+  # --- core-axis edges ---
+  - tool: disarm
+    target: attack_reliant
+    mechanism: "disarm cancels auto-attacks - zeroes a right-clicker's DPS"
+    weight: 1.3
+    conditions: { unless_target_tag: bkb_reliant }   # Halberd is removed by BKB
+  - tool: break
+    target: attack_reliant
+    mechanism: "break disables the steroid passive (Coup/Bash/Fury)"
+    weight: 0.9
+  - tool: break
+    target: dodge_backtrack
+    mechanism: "break disables the Backtrack passive - the dodge is gone, the target takes damage again"
+    weight: 1.0
+  - tool: break
+    target: key_passive
+    mechanism: "break disables the defining passive (Reactive Armor/Warpath/Dispersion) - the hero's whole kit collapses"
+    weight: 1.1
+  - tool: kite
+    target: melee_commit
+    mechanism: "force/slow/mobility deny a melee its damage"
+    weight: 1.0
+  - tool: kite
+    target: low_mobility
+    mechanism: "a slow, escape-less target gets kited and focused"
+    weight: 0.8
+  - tool: physical_burst
+    target: squishy_to_burst
+    mechanism: "physical burst kills a fragile target before it acts"
+    weight: 1.0
+  - tool: focus_summon
+    target: summon_tanky
+    mechanism: "the tanky summon is focus-fired - but NOT AoE-cleared"
+    weight: 0.7
+
+  # --- v0.2: BKB-piercing control as a standalone counter-tool ---
+  #     bkb_piercing_disable used to live ONLY in guards (or_tool_tag). But hard
+  #     CC through immunity IS the universal answer to mobility and channeling
+  #     even under BKB. These edges carry NO bkb guard: they pierce by definition.
+  - tool: bkb_piercing_disable
+    target: mobility_dependent
+    mechanism: "a lock through BKB (Doom/Chrono/Roar/Ensnare) pins the blink-escaper even if it goes immune"
+    weight: 1.1
+  - tool: bkb_piercing_disable
+    target: channeling_ultimate
+    mechanism: "an interrupt through BKB cancels the channel even if the caster pops immunity under it"
+    weight: 1.3
+
+  # --- v0.2: filling answered_by entries that had no edge ---
+  - tool: physical_burst
+    target: low_armor
+    mechanism: "low-armor targets evaporate to physical burst even without minus armor"
+    weight: 0.9
+  - tool: magic_burst
+    target: squishy_to_burst
+    mechanism: "a magic combo deletes any low effective-HP target before it acts (not only low-MR ones)"
+    weight: 0.9
+    conditions: { unless_target_tag: bkb_reliant }
+  - tool: break
+    target: evasion
+    mechanism: "break removes PASSIVE evasion (Blur/Drunken Brawler) - miss chance disappears without MKB"
+    weight: 0.8
+
+  # --- v0.2: pickoff as a working strategic answer (it has carriers) ---
+  #     pickoff is carried by Pudge/Spectre/Bloodseeker/Bounty - removing singles.
+  - tool: pickoff
+    target: squishy_to_burst
+    mechanism: "a pickoff cuts a fragile target out of the lineup before the fight"
+    weight: 0.8
+  - tool: pickoff
+    target: low_mobility
+    mechanism: "an escape-less, slow target gets caught on rotations and removed alone"
+    weight: 0.8
+  - tool: pickoff
+    target: greedy_farmer
+    mechanism: "deny the greedy carry farm space - pressure with pickoffs at the right timing"
+    weight: 0.7
+
+# -----------------------------------------------------------------------------
+#  HERO MEMBERSHIP - FULL CORE COVERAGE (pos 1/2/3). Supports (pos 4/5) are
+#  deliberately excluded: not material to a core-vs-core counter-pick engine.
+#  Supports that appear below are present ONLY as tool-tag carriers (for item/
+#  synergy and edges), marked [tool-only].
+#
+#  pos - primary positions (documents the core scope; flex marked explicitly).
+#  WEIGHTS - calibrated expert estimates, not measurements. The first engine run
+#  shows where to tune. Reworks after ~early-2026 are not accounted for.
+#  format: hero: { pos: [..], reliance: {tag: w}, tool: {tag: w} }
+# -----------------------------------------------------------------------------
+hero_tags:
+
+  # ===========================================================================
+  #  POSITION 1 - CARRY
+  # ===========================================================================
+  anti_mage:       { pos: [1], reliance: {mobility_dependent: 0.8, greedy_farmer: 0.7, attack_reliant: 0.6, bkb_reliant: 1.0}, tool: {mana_burn: 1.0} }  # high magic resist - NOT magic_burst
+  juggernaut:      { pos: [1], reliance: {attack_reliant: 0.7, spell_reliant: 0.4, bkb_reliant: 0.7} }
+  phantom_assassin: { pos: [1], reliance: {evasion: 1.0, attack_reliant: 0.9, melee_commit: 0.7, bkb_reliant: 1.0}, tool: {physical_burst: 0.9, true_strike: 0.7} }
+  faceless_void:   { pos: [1], reliance: {dodge_backtrack: 0.9, attack_reliant: 0.7, melee_commit: 0.6, bkb_reliant: 0.8}, tool: {bkb_piercing_disable: 1.0} }   # backtrack = dodge, NOT evasion (ADR-010); Chrono = bkb-pierce. true_strike intentionally NOT applicable
+  spectre:         { pos: [1], reliance: {greedy_farmer: 0.8, melee_commit: 0.3, key_passive: 0.6}, tool: {pickoff: 0.4} }   # tanky; break removes Dispersion + Desolate
+  medusa:          { pos: [1], reliance: {mana_dependent: 1.0, greedy_farmer: 0.8, attack_reliant: 0.7, low_mobility: 0.6, low_armor: 0.3} }
+  terrorblade:     { pos: [1], reliance: {illusion_based: 0.6, greedy_farmer: 0.6, attack_reliant: 0.6, low_armor: 0.4, magic_burst_vulnerable: 0.3} }
+  phantom_lancer:  { pos: [1], reliance: {illusion_based: 1.0, mana_dependent: 0.4, greedy_farmer: 0.6, melee_commit: 0.4} }
+  naga_siren:      { pos: [1], reliance: {illusion_based: 0.9, greedy_farmer: 0.7}, tool: {bkb_piercing_disable: 0.8, aoe_clear: 0.4} }
+  morphling:       { pos: [1,2], reliance: {attack_reliant: 0.6, mobility_dependent: 0.6, spell_reliant: 0.5, mana_dependent: 0.4, magic_burst_vulnerable: 0.4} }
+  slark:           { pos: [1], reliance: {mobility_dependent: 0.6, snowball_dependent: 0.7, mana_dependent: 0.3, bkb_reliant: 0.6} }   # Shadow Dance = HIDDEN, not invis (special_cases)
+  sven:            { pos: [1], reliance: {attack_reliant: 0.8, melee_commit: 0.7, low_mobility: 0.5, snowball_dependent: 0.4, bkb_reliant: 1.0}, tool: {physical_burst: 0.9, aoe_clear: 0.6} }
+  luna:            { pos: [1], reliance: {attack_reliant: 0.7, low_armor: 0.4, squishy_to_burst: 0.5, low_mobility: 0.5}, tool: {physical_burst: 0.6} }
+  drow_ranger:     { pos: [1], reliance: {attack_reliant: 0.8, magic_burst_vulnerable: 0.7, low_mobility: 0.6, low_armor: 0.3}, tool: {silence: 0.6, physical_burst: 0.5} }
+  sniper:          { pos: [1,2], reliance: {attack_reliant: 0.8, magic_burst_vulnerable: 0.8, squishy_to_burst: 0.7, low_mobility: 0.5, low_armor: 0.4} }
+  gyrocopter:      { pos: [1], reliance: {attack_reliant: 0.7, squishy_to_burst: 0.5}, tool: {aoe_clear: 0.5} }
+  lifestealer:     { pos: [1], reliance: {sustain_dependent: 0.7, attack_reliant: 0.6, melee_commit: 0.6, spell_reliant: 0.3, bkb_reliant: 1.0} }   # Rage = built-in BKB
+  troll_warlord:   { pos: [1], reliance: {attack_reliant: 0.9, low_mobility: 0.4, bkb_reliant: 1.0} }
+  ursa:            { pos: [1], reliance: {attack_reliant: 0.8, melee_commit: 0.8, low_mobility: 0.5, snowball_dependent: 0.6, bkb_reliant: 1.0} }
+  wraith_king:     { pos: [1], reliance: {sustain_dependent: 0.6, attack_reliant: 0.7, melee_commit: 0.6, low_mobility: 0.6, summon_clearable: 0.4, bkb_reliant: 0.8} }
+  chaos_knight:    { pos: [1], reliance: {illusion_based: 0.8, melee_commit: 0.6, mana_dependent: 0.3} }
+  lone_druid:      { pos: [1], reliance: {summon_tanky: 0.9, greedy_farmer: 0.5, attack_reliant: 0.5} }   # Bear is NOT AoE-cleared
+  monkey_king:     { pos: [1,3], reliance: {attack_reliant: 0.7, melee_commit: 0.5} }
+  clinkz:          { pos: [1], reliance: {relies_on_invisibility: 0.8, attack_reliant: 0.7, squishy_to_burst: 0.6, sustain_dependent: 0.4} }
+  riki:            { pos: [1,4], reliance: {relies_on_invisibility: 1.0, melee_commit: 0.6, attack_reliant: 0.6, squishy_to_burst: 0.6} }
+  bloodseeker:     { pos: [1,3], reliance: {snowball_dependent: 0.5, attack_reliant: 0.5, melee_commit: 0.5}, tool: {pickoff: 0.6, healing_reduction: 0.5} }
+  razor:           { pos: [1,2,3], reliance: {attack_reliant: 0.6, mobility_dependent: 0.4}, tool: {armor_reduction: 0.4} }
+  weaver:          { pos: [1], reliance: {relies_on_invisibility: 0.6, mobility_dependent: 0.7, attack_reliant: 0.5, snowball_dependent: 0.4, squishy_to_burst: 0.4} }
+  arc_warden:      { pos: [1,2], reliance: {greedy_farmer: 0.7, mobility_dependent: 0.5, attack_reliant: 0.5} }   # Tempest Double = a unit, NOT an illusion
+  meepo:           { pos: [1,2], reliance: {magic_burst_vulnerable: 0.7, greedy_farmer: 0.6, mana_dependent: 0.3} }   # clones = real units, AoE-magic hits all; NOT illusion_based
+  alchemist:       { pos: [1,2], reliance: {sustain_dependent: 0.5, greedy_farmer: 0.6, attack_reliant: 0.5, bkb_reliant: 0.7} }
+  templar_assassin: { pos: [2,1], reliance: {attack_reliant: 0.6, magic_burst_vulnerable: 0.3}, tool: {armor_reduction: 0.4} }   # Refraction blocks instances
+  muerta:          { pos: [1,2], reliance: {attack_reliant: 0.6, magic_burst_vulnerable: 0.4, low_mobility: 0.5} }   # flex carry
+
+  # ===========================================================================
+  #  POSITION 2 - MID
+  # ===========================================================================
+  invoker:         { pos: [2], reliance: {mana_dependent: 0.7, spell_reliant: 0.8, squishy_to_burst: 0.5}, tool: {magic_burst: 0.7, aoe_clear: 0.4} }
+  storm_spirit:    { pos: [2], reliance: {mana_dependent: 1.0, mobility_dependent: 0.9, snowball_dependent: 0.6, spell_reliant: 0.5, bkb_reliant: 0.6} }
+  queen_of_pain:   { pos: [2], reliance: {mobility_dependent: 0.7, magic_burst_vulnerable: 0.4, spell_reliant: 0.6}, tool: {magic_burst: 0.7, silence: 0.5} }
+  puck:            { pos: [2], reliance: {mobility_dependent: 0.9, magic_burst_vulnerable: 0.4, spell_reliant: 0.6}, tool: {magic_burst: 0.5, silence: 0.4} }
+  shadow_fiend:    { pos: [2,1], reliance: {attack_reliant: 0.5, magic_burst_vulnerable: 0.6, squishy_to_burst: 0.6, low_mobility: 0.6, spell_reliant: 0.5} }
+  void_spirit:     { pos: [2], reliance: {mobility_dependent: 0.8, spell_reliant: 0.5}, tool: {magic_burst: 0.5} }
+  ember_spirit:    { pos: [2,1], reliance: {mobility_dependent: 0.8, attack_reliant: 0.4}, tool: {bkb_piercing_disable: 0.4} }
+  tinker:          { pos: [2], reliance: {spell_reliant: 0.9, mobility_dependent: 0.7, mana_dependent: 0.5, squishy_to_burst: 0.7, magic_burst_vulnerable: 0.5, low_armor: 0.3}, tool: {magic_burst: 0.7} }
+  death_prophet:   { pos: [2,3], reliance: {spell_reliant: 0.6, low_mobility: 0.5, magic_burst_vulnerable: 0.4} }
+  outworld_destroyer: { pos: [2], reliance: {mana_dependent: 0.8, spell_reliant: 0.6, magic_burst_vulnerable: 0.3} }
+  leshrac:         { pos: [2,3], reliance: {spell_reliant: 0.7, squishy_to_burst: 0.5, magic_burst_vulnerable: 0.5}, tool: {magic_burst: 0.6} }
+  pugna:           { pos: [2,4], reliance: {spell_reliant: 0.7, squishy_to_burst: 0.7, low_mobility: 0.6}, tool: {magic_burst: 0.6} }
+  zeus:            { pos: [2,4], reliance: {squishy_to_burst: 0.7, low_mobility: 0.7, spell_reliant: 0.8, magic_burst_vulnerable: 0.5}, tool: {magic_burst: 0.8, detection: 0.5} }
+  lina:            { pos: [2,4], reliance: {squishy_to_burst: 0.6, low_mobility: 0.5, spell_reliant: 0.7, attack_reliant: 0.4, low_armor: 0.3}, tool: {magic_burst: 0.9} }
+  kunkka:          { pos: [2,3,1], reliance: {spell_reliant: 0.6, attack_reliant: 0.4} }
+  dragon_knight:   { pos: [2,3], reliance: {sustain_dependent: 0.5, attack_reliant: 0.5, low_mobility: 0.5, high_armor: 0.7, bkb_reliant: 0.6}, tool: {armor_reduction: 0.3} }   # Dragon Blood = lots of armor
+  viper:           { pos: [2,1,3], reliance: {attack_reliant: 0.6, low_mobility: 0.5}, tool: {break: 0.4} }
+  huskar:          { pos: [2,1], reliance: {sustain_dependent: 1.0, snowball_dependent: 0.7, attack_reliant: 0.5, magic_burst_vulnerable: 0.5} }
+  pangolier:       { pos: [2,3], reliance: {mobility_dependent: 0.7, spell_reliant: 0.5} }
+  windranger:      { pos: [2,4], reliance: {evasion: 0.5, mobility_dependent: 0.5, spell_reliant: 0.5}, tool: {true_strike: 0.6, magic_burst: 0.5} }
+  necrophos:       { pos: [2,3], reliance: {sustain_dependent: 0.8, low_mobility: 0.6, magic_burst_vulnerable: 0.3}, tool: {healing_reduction: 0.6, detection: 0.3} }
+
+  # ===========================================================================
+  #  POSITION 3 - OFFLANE
+  # ===========================================================================
+  axe:             { pos: [3], reliance: {melee_commit: 0.6, low_mobility: 0.5, spell_reliant: 0.4} }   # tank, few vulnerabilities
+  centaur_warrunner: { pos: [3], reliance: {melee_commit: 0.5, low_mobility: 0.4} }
+  tidehunter:      { pos: [3], reliance: {low_mobility: 0.5, spell_reliant: 0.5, high_armor: 0.6, bkb_reliant: 0.4} }   # Kraken Shell + armor
+  bristleback:     { pos: [3], reliance: {sustain_dependent: 0.8, low_mobility: 0.5, high_armor: 0.7, key_passive: 0.9} }   # physical reduction (Bristleback) -> bring magic; break kills Warpath
+  underlord:       { pos: [3], reliance: {spell_reliant: 0.5, low_mobility: 0.5, high_armor: 0.4} }
+  mars:            { pos: [3], reliance: {melee_commit: 0.5, spell_reliant: 0.5}, tool: {bkb_piercing_disable: 0.4} }
+  doom:            { pos: [3,2], reliance: {melee_commit: 0.4, mana_dependent: 0.3, low_mobility: 0.4}, tool: {break: 1.0, bkb_piercing_disable: 1.0} }
+  dark_seer:       { pos: [3], reliance: {spell_reliant: 0.6, mana_dependent: 0.3}, tool: {aoe_clear: 0.4} }
+  beastmaster:     { pos: [3], reliance: {summon_clearable: 0.6, low_mobility: 0.4}, tool: {bkb_piercing_disable: 0.9, detection: 0.5} }
+  timbersaw:       { pos: [3], reliance: {spell_reliant: 0.6, mana_dependent: 0.4, magic_burst_vulnerable: 0.5, high_armor: 0.9, key_passive: 1.0} }   # Reactive Armor = stacks armor; bring magic / break it
+  night_stalker:   { pos: [3,1], reliance: {snowball_dependent: 0.7, attack_reliant: 0.5, melee_commit: 0.5}, tool: {silence: 0.6} }
+  slardar:         { pos: [3,4], reliance: {melee_commit: 0.5, low_mobility: 0.4}, tool: {detection: 0.7, armor_reduction: 0.9} }
+  brewmaster:      { pos: [3], reliance: {evasion: 0.6, melee_commit: 0.5, bkb_reliant: 0.6}, tool: {bkb_piercing_disable: 0.5} }
+  legion_commander: { pos: [3], reliance: {melee_commit: 0.7, low_mobility: 0.5, bkb_reliant: 0.7}, tool: {bkb_piercing_disable: 0.8} }
+  magnus:          { pos: [3,2], reliance: {spell_reliant: 0.6, low_mobility: 0.5}, tool: {bkb_piercing_disable: 0.7, aoe_clear: 0.4} }
+  primal_beast:    { pos: [3], reliance: {melee_commit: 0.6, spell_reliant: 0.4}, tool: {bkb_piercing_disable: 0.5} }
+  lycan:           { pos: [3,1], reliance: {summon_clearable: 0.5, snowball_dependent: 0.6, attack_reliant: 0.5, bkb_reliant: 0.6} }
+  broodmother:     { pos: [3,1], reliance: {summon_clearable: 0.9, snowball_dependent: 0.6, sustain_dependent: 0.5, melee_commit: 0.4} }
+  sand_king:       { pos: [3,4], reliance: {channeling_ultimate: 0.7, relies_on_invisibility: 0.3, spell_reliant: 0.5}, tool: {magic_burst: 0.6, aoe_clear: 0.3} }
+  enigma:          { pos: [3,4], reliance: {summon_clearable: 0.6, channeling_ultimate: 1.0, low_mobility: 0.5}, tool: {aoe_clear: 0.7, bkb_piercing_disable: 0.9} }
+  visage:          { pos: [3,4], reliance: {summon_clearable: 0.8, low_mobility: 0.4} }
+  natures_prophet: { pos: [3,1,4], reliance: {summon_clearable: 0.5, mobility_dependent: 0.5} }
+  abaddon:         { pos: [3,4], reliance: {sustain_dependent: 0.6, high_armor: 0.4} }   # dispel-heavy; Aphotic Shield + armor
+  undying:         { pos: [3,4], reliance: {sustain_dependent: 0.6, summon_clearable: 0.3} }
+  pudge:           { pos: [3,4], reliance: {low_mobility: 0.4, spell_reliant: 0.4}, tool: {pickoff: 0.7} }   # flex off/support
+
+  # ===========================================================================
+  #  POSITIONS 4/5 - SUPPORTS (v0.6, 2026-11-03: now full counter targets too,
+  #  not only tool carriers - ADR-011 amended). Weights are an expert draft for
+  #  ~patch 7.41; lines marked TENTATIVE are newer heroes / less certain reads.
+  # ===========================================================================
+  lion:            { pos: [4,5], reliance: {squishy_to_burst: 0.7, low_mobility: 0.7, spell_reliant: 0.7}, tool: {bkb_piercing_disable: 0.6, magic_burst: 0.7, mana_burn: 0.5} }
+  silencer:        { pos: [4,5], reliance: {low_mobility: 0.6, squishy_to_burst: 0.5, attack_reliant: 0.3}, tool: {silence: 1.0, bkb_piercing_disable: 0.6} }
+  earthshaker:     { pos: [4,5], reliance: {spell_reliant: 0.7, mobility_dependent: 0.5, squishy_to_burst: 0.4}, tool: {aoe_clear: 0.9, bkb_piercing_disable: 0.4} }   # Blink-initiation: root/lock him before the jump
+  ancient_apparition: { pos: [4,5], reliance: {low_mobility: 0.8, squishy_to_burst: 0.7, spell_reliant: 0.6}, tool: {healing_reduction: 1.0} }
+  batrider:        { pos: [3,4], reliance: {mobility_dependent: 0.6, spell_reliant: 0.6, squishy_to_burst: 0.4}, tool: {lockdown_root: 0.9, bkb_piercing_disable: 0.7} }
+  shadow_shaman:   { pos: [4,5], reliance: {channeling_ultimate: 0.6, low_mobility: 0.8, squishy_to_burst: 0.6, spell_reliant: 0.6}, tool: {lockdown_root: 0.8, bkb_piercing_disable: 0.4} }   # Shackles is a channel
+  crystal_maiden:  { pos: [5], reliance: {channeling_ultimate: 0.8, low_mobility: 0.9, squishy_to_burst: 0.8, magic_burst_vulnerable: 0.5}, tool: {aoe_clear: 0.4} }   # Freezing Field channel
+  bane:            { pos: [4,5], reliance: {channeling_ultimate: 0.7, low_mobility: 0.6, squishy_to_burst: 0.5, spell_reliant: 0.6}, tool: {bkb_piercing_disable: 0.7, disarm: 0.6} }   # Fiend's Grip channel
+  vengeful_spirit: { pos: [4,5], reliance: {squishy_to_burst: 0.5, low_mobility: 0.4, spell_reliant: 0.5}, tool: {armor_reduction: 0.8} }
+  bounty_hunter:   { pos: [4], reliance: {relies_on_invisibility: 0.7}, tool: {detection: 0.6} }
+  # --- v0.6 supports & flex heroes that had no tags (dimmed in the UI before) ---
+  #     codes = roster valve names (rattletrap / wisp / treant), so the wiki layer
+  #     links without an alias.
+  chen:            { pos: [5,4], reliance: {summon_clearable: 0.4, low_mobility: 0.5, squishy_to_burst: 0.5}, tool: {early_pressure: 0.6} }
+  rattletrap:      { pos: [4,3], reliance: {spell_reliant: 0.6, melee_commit: 0.5}, tool: {pickoff: 0.8, lockdown_early: 0.6, interrupt: 0.5} }   # Cogs trap; Battery Assault mini-stuns interrupt channels
+  dark_willow:     { pos: [4,5], reliance: {squishy_to_burst: 0.6, spell_reliant: 0.7, mobility_dependent: 0.4}, tool: {lockdown_root: 0.6, magic_burst: 0.5, interrupt: 0.4} }   # Bramble Maze roots
+  dawnbreaker:     { pos: [3,4,5], reliance: {melee_commit: 0.5, spell_reliant: 0.5, sustain_dependent: 0.4}, tool: {lockdown_early: 0.4} }
+  dazzle:          { pos: [5,4], reliance: {squishy_to_burst: 0.6, spell_reliant: 0.7, low_mobility: 0.6} }   # Shallow Grave: no tool in the vocabulary for "can't die"
+  disruptor:       { pos: [5,4], reliance: {squishy_to_burst: 0.6, low_mobility: 0.5, spell_reliant: 0.6}, tool: {silence: 0.8, lockdown_root: 0.6} }   # Static Storm; Kinetic Field + Glimpse vs escapers
+  earth_spirit:    { pos: [4,3], reliance: {spell_reliant: 0.8, mobility_dependent: 0.5}, tool: {silence: 0.5, lockdown_early: 0.5, pickoff: 0.5} }   # Geomagnetic Grip silences
+  elder_titan:     { pos: [5,4], reliance: {low_mobility: 0.6, spell_reliant: 0.5}, tool: {armor_reduction: 0.7, lockdown_early: 0.4} }   # Natural Order strips armor (and magic resist)
+  enchantress:     { pos: [5,4,2], reliance: {squishy_to_burst: 0.6, attack_reliant: 0.5, summon_clearable: 0.4, low_mobility: 0.4}, tool: {kite: 0.5} }
+  grimstroke:      { pos: [5,4], reliance: {squishy_to_burst: 0.6, spell_reliant: 0.7, low_mobility: 0.5}, tool: {silence: 0.7, lockdown_early: 0.5, pickoff: 0.4} }   # Phantom's Embrace silences
+  hoodwink:        { pos: [4], reliance: {squishy_to_burst: 0.7, mobility_dependent: 0.5, evasion: 0.4}, tool: {lockdown_root: 0.7, pickoff: 0.5} }   # Bushwhack; Scurry evasion
+  wisp:            { pos: [5,4], reliance: {squishy_to_burst: 0.5, spell_reliant: 0.6, mobility_dependent: 0.5} }   # Io: Tether / Relocate
+  jakiro:          { pos: [5,4], reliance: {low_mobility: 0.8, squishy_to_burst: 0.5, spell_reliant: 0.6}, tool: {aoe_clear: 0.6, lockdown_early: 0.5} }
+  keeper_of_the_light: { pos: [5,4,2], reliance: {squishy_to_burst: 0.7, low_mobility: 0.5, spell_reliant: 0.7, channeling_ultimate: 0.4}, tool: {aoe_clear: 0.5, disarm: 0.4} }   # Illuminate channel; Blinding Light miss chance
+  kez:             { pos: [2,1], reliance: {attack_reliant: 0.7, melee_commit: 0.6, mobility_dependent: 0.7, spell_reliant: 0.4, relies_on_invisibility: 0.3, bkb_reliant: 0.4}, tool: {silence: 0.6, physical_burst: 0.5} }   # TENTATIVE (7.37): Grappling Claw, Talon Toss silence, Raven's Veil invis
+  largo:           { pos: [4,5], reliance: {spell_reliant: 0.8, low_mobility: 0.6, mana_dependent: 0.5, squishy_to_burst: 0.4}, tool: {lockdown_early: 0.4, pickoff: 0.3} }   # TENTATIVE (7.40): silence removes him; Rhapsody disarms himself
+  lich:            { pos: [5], reliance: {low_mobility: 0.6, squishy_to_burst: 0.5, channeling_ultimate: 0.3}, tool: {magic_burst: 0.5, lockdown_early: 0.4} }   # Sinister Gaze channel
+  marci:           { pos: [4,3,1], reliance: {melee_commit: 0.7, attack_reliant: 0.6, spell_reliant: 0.4, mobility_dependent: 0.4}, tool: {lockdown_early: 0.5, physical_burst: 0.6} }
+  mirana:          { pos: [4,2], reliance: {squishy_to_burst: 0.6, mobility_dependent: 0.6, relies_on_invisibility: 0.4, spell_reliant: 0.5}, tool: {pickoff: 0.6, lockdown_early: 0.5} }   # Leap; Moonlight Shadow
+  ogre_magi:       { pos: [5,4], reliance: {low_mobility: 0.6, spell_reliant: 0.5}, tool: {lockdown_early: 0.6, interrupt: 0.5} }
+  omniknight:      { pos: [5,4,3], reliance: {melee_commit: 0.5, low_mobility: 0.6, spell_reliant: 0.6} }   # Guardian Angel / Repel: save tools, no counter tool in the vocabulary
+  oracle:          { pos: [5], reliance: {squishy_to_burst: 0.7, low_mobility: 0.5, spell_reliant: 0.7}, tool: {lockdown_root: 0.5} }   # Fortune's End root
+  phoenix:         { pos: [4,5,3], reliance: {spell_reliant: 0.7, mobility_dependent: 0.4}, tool: {magic_damage: 0.4, aoe_clear: 0.3} }   # Supernova is NOT a channel (an interrupt does nothing) - the egg dies to hero hits
+  ringmaster:      { pos: [5,4], reliance: {spell_reliant: 0.7, squishy_to_burst: 0.6, low_mobility: 0.4, channeling_ultimate: 0.3}, tool: {lockdown_early: 0.4, pickoff: 0.3} }   # TENTATIVE (7.37): Wheel of Wonder taunt does NOT pierce BKB; Tame the Beasts is a channel
+  rubick:          { pos: [4,5], reliance: {squishy_to_burst: 0.6, spell_reliant: 0.8, low_mobility: 0.4}, tool: {lockdown_early: 0.4, interrupt: 0.4} }
+  shadow_demon:    { pos: [5,4], reliance: {squishy_to_burst: 0.6, spell_reliant: 0.7}, tool: {interrupt: 0.4} }   # Disruption banish
+  skywrath_mage:   { pos: [4,5,2], reliance: {squishy_to_burst: 0.9, low_mobility: 0.8, magic_burst_vulnerable: 0.6, spell_reliant: 0.7}, tool: {magic_burst: 0.9, silence: 0.7} }   # Ancient Seal
+  snapfire:        { pos: [4,5], reliance: {low_mobility: 0.5, spell_reliant: 0.6, squishy_to_burst: 0.5}, tool: {lockdown_early: 0.5, magic_burst: 0.4} }
+  spirit_breaker:  { pos: [4,3], reliance: {melee_commit: 0.6, attack_reliant: 0.5}, tool: {pickoff: 0.8, lockdown_early: 0.6} }   # global Charge
+  techies:         { pos: [5,4], reliance: {squishy_to_burst: 0.7, relies_on_invisibility: 0.5, spell_reliant: 0.6, low_mobility: 0.4}, tool: {magic_burst: 0.5} }   # mines are invisible: Sentry/Gem clear them
+  tiny:            { pos: [4,2,3], reliance: {melee_commit: 0.5, attack_reliant: 0.5, spell_reliant: 0.5, low_mobility: 0.5, mana_dependent: 0.4}, tool: {magic_burst: 0.7, lockdown_early: 0.6} }   # Avalanche + Toss = magic burst
+  treant:          { pos: [5,4], reliance: {low_mobility: 0.7, spell_reliant: 0.5, relies_on_invisibility: 0.3}, tool: {lockdown_root: 0.9} }   # Overgrowth; Nature's Guise
+  tusk:            { pos: [4,5,3], reliance: {melee_commit: 0.6, spell_reliant: 0.6, mobility_dependent: 0.4}, tool: {pickoff: 0.6, lockdown_early: 0.6, physical_burst: 0.4} }   # Ice Shards trap; Walrus Punch
+  venomancer:      { pos: [5,4,3], reliance: {low_mobility: 0.6, squishy_to_burst: 0.5, summon_clearable: 0.4}, tool: {early_pressure: 0.5, magic_damage: 0.4} }   # Plague Wards die to AoE
+  warlock:         { pos: [5,4], reliance: {low_mobility: 0.7, summon_tanky: 0.7, spell_reliant: 0.6, channeling_ultimate: 0.4}, tool: {lockdown_early: 0.4} }   # Golem is TANKY (special_cases), Upheaval channel
+  winter_wyvern:   { pos: [5,4], reliance: {squishy_to_burst: 0.5, spell_reliant: 0.7, low_mobility: 0.4}, tool: {interrupt: 0.4, lockdown_early: 0.4} }
+  witch_doctor:    { pos: [5,4], reliance: {channeling_ultimate: 0.9, low_mobility: 0.7, squishy_to_burst: 0.6, spell_reliant: 0.6}, tool: {lockdown_early: 0.5, magic_damage: 0.4} }   # Death Ward channel
+  nyx_assassin:    { pos: [4], reliance: {relies_on_invisibility: 0.4}, tool: {mana_burn: 0.6, magic_burst: 0.5} }

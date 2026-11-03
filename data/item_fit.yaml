@@ -1,0 +1,163 @@
+# =============================================================================
+#  Item fit - does an item belong in THIS hero's build? (ADR-018)
+# =============================================================================
+#  The counter layers (items.yaml tags, item_edges, defense.yaml) answer "what
+#  beats the enemy draft". They say nothing about whether the item suits the hero
+#  you play: Eul's Scepter really does cancel Axe's Call, but a carry Sniper does
+#  not build it. This file is that missing axis, as a score multiplier per hero
+#  ARCHETYPE (curated expert estimate - calibrate like the edge weights):
+#
+#      1.0  core / standard item for the archetype
+#      0.6  situational
+#      0.25 off-build (shown last, flagged in the UI)
+#
+#  Archetype of the hero you play (resolver.archetypeOf):
+#    - your selected position wins: 1 carry, 2 by hero (see below), 3 offlane, 4/5 support
+#    - else the hero's first position in taxonomy hero_tags:
+#        1 -> carry, 3 -> offlane, 4/5 -> support,
+#        2 -> carry if attack_reliant >= 0.6 (right-click mid) else caster
+#    - archetype_override below fixes the heroes this heuristic gets wrong
+#  Attack type (melee / ranged) comes from data/roster.json (OpenDota attack_type).
+#  Items with `melee_only` / `ranged_only` are capped at `wrong_attack` for the other type.
+#
+#  An item missing from `fit` is neutral (x1) - test/engine.test.ts checks that every
+#  item the engine can recommend is listed.
+# =============================================================================
+
+wrong_attack: 0.25
+
+archetype_override:
+  huskar: carry          # right-click (Armlet / Heaven's Halberd / Satanic), not a caster
+  dragon_knight: carry   # right-click tank-carry
+  ember_spirit: carry    # Maelstrom / Battle Fury / Daedalus mid
+  kunkka: offlane        # utility core, not a caster
+
+# wiki slugs that duplicate catalog ids (merged before scoring)
+alias:
+  battle_fury: battlefury
+  orchid_malevolence: orchid
+  shiva_s_guard: shivas_guard
+
+#                        carry  caster offlane support
+fit:
+  abyssal_blade:        [1.0,   0.25,  0.8,    0.1]
+  aeon_disk:            [0.5,   0.7,   0.7,    0.3]
+  arcane_boots:         [0.25,  0.7,   0.5,    1.0]
+  assault_cuirass:      [0.7,   0.25,  0.8,    0.3]
+  battlefury:           [1.0,   0.1,   0.25,   0.1]
+  black_king_bar:       [1.0,   0.8,   1.0,    0.4]
+  blade_mail:           [0.5,   0.5,   1.0,    0.3]
+  blink_dagger:         [0.5,   0.9,   1.0,    0.7]
+  bloodthorn:           [1.0,   0.5,   0.3,    0.1]
+  book_of_the_dead:     [0.5,   0.3,   0.6,    0.3]
+  boots_of_travel:      [0.8,   0.8,   0.6,    0.3]
+  boots_of_travel_2:    [0.8,   0.8,   0.6,    0.3]
+  butterfly:            [1.0,   0.1,   0.25,   0.1]
+  cloak:                [0.4,   0.5,   0.6,    0.6]
+  crimson_guard:        [0.25,  0.25,  1.0,    0.5]
+  dagon:                [0.25,  1.0,   0.4,    0.3]
+  desolator:            [1.0,   0.25,  0.5,    0.1]
+  diffusal_blade:       [0.9,   0.25,  0.5,    0.1]
+  dragon_lance:         [1.0,   0.2,   0.3,    0.1]
+  dragon_scale:         [0.5,   0.5,   0.6,    0.5]
+  dust_of_appearance:   [0.4,   0.5,   0.6,    1.0]
+  eternal_shroud:       [0.4,   0.6,   0.9,    0.4]
+  ethereal_blade:       [0.5,   1.0,   0.4,    0.4]
+  euls_scepter:         [0.25,  1.0,   0.5,    0.9]
+  eye_of_skadi:         [1.0,   0.3,   0.6,    0.1]
+  force_staff:          [0.5,   0.8,   0.7,    1.0]
+  gem_of_true_sight:    [0.4,   0.4,   0.6,    1.0]
+  ghost_scepter:        [0.6,   0.7,   0.5,    0.9]
+  gleipnir:             [0.9,   0.8,   0.5,    0.4]
+  glimmer_cape:         [0.25,  0.6,   0.4,    1.0]
+  guardian_greaves:     [0.25,  0.5,   0.8,    1.0]
+  hand_of_midas:        [0.7,   0.7,   0.4,    0.2]
+  heart_of_tarrasque:   [0.7,   0.3,   1.0,    0.2]
+  heavens_halberd:      [0.4,   0.3,   1.0,    0.6]
+  hood_of_defiance:     [0.4,   0.5,   0.9,    0.5]
+  hurricane_pike:       [1.0,   0.7,   0.3,    0.5]
+  infused_raindrops:    [0.5,   0.7,   0.7,    0.7]
+  linkens_sphere:       [0.8,   0.8,   0.7,    0.3]
+  lotus_orb:            [0.4,   0.5,   1.0,    0.7]
+  maelstrom:            [1.0,   0.25,  0.4,    0.1]
+  mage_slayer:          [0.7,   0.3,   0.6,    0.3]
+  magic_stick:          [0.7,   0.7,   0.7,    0.8]
+  magic_wand:           [0.8,   0.8,   0.8,    0.9]
+  manta_style:          [1.0,   0.3,   0.4,    0.1]
+  medallion_of_courage: [0.3,   0.3,   0.6,    0.9]
+  mekansm:              [0.2,   0.4,   0.8,    0.9]
+  mjollnir:             [1.0,   0.25,  0.5,    0.1]
+  monkey_king_bar:      [1.0,   0.2,   0.4,    0.1]
+  moon_shard:           [1.0,   0.4,   0.4,    0.2]
+  morbid_mask:          [0.6,   0.2,   0.4,    0.2]
+  nullifier:            [1.0,   0.6,   0.7,    0.2]
+  observer_ward:        [0.3,   0.3,   0.4,    1.0]
+  orb_of_venom:         [0.5,   0.3,   0.5,    0.6]
+  orchid:               [0.8,   0.9,   0.4,    0.3]
+  phase_boots:          [1.0,   0.5,   0.8,    0.4]
+  pipe_of_insight:      [0.3,   0.4,   1.0,    0.8]
+  quelling_blade:       [0.8,   0.5,   0.8,    0.3]
+  radiance:             [0.8,   0.4,   0.7,    0.1]
+  revenant_s_brooch:    [0.6,   0.7,   0.4,    0.3]
+  rod_of_atos:          [0.5,   0.8,   0.5,    0.8]
+  satanic:              [1.0,   0.1,   0.4,    0.1]
+  scythe_of_vyse:       [0.4,   1.0,   0.6,    0.7]
+  sentry_ward:          [0.3,   0.4,   0.5,    1.0]
+  shadow_amulet:        [0.5,   0.5,   0.5,    0.8]
+  shadow_blade:         [0.7,   0.5,   0.7,    0.3]
+  shivas_guard:         [0.3,   0.7,   1.0,    0.4]
+  silver_edge:          [1.0,   0.3,   0.6,    0.1]
+  skull_basher:         [1.0,   0.1,   0.5,    0.1]
+  smoke_of_deceit:      [0.3,   0.4,   0.5,    1.0]
+  solar_crest:          [0.5,   0.3,   0.6,    1.0]
+  spirit_vessel:        [0.3,   0.3,   0.9,    1.0]
+  tango:                [0.7,   0.7,   0.7,    0.9]
+  town_portal_scroll:   [1.0,   1.0,   1.0,    1.0]
+  vanguard:             [0.6,   0.2,   1.0,    0.2]
+  veil_of_discord:      [0.2,   0.8,   0.5,    0.8]
+  wind_waker:           [0.3,   0.9,   0.5,    0.9]
+  witch_blade:          [0.6,   0.7,   0.3,    0.4]
+  # v0.7 (patch 7.41)
+  aether_lens:          [0.2,   0.8,   0.6,    0.9]
+  aghanims_scepter:     [0.7,   0.9,   0.9,    0.7]
+  armlet_of_mordiggian: [0.7,   0.1,   0.6,    0.1]
+  bloodstone:           [0.2,   0.9,   0.6,    0.2]
+  boots_of_bearing:     [0.1,   0.2,   0.5,    1.0]
+  consecrated_wraps:    [0.5,   0.6,   0.8,    0.5]
+  crellas_crozier:      [0.3,   0.6,   0.8,    0.4]
+  crystalys:            [1.0,   0.2,   0.4,    0.1]
+  daedalus:             [1.0,   0.2,   0.3,    0.1]
+  disperser:            [1.0,   0.2,   0.3,    0.1]
+  divine_rapier:        [0.6,   0.4,   0.2,    0.1]
+  echo_sabre:           [0.7,   0.1,   0.8,    0.2]
+  helm_of_the_dominator: [0.6,  0.4,   0.7,    0.5]
+  helm_of_the_overlord: [0.6,   0.4,   0.7,    0.4]
+  holy_locket:          [0.1,   0.3,   0.6,    1.0]
+  hydras_breath:        [1.0,   0.2,   0.3,    0.1]
+  kaya:                 [0.3,   1.0,   0.5,    0.4]
+  kaya_and_sange:       [0.4,   1.0,   0.8,    0.3]
+  meteor_hammer:        [0.3,   0.8,   0.6,    0.5]
+  necronomicon:         [0.5,   0.5,   0.6,    0.3]
+  octarine_core:        [0.3,   1.0,   0.8,    0.4]
+  parasma:              [0.6,   0.6,   0.4,    0.2]
+  refresher_orb:        [0.3,   0.9,   0.8,    0.5]
+  sange:                [0.6,   0.3,   0.7,    0.2]
+  sange_and_yasha:      [1.0,   0.3,   0.7,    0.1]
+  soul_booster:         [0.3,   0.7,   0.7,    0.4]
+  specialists_array:    [0.9,   0.2,   0.2,    0.1]
+  vladmirs_offering:    [0.5,   0.2,   0.8,    0.7]
+  wraith_pact:          [0.2,   0.3,   0.7,    0.9]
+  yasha:                [0.9,   0.3,   0.4,    0.1]
+  yasha_and_kaya:       [0.7,   0.8,   0.3,    0.1]
+
+# no longer buyable (removed from the shop / turned into neutral items) - the loader
+# drops every edge that recommends them. Maintained from `npm run patch:check` (B6).
+unavailable:
+  - hood_of_defiance      # removed from the shop (dotaconstants 10.8.0 / 7.41)
+  - dragon_scale          # removed neutral item
+  - book_of_the_dead      # neutral item now (tier 5)
+  - medallion_of_courage  # neutral item now (tier 2)
+
+# attack-type restrictions (the other type is capped at wrong_attack)
+melee_only: [battlefury, echo_sabre]        # cleave / Echo Strike are melee-only
+ranged_only: [dragon_lance, hurricane_pike, hydras_breath, specialists_array]  # range bonus, Pike active, multishot procs on ranged attacks

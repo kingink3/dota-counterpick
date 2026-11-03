@@ -1,0 +1,92 @@
+# =============================================================================
+#  Item catalog - curated KB (ADR-006/007/011), NOT a stat layer (ADR-004).
+# =============================================================================
+#  An item is just another subject that carries `tool` tags. The engine runs the
+#  exact same tool->reliance edges against it as against a hero (ADR-007:
+#  "item-рекомендация - то же ребро, где субъект предмет").
+#
+#  Derivation: distilled from `tool.sources_hint` in taxonomy.yaml, keeping ONLY
+#  unambiguous items. Hero sources, strategy phrases ("Manta-aware play",
+#  "Kiting comp"), and "(?)"-flagged uncertain sources were dropped. This file is
+#  a deliberate, reviewable artifact - taxonomy.yaml stays the untouched truth.
+#
+#  weight semantics mirror hero_tags.tool: how reliably/centrally the item
+#  delivers the tool (1.0 = dedicated; lower = partial / shared with other roles).
+#
+#  Note: no item is mapped to bkb_piercing_disable, lockdown_root, magic_burst,
+#  physical_burst or illusion_detection - sources_hint listed only heroes (or
+#  uncertain entries) for those tools, so honesty (ADR-004) means leaving them
+#  hero-only rather than inventing item mappings.
+# =============================================================================
+
+items:
+  diffusal_blade:    { label: "Diffusal Blade",        tool: { mana_burn: 1.0 } }
+  sentry_ward:       { label: "Sentry Ward",           tool: { detection: 1.0 } }
+  dust_of_appearance: { label: "Dust of Appearance",  tool: { detection: 0.9 } }
+  gem_of_true_sight: { label: "Gem of True Sight",     tool: { detection: 1.0 } }
+  battlefury:        { label: "Battle Fury",           tool: { aoe_clear: 0.8 } }
+  mjollnir:          { label: "Mjollnir",              tool: { aoe_clear: 0.7 } }
+  monkey_king_bar:   { label: "Monkey King Bar",       tool: { true_strike: 1.0 } }
+  bloodthorn:        { label: "Bloodthorn",            tool: { true_strike: 1.0, silence: 1.0 } }
+  silver_edge:       { label: "Silver Edge",           tool: { break: 1.0 } }
+  euls_scepter:      { label: "Eul's Scepter",         tool: { interrupt: 0.8, kite: 0.7 } }
+  scythe_of_vyse:    { label: "Scythe of Vyse (Hex)",  tool: { interrupt: 0.9, lockdown_root: 0.8 } }   # hex locks a blink-escape (like a root), but it is magical -> not through BKB
+  spirit_vessel:     { label: "Spirit Vessel",         tool: { healing_reduction: 1.0 } }
+  eye_of_skadi:      { label: "Eye of Skadi",          tool: { healing_reduction: 0.8 } }
+  desolator:         { label: "Desolator",             tool: { armor_reduction: 1.0 } }
+  solar_crest:       { label: "Solar Crest",           tool: { armor_reduction: 0.8 } }
+  orchid:            { label: "Orchid Malevolence",    tool: { silence: 1.0 } }
+  heavens_halberd:   { label: "Heaven's Halberd",      tool: { disarm: 1.0 } }
+  force_staff:       { label: "Force Staff",           tool: { kite: 0.8 } }
+  hurricane_pike:    { label: "Hurricane Pike",        tool: { kite: 0.9 } }
+  glimmer_cape:      { label: "Glimmer Cape",          tool: { kite: 0.6 } }
+
+  # --- v0.2: items for tools that used to be "heroes only" ---
+  #     bkb_piercing_disable / lockdown_root / magic_burst had no item at all -
+  #     now the player gets item recs on them too.
+  abyssal_blade:     { label: "Abyssal Blade",         tool: { bkb_piercing_disable: 0.9 } }   # Overwhelm - a stun through BKB
+  rod_of_atos:       { label: "Rod of Atos",           tool: { lockdown_root: 0.9 } }            # single-target root
+  gleipnir:          { label: "Gleipnir",              tool: { lockdown_root: 1.0, aoe_clear: 0.4 } }  # AoE root + chain lightning on illusions
+  dagon:             { label: "Dagon",                 tool: { magic_burst: 0.8 } }              # pure magic-burst instant
+  ethereal_blade:    { label: "Ethereal Blade",        tool: { magic_burst: 0.7 } }              # ethereal + magic-damage amplification in the combo
+  radiance:          { label: "Radiance",              tool: { aoe_clear: 0.5 } }                # burn aura kills fragile summons/illusions
+  revenant_s_brooch: { label: "Revenant's Brooch",     tool: { magic_damage: 1.0 } }             # right-clicks become magic damage -> ignores armor, shreds high-armor tanks
+  veil_of_discord:   { label: "Veil of Discord",       tool: { magic_damage: 0.6 } }             # magic-resist debuff amplifies the team's magic vs armor-stackers
+
+  # --- v0.7 (2026-11-03, patch 7.41): the 31 shop items the KB never recommended ---
+  #     Tagged ONLY where the item really answers a reliance (read from dotaconstants).
+  #     physical_burst had no item before - crit / Rapier / Echo fill it.
+  daedalus:          { label: "Daedalus",              tool: { physical_burst: 0.9 } }            # 30% x225% crit
+  crystalys:         { label: "Crystalys",             tool: { physical_burst: 0.5 } }            # 30% x160% crit, early version
+  divine_rapier:     { label: "Divine Rapier",         tool: { physical_burst: 0.7, magic_burst: 0.2 } }  # +250 damage, but dropped on death: a late, situational all-in
+  echo_sabre:        { label: "Echo Sabre",            tool: { physical_burst: 0.4 } }            # melee double hit + 100% slow
+  armlet_of_mordiggian: { label: "Armlet of Mordiggian", tool: { physical_burst: 0.3 } }          # Unholy Strength damage spike
+  parasma:           { label: "Parasma",               tool: { magic_damage: 0.8 } }              # int-scaled magic poison + -20% magic resist on hit
+  hydras_breath:     { label: "Hydra's Breath",        tool: { magic_damage: 0.6, aoe_clear: 0.4 } }  # 2.5% max HP/s magic poison; ranged multishot
+  specialists_array: { label: "Specialist's Array",    tool: { aoe_clear: 0.3 } }                 # ranged splitshot hits illusions around the target
+  crellas_crozier:   { label: "Crella's Crozier",      tool: { healing_reduction: 0.7 } }         # Putrefaction Aura -30% health restoration (75% when active)
+  disperser:         { label: "Disperser",             tool: { mana_burn: 0.6, kite: 0.5 } }      # Manabreak 40/hit; Suppress dispels + slows the target
+  necronomicon:      { label: "Necronomicon",          tool: { detection: 0.4, mana_burn: 0.3 } } # Warrior: mana break, True Sight at level 3
+  bloodstone:        { label: "Bloodstone",            tool: { magic_burst: 0.3 } }               # Spell Weakness Aura: enemies take +12% spell damage
+
+  # build items with NO counter mechanism: listed so patch:check tracks them and the fit
+  # table covers them; the counter engine has no reason to recommend them (empty tool)
+  aether_lens:       { label: "Aether Lens",           tool: {} }
+  aghanims_scepter:  { label: "Aghanim's Scepter",     tool: {} }   # hero-specific upgrade
+  boots_of_bearing:  { label: "Boots of Bearing",      tool: {} }
+  consecrated_wraps: { label: "Consecrated Wraps",     tool: {} }   # defensive -> data/defense.yaml
+  helm_of_the_dominator: { label: "Helm of the Dominator", tool: {} }
+  helm_of_the_overlord:  { label: "Helm of the Overlord",  tool: {} }
+  holy_locket:       { label: "Holy Locket",           tool: {} }
+  kaya:              { label: "Kaya",                  tool: {} }
+  kaya_and_sange:    { label: "Kaya and Sange",        tool: {} }
+  meteor_hammer:     { label: "Meteor Hammer",         tool: {} }   # 2.5s channel + 0.75s stun: too slow to count as interrupt
+  octarine_core:     { label: "Octarine Core",         tool: {} }
+  refresher_orb:     { label: "Refresher Orb",         tool: {} }
+  sange:             { label: "Sange",                 tool: {} }
+  sange_and_yasha:   { label: "Sange and Yasha",       tool: {} }
+  soul_booster:      { label: "Soul Booster",          tool: {} }
+  vladmirs_offering: { label: "Vladmir's Offering",    tool: {} }
+  wraith_pact:       { label: "Wraith Pact",           tool: {} }
+  yasha:             { label: "Yasha",                 tool: {} }
+  yasha_and_kaya:    { label: "Yasha and Kaya",        tool: {} }

@@ -1,0 +1,30 @@
+{
+  "name": "dota-counterpick-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Explainable counter-pick rule-engine for Dota 2 (KB-only MVP per ADR-012).",
+  "scripts": {
+    "demo": "tsx src/cli.ts",
+    "build:web": "tsx scripts/build-web.ts",
+    "build:roster": "tsx scripts/build-roster.ts",
+    "scrape:counters": "tsx scripts/scrape-counters.ts",
+    "fetch:portraits": "tsx scripts/fetch-portraits.ts",
+    "serve": "npm run build:web && npx --yes serve web -l 5173",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.web.json",
+    "test": "tsx --test test/engine.test.ts test/gsi.test.ts test/screen.test.ts",
+    "gsi": "tsx scripts/gsi-bridge.ts",
+    "companion": "npm run build:web && tsx scripts/gsi-bridge.ts",
+    "patch:check": "tsx scripts/patch-check.ts",
+    "build:pages": "npm run build:web && tsx scripts/build-pages.ts"
+  },
+  "dependencies": {
+    "yaml": "^2.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "esbuild": "^0.28.1",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.4"
+  }
+}
