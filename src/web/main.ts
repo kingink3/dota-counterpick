@@ -12,6 +12,7 @@
 
 import { indexKB, type KnowledgeBase, type RawKB } from "../knowledge.js";
 import { archetypeOf, resolve as resolveDraft } from "../resolver.js";
+import { genericCombos, roleFit, type RoleFit } from "../combos.js";
 import { heroLabel } from "../explain.js";
 import { heroImageUrlByValve, heroValveName } from "./hero-art.js";
 import { AutoInputAdapter, defaultBridgeUrl, type AutoStatus, type DraftPatch } from "./auto-input.js";
@@ -168,9 +169,6 @@ function heroTile(hero: GridHero, onClick: (code: string) => void): HTMLElement 
   img.src = heroImageUrlByValve(hero.valve);
   img.addEventListener("error", () => tile.classList.add("no-art"));
   img.addEventListener("load", () => tile.classList.remove("no-art"));
-  window.setTimeout(() => {
-    if (!img.complete || img.naturalWidth === 0) tile.classList.add("no-art");
-  }, 6000);
 
   const nm = document.createElement("span");
   nm.className = "nm";
@@ -506,6 +504,7 @@ const COMBO_LIMIT = 40;
 let comboSearch = "";
 
 function buildCombos(): void {
+  genericSet = genericCombos(kb.combos, labelFor);
   const search = el("#combos-search") as HTMLInputElement;
   search.addEventListener("input", () => {
     comboSearch = search.value.trim().toLowerCase();
@@ -529,36 +528,76 @@ function renderCombos(): void {
     return;
   }
 
-  // strongest first: mutual mentions (strength 2) before one-way (1), then alphabetical
-  const list = kb.combos
+  // the hero the user is looking at (exact name) is shown first on every card
+  const focus = grid.find((g) => g.label.toLowerCase() === q)?.engineId;
+  const posOf = (code: string) => kb.taxonomy.hero_tags[code]?.pos;
+  const LANE_RANK: Record<RoleFit["lane"], number> = {
+    "safe lane duo": 0, "off lane duo": 0, "support duo": 1, "mid + teammate": 2, "different lanes": 3,
+  };
+  const rows = kb.combos
     .filter((c) => c.pair.some((code) => labelFor(code).toLowerCase().includes(q)))
-    .slice()
+    .map((c) => ({ c, fit: roleFit(posOf(c.pair[0]), posOf(c.pair[1])), generic: genericSet.has(c) }));
+  const conflicts = rows.filter((r) => r.fit === null);
+  const shown = rows
+    .filter((r) => r.fit !== null || showConflicts)
+    // mutual first, specific before copy-paste lines, main roles before off-roles, lane duos first
     .sort(
       (a, b) =>
-        (b.strength ?? 0) - (a.strength ?? 0) ||
-        labelFor(a.pair[0]).localeCompare(labelFor(b.pair[0])),
+        Number(a.fit === null) - Number(b.fit === null) ||
+        (b.c.strength ?? 0) - (a.c.strength ?? 0) ||
+        Number(a.generic) - Number(b.generic) ||
+        (a.fit?.cost ?? 9) - (b.fit?.cost ?? 9) ||
+        (a.fit ? LANE_RANK[a.fit.lane] : 9) - (b.fit ? LANE_RANK[b.fit.lane] : 9) ||
+        labelFor(a.c.pair[0]).localeCompare(labelFor(b.c.pair[0])),
     );
 
-  if (list.length === 0) {
+  if (shown.length === 0 && conflicts.length === 0) {
     root.appendChild(note("No synergies for that hero."));
     return;
   }
-  const grid = document.createElement("div");
-  grid.className = "combo-grid";
-  for (const c of list.slice(0, COMBO_LIMIT)) grid.appendChild(comboCard(c));
-  root.appendChild(grid);
-  if (list.length > COMBO_LIMIT) {
-    root.appendChild(note(`Showing ${COMBO_LIMIT} of ${list.length} synergies.`));
+  const list = document.createElement("div");
+  list.className = "combo-grid";
+  for (const r of shown.slice(0, COMBO_LIMIT)) list.appendChild(comboCard(r.c, r.fit, r.generic, focus));
+  root.appendChild(list);
+  if (shown.length > COMBO_LIMIT) {
+    root.appendChild(note(`Showing ${COMBO_LIMIT} of ${shown.length} synergies.`));
+  }
+  if (conflicts.length) {
+    const p = document.createElement("p");
+    p.className = "empty";
+    const ex = conflicts[0]!.c.pair.map((code) => `${labelFor(code)} ${posOf(code)?.join("/")}`).join(" + ");
+    p.innerHTML = showConflicts
+      ? `Including ${conflicts.length} pair(s) that cannot share a team: both heroes only play the same position. `
+      : `${conflicts.length} pair(s) hidden: both heroes only play the same position (e.g. ${esc(ex)}). `;
+    const b = document.createElement("button");
+    b.className = "link";
+    b.textContent = showConflicts ? "Hide them" : "Show them";
+    b.addEventListener("click", () => {
+      showConflicts = !showConflicts;
+      renderCombos();
+    });
+    p.appendChild(b);
+    root.appendChild(p);
   }
 }
 
-function comboCard(c: Combo): HTMLElement {
+let showConflicts = false;
+/** wiki lines copy-pasted across partners (computed once per KB). */
+let genericSet = new Set<Combo>();
+
+function comboCard(c: Combo, fit: RoleFit | null | undefined, generic: boolean, focus?: string): HTMLElement {
   const card = document.createElement("article");
-  card.className = "card combo";
+  card.className = "card combo" + (fit === null ? " conflict" : "") + (generic ? " generic" : "");
+  const flip = focus !== undefined && c.pair[1] === focus;
+  const order: Array<[string, number | undefined]> = [
+    [c.pair[0], fit?.pos[0]],
+    [c.pair[1], fit?.pos[1]],
+  ];
+  if (flip) order.reverse();
 
   const head = document.createElement("div");
   head.className = "combo-head";
-  for (const code of c.pair) {
+  for (const [code, pos] of order) {
     const cell = document.createElement("span");
     cell.className = "combo-hero";
     const img = document.createElement("img");
@@ -569,6 +608,13 @@ function comboCard(c: Combo): HTMLElement {
     const nm = document.createElement("span");
     nm.textContent = labelFor(code);
     cell.append(img, nm);
+    if (pos !== undefined) {
+      const p = document.createElement("b");
+      p.className = "pos";
+      p.title = `plays position ${pos} in this duo`;
+      p.textContent = String(pos);
+      cell.appendChild(p);
+    }
     head.appendChild(cell);
   }
   if ((c.strength ?? 0) >= 2) {
@@ -579,6 +625,27 @@ function comboCard(c: Combo): HTMLElement {
     head.appendChild(tag);
   }
   card.appendChild(head);
+
+  const roles = document.createElement("div");
+  roles.className = "combo-roles";
+  if (fit) {
+    const offRole = order
+      .filter(([code, pos]) => pos !== undefined && kb.taxonomy.hero_tags[code]?.pos[0] !== pos)
+      .map(([code]) => labelFor(code));
+    roles.innerHTML =
+      `Pos ${order.map(([, pos]) => pos).join(" + ")}, ${fit.lane}` +
+      (offRole.length ? ` <span class="muted">(${esc(offRole.join(", "))} off the main role)</span>` : "");
+  } else if (fit === null) {
+    roles.textContent = `Both only play pos ${kb.taxonomy.hero_tags[c.pair[0]]?.pos.join("/")}: not one team`;
+  }
+  if (generic) {
+    const g = document.createElement("span");
+    g.className = "combo-generic";
+    g.title = "The wiki repeats this line for many partners with only the name changed";
+    g.textContent = "generic";
+    roles.appendChild(g);
+  }
+  if (roles.childNodes.length) card.appendChild(roles);
 
   const mech = document.createElement("div");
   mech.className = "combo-mech";

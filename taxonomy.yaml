@@ -450,7 +450,7 @@ hero_tags:
   phantom_assassin: { pos: [1], reliance: {evasion: 1.0, attack_reliant: 0.9, melee_commit: 0.7, bkb_reliant: 1.0}, tool: {physical_burst: 0.9, true_strike: 0.7} }
   faceless_void:   { pos: [1], reliance: {dodge_backtrack: 0.9, attack_reliant: 0.7, melee_commit: 0.6, bkb_reliant: 0.8}, tool: {bkb_piercing_disable: 1.0} }   # backtrack = dodge, NOT evasion (ADR-010); Chrono = bkb-pierce. true_strike intentionally NOT applicable
   spectre:         { pos: [1], reliance: {greedy_farmer: 0.8, melee_commit: 0.3, key_passive: 0.6}, tool: {pickoff: 0.4} }   # tanky; break removes Dispersion + Desolate
-  medusa:          { pos: [1], reliance: {mana_dependent: 1.0, greedy_farmer: 0.8, attack_reliant: 0.7, low_mobility: 0.6, low_armor: 0.3} }
+  medusa:          { pos: [1,2], reliance: {mana_dependent: 1.0, greedy_farmer: 0.8, attack_reliant: 0.7, low_mobility: 0.6, low_armor: 0.3} }
   terrorblade:     { pos: [1], reliance: {illusion_based: 0.6, greedy_farmer: 0.6, attack_reliant: 0.6, low_armor: 0.4, magic_burst_vulnerable: 0.3} }
   phantom_lancer:  { pos: [1], reliance: {illusion_based: 1.0, mana_dependent: 0.4, greedy_farmer: 0.6, melee_commit: 0.4} }
   naga_siren:      { pos: [1], reliance: {illusion_based: 0.9, greedy_farmer: 0.7}, tool: {bkb_piercing_disable: 0.8, aoe_clear: 0.4} }
@@ -468,7 +468,7 @@ hero_tags:
   chaos_knight:    { pos: [1], reliance: {illusion_based: 0.8, melee_commit: 0.6, mana_dependent: 0.3} }
   lone_druid:      { pos: [1], reliance: {summon_tanky: 0.9, greedy_farmer: 0.5, attack_reliant: 0.5} }   # Bear is NOT AoE-cleared
   monkey_king:     { pos: [1,3], reliance: {attack_reliant: 0.7, melee_commit: 0.5} }
-  clinkz:          { pos: [1], reliance: {relies_on_invisibility: 0.8, attack_reliant: 0.7, squishy_to_burst: 0.6, sustain_dependent: 0.4} }
+  clinkz:          { pos: [1,2], reliance: {relies_on_invisibility: 0.8, attack_reliant: 0.7, squishy_to_burst: 0.6, sustain_dependent: 0.4} }
   riki:            { pos: [1,4], reliance: {relies_on_invisibility: 1.0, melee_commit: 0.6, attack_reliant: 0.6, squishy_to_burst: 0.6} }
   bloodseeker:     { pos: [1,3], reliance: {snowball_dependent: 0.5, attack_reliant: 0.5, melee_commit: 0.5}, tool: {pickoff: 0.6, healing_reduction: 0.5} }
   razor:           { pos: [1,2,3], reliance: {attack_reliant: 0.6, mobility_dependent: 0.4}, tool: {armor_reduction: 0.4} }
@@ -529,7 +529,7 @@ hero_tags:
   enigma:          { pos: [3,4], reliance: {summon_clearable: 0.6, channeling_ultimate: 1.0, low_mobility: 0.5}, tool: {aoe_clear: 0.7, bkb_piercing_disable: 0.9} }
   visage:          { pos: [3,4], reliance: {summon_clearable: 0.8, low_mobility: 0.4} }
   natures_prophet: { pos: [3,1,4], reliance: {summon_clearable: 0.5, mobility_dependent: 0.5} }
-  abaddon:         { pos: [3,4], reliance: {sustain_dependent: 0.6, high_armor: 0.4} }   # dispel-heavy; Aphotic Shield + armor
+  abaddon:         { pos: [3,4,5], reliance: {sustain_dependent: 0.6, high_armor: 0.4} }   # dispel-heavy; Aphotic Shield + armor
   undying:         { pos: [3,4], reliance: {sustain_dependent: 0.6, summon_clearable: 0.3} }
   pudge:           { pos: [3,4], reliance: {low_mobility: 0.4, spell_reliant: 0.4}, tool: {pickoff: 0.7} }   # flex off/support
 

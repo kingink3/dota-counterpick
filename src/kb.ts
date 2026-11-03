@@ -21,6 +21,7 @@ import type {
   Taxonomy,
 } from "./types.js";
 import { heroValveName } from "./web/hero-art.js";
+import { clipSentence } from "./combos.js";
 
 export type { KnowledgeBase } from "./knowledge.js";
 
@@ -201,7 +202,7 @@ function loadWiki(
       if (heroKeys.has(key)) continue;
       heroKeys.add(key);
       nHero++;
-      heroEdges.push({ subject, target, mechanism: e.notes[0]!.slice(0, 180), weight: 0.5, source: "wiki" });
+      heroEdges.push({ subject, target, mechanism: clipSentence(e.notes[0]!, 260), weight: 0.5, source: "wiki" });
     }
 
     let nItem = 0;
@@ -213,7 +214,7 @@ function loadWiki(
       if (itemKeys.has(key)) continue;
       itemKeys.add(key);
       nItem++;
-      itemEdges.push({ item: slug, label: it.name, target, mechanism: it.note.slice(0, 180), weight: 0.5, source: "wiki" });
+      itemEdges.push({ item: slug, label: it.name, target, mechanism: clipSentence(it.note, 260), weight: 0.5, source: "wiki" });
     }
 
     for (const s of page.synergy ?? []) {
@@ -224,7 +225,7 @@ function loadWiki(
       const key = pairKey(pair);
       const existing = comboMap.get(key);
       if (existing) existing.strength++; // mentioned on both heroes' pages -> mutual
-      else comboMap.set(key, { pair, mechanism: s.notes[0]!.slice(0, 200), strength: 1 });
+      else comboMap.set(key, { pair, mechanism: clipSentence(s.notes[0]!, 320), strength: 1 });
     }
   }
 
