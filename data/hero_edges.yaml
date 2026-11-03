@@ -73,3 +73,53 @@ hero_edges:
       Mana Burn punishes Invoker's huge mana pool and Spiked Carapace reflects and
       stuns him mid-combo - a single Carapace can turn his own burst back on him.
     weight: 1.2
+
+  # --- v0.8 (2026-11-04): howdoiplay.com review - explicit counters the tag layer
+  #     cannot express. Mechanisms are written in our own words (the site's text is
+  #     not licensed for reuse); weights are expert estimates, below the classic
+  #     hard counters above. General mechanics from the same review went into tags
+  #     instead (purge, illusion_execute, creep_execute, ally_save, break, healing
+  #     reduction and BKB-piercing carriers) - see DECISIONS ADR-021.
+  - { subject: shadow_demon, target: anti_mage, weight: 1.0, mechanism: "Disruption creates illusions of Anti-Mage that Mana Break him back, and Demonic Purge strips Counterspell's active." }
+  - { subject: dark_seer, target: anti_mage, weight: 0.5, mechanism: "Wall of Replica copies of Anti-Mage burn his own mana with Mana Break." }
+  - { subject: terrorblade, target: anti_mage, weight: 0.5, mechanism: "Reflection's copy of Anti-Mage hits him with his own Mana Break." }
+  - { subject: phantom_lancer, target: arc_warden, weight: 0.8, mechanism: "Illusions and Doppelganger's dispel make Flux useless, Phantom Rush gets through Magnetic Field, and Arc Warden has little AoE to clear the army." }
+  - { subject: batrider, target: broodmother, weight: 0.8, mechanism: "Sticky Napalm and Firefly burn spiders and Broodmother together - the army melts before it trades." }
+  - { subject: centaur_warrunner, target: broodmother, weight: 0.7, mechanism: "Retaliate damages every spider that hits him, so spider harass in lane backfires." }
+  - { subject: dragon_knight, target: broodmother, weight: 0.7, mechanism: "Dragon Blood armor makes spider hits negligible and Breathe Fire wipes a wave of them." }
+  - { subject: grimstroke, target: broodmother, weight: 0.6, mechanism: "Stroke of Fate gains damage for every unit it passes - a line through the spider army clears it and still hits hard." }
+  - { subject: kunkka, target: broodmother, weight: 0.7, mechanism: "Tidebringer cleave shreds spiders, and the X-Torrent-Ghostship combo catches Broodmother away from her webs." }
+  - { subject: legion_commander, target: broodmother, weight: 0.8, mechanism: "Overwhelming Odds wipes the spider army and Moment of Courage procs off every spider attack." }
+  - { subject: mars, target: broodmother, weight: 0.7, mechanism: "God's Rebuke cleaves spiders and Arena of Blood traps Broodmother where she cannot web out." }
+  - { subject: winter_wyvern, target: chaos_knight, weight: 0.8, mechanism: "Cold Embrace wastes Chaos Knight's burst on one target and Winter's Curse turns his Phantasm illusions on him." }
+  - { subject: winter_wyvern, target: meepo, weight: 0.8, mechanism: "Winter's Curse on one Meepo makes the other clones beat him - grouped Meepo fights collapse." }
+  - { subject: winter_wyvern, target: lycan, weight: 0.6, mechanism: "Winter's Curse makes Lycan's own wolves attack him." }
+  - { subject: winter_wyvern, target: visage, weight: 0.6, mechanism: "Cold Embrace blocks the Familiars' physical damage, and Curse next to his Familiars turns them on Visage." }
+  - { subject: nyx_assassin, target: centaur_warrunner, weight: 0.6, mechanism: "Spiked Carapace reflects Retaliate, so Centaur stuns himself by hitting Nyx." }
+  - { subject: nyx_assassin, target: ember_spirit, weight: 0.6, mechanism: "Ember cannot turn off Immolation, so his own aura keeps triggering Spiked Carapace." }
+  - { subject: nyx_assassin, target: phoenix, weight: 0.6, mechanism: "Phoenix cannot stop dealing damage (Icarus Dive, Sun Ray, Dying Light) - Spiked Carapace stuns him mid-commit." }
+  - { subject: nyx_assassin, target: dawnbreaker, weight: 0.5, mechanism: "Carapace pre-cast where Solar Guardian lands stuns Dawnbreaker on arrival." }
+  - { subject: kunkka, target: disruptor, weight: 0.6, mechanism: "X Marks the Spot on a Glimpsed ally returns them to safety - Glimpse loses its kill setup." }
+  - { subject: axe, target: dazzle, weight: 0.8, mechanism: "Culling Blade removes Shallow Grave and executes the target - Dazzle's save does nothing." }
+  - { subject: axe, target: troll_warlord, weight: 0.6, mechanism: "Culling Blade is the one execute that goes through Battle Trance's can't-die window." }
+  - { subject: axe, target: bristleback, weight: 0.7, mechanism: "Berserker's Call turns Bristleback to face Axe, so his rear damage reduction stops working." }
+  - { subject: legion_commander, target: bristleback, weight: 0.6, mechanism: "Duel forces Bristleback to face Legion - his back is never turned to her." }
+  - { subject: viper, target: huskar, weight: 0.8, mechanism: "Corrosive Skin punishes every Burning Spear hit, and Viper Strike's break shuts off Berserker's Blood." }
+  - { subject: drow_ranger, target: morphling, weight: 0.7, mechanism: "Marksmanship ignores the armor Morphling gets from agility, and Gust silences him before he can shift to strength." }
+  - { subject: elder_titan, target: morphling, weight: 0.6, mechanism: "Natural Order removes the agility armor Morphling's tankiness rests on." }
+  - { subject: spirit_breaker, target: slark, weight: 0.7, mechanism: "Dark Pact cannot dispel Charge, and Charge's vision stops Shadow Dance regeneration." }
+  - { subject: bloodseeker, target: slark, weight: 0.8, mechanism: "Rupture cannot be Dark Pacted off, the silence stops his combo, and Thirst gives vision that stops Shadow Dance regeneration." }
+  - { subject: disruptor, target: slark, weight: 0.5, mechanism: "Glimpse cannot be dispelled, and Kinetic Field plus Static Storm trap Slark where Dark Pact does not help." }
+  - { subject: shadow_demon, target: spirit_breaker, weight: 0.6, mechanism: "Disruption hides the Charge target, and Demonic Purge slows Spirit Breaker and strips Bulldoze." }
+  - { subject: rattletrap, target: primal_beast, weight: 0.7, mechanism: "Clockwerk's frequent stuns cancel Onslaught and interrupt Pulverize." }
+  - { subject: phoenix, target: night_stalker, weight: 0.6, mechanism: "Supernova forces daytime over Dark Ascension, so Night Stalker loses his night window." }
+  - { subject: dawnbreaker, target: night_stalker, weight: 0.6, mechanism: "Solar Guardian forces daytime over Dark Ascension, so Night Stalker loses his night window." }
+  - { subject: venomancer, target: windranger, weight: 0.6, mechanism: "Snakebite deals burst damage every time she attacks, so Focus Fire hurts Windranger herself." }
+  - { subject: shadow_demon, target: medusa, weight: 0.6, mechanism: "Disruption's copies of Medusa keep Mana Shield and Split Shot - very tanky illusions fighting for you." }
+  - { subject: dark_seer, target: medusa, weight: 0.5, mechanism: "Wall of Replica's Medusa copies keep Mana Shield and survive a long time." }
+  - { subject: naga_siren, target: templar_assassin, weight: 0.5, mechanism: "Every illusion hit strips one Refraction instance - the barrier is gone in a second." }
+  - { subject: phantom_lancer, target: templar_assassin, weight: 0.5, mechanism: "Every illusion hit strips one Refraction instance - the barrier is gone in a second." }
+  - { subject: jakiro, target: templar_assassin, weight: 0.4, mechanism: "Damage-over-time ticks from Liquid Fire and Macropyre burn through Refraction instances." }
+  - { subject: venomancer, target: templar_assassin, weight: 0.4, mechanism: "Poison ticks burn through Refraction instances." }
+  - { subject: viper, target: ursa, weight: 0.5, mechanism: "Viper Strike cannot be removed by Enrage's dispel and slows Ursa off his target." }
+  - { subject: invoker, target: ursa, weight: 0.4, mechanism: "Deafening Blast's disarm cannot be removed by Enrage's dispel." }

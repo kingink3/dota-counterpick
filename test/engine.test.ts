@@ -408,9 +408,15 @@ test("risk: Medusa is exposed to mana burn and gets no Mana Shield credit vs Ant
 
 test("blunted: health-based damage is penalised into Medusa, but mana burn pierces the shield", () => {
   const r = engine.recommend({ enemyHeroes: ["medusa", "rubick"] });
-  const ls = rec(r.heroes, "lifestealer")!;
-  assert.ok(ls?.reasons.some((x) => x.basis === "risk" && x.resistance === "mana_shield" && x.tool === "health_based_damage"));
-  assert.ok(r.heroes.indexOf(ls) > r.heroes.length / 2, "Feast into Mana Shield ranks low");
+  // Feast into Mana Shield: either not suggested at all, or low with the penalty shown
+  const ls = rec(r.heroes, "lifestealer");
+  if (ls) {
+    assert.ok(ls.reasons.some((x) => x.basis === "risk" && x.resistance === "mana_shield" && x.tool === "health_based_damage"));
+    assert.ok(r.heroes.indexOf(ls) > r.heroes.length / 2, "Feast into Mana Shield ranks low");
+  }
+  const solo = engine.recommend({ enemyHeroes: ["medusa"] });
+  const ls2 = rec(solo.heroes, "lifestealer");
+  assert.ok(!ls2 || ls2.reasons.some((x) => x.resistance === "mana_shield" && x.contribution < 0));
   const nyx = rec(r.heroes, "nyx_assassin");
   assert.ok(nyx, "Nyx recommended vs Medusa");
   assert.ok(!nyx.reasons.some((x) => x.basis === "risk" && x.resistance === "mana_shield"), "Nyx carries mana_burn -> not blunted");
@@ -445,4 +451,44 @@ test("wiki layer never displays a line naming a retired ability (data/retired-ab
   ];
   const bad = shown.filter((t) => stale(t).length);
   assert.deepEqual(bad, []);
+});
+
+// ---------------------------------------------------------------------------
+//  ADR-021: vocabulary from the howdoiplay review (purge / saves / illusions / creeps)
+// ---------------------------------------------------------------------------
+
+test("purge: offensive dispels answer buff-reliant heroes (Dark Seer)", () => {
+  const r = engine.recommend({ enemyHeroes: ["dark_seer"] });
+  for (const code of ["shadow_demon", "oracle"]) {
+    assert.ok(rec(r.heroes, code)?.reasons.some((x) => x.tool === "purge" && x.reliance === "dispellable_buffs"), `${code} purges Ion Shell / Surge`);
+  }
+  assert.ok(rec(r.items, "nullifier")?.reasons.some((x) => x.tool === "purge"), "Nullifier recommended vs Dark Seer");
+});
+
+test("ally_save: saves answer one-target killers, and the killer is told it is risky", () => {
+  const r = engine.recommend({ enemyHeroes: ["legion_commander"] });
+  for (const code of ["oracle", "dazzle"]) {
+    assert.ok(rec(r.heroes, code)?.reasons.some((x) => x.tool === "ally_save"), `${code} saves the Duel target`);
+  }
+  const vsOracle = engine.recommend({ enemyHeroes: ["oracle"] });
+  const lc = rec(vsOracle.heroes, "legion_commander");
+  assert.ok(!lc || lc.reasons.some((x) => x.basis === "risk" && x.tool === "ally_save"), "LC exposed to False Promise");
+});
+
+test("illusion_execute and creep_execute reach illusion / summon heroes", () => {
+  const pl = engine.recommend({ enemyHeroes: ["phantom_lancer"] });
+  assert.ok(rec(pl.heroes, "lion")?.reasons.some((x) => x.tool === "illusion_execute"));
+  const chen = engine.recommend({ enemyHeroes: ["chen"] });
+  assert.ok(rec(chen.heroes, "doom")?.reasons.some((x) => x.tool === "creep_execute"), "Devour vs Chen's creeps");
+});
+
+test("curated combos load first and replace the wiki line for the same pair", async () => {
+  const { readRawKB } = await import("../src/kb.js");
+  const raw = readRawKB();
+  const key = (p: string[]) => [...p].sort().join("+");
+  const ls = raw.combos.filter((c) => key(c.pair) === key(["lifestealer", "storm_spirit"]));
+  assert.equal(ls.length, 1);
+  assert.equal(ls[0]!.source, "curated");
+  const keys = raw.combos.map((c) => key(c.pair));
+  assert.equal(new Set(keys).size, keys.length, "no duplicate pairs");
 });

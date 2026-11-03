@@ -167,6 +167,7 @@ Linken's / Aeon Disk are the honest answers. Output lands in `EngineResult.defen
 | `data/items.yaml` | curated item → tool catalog |
 | `data/hero_edges.yaml` | hero → hero point counters (e.g. Huskar vs Anti-Mage) |
 | `data/item_edges.yaml` | item → hero point counters (e.g. Nullifier vs Necrophos) |
+| `data/combos.yaml` | curated combos (Infest + initiators, Surge + Doom…); listed before wiki combos (ADR-021) |
 | `data/wiki-counters.json` | scraped Fandom wiki counters + synergies (generated, CC-BY-SA) |
 | `data/matchups.json` | hero-vs-hero win rates (stat layer, from OpenDota; generated) |
 | `scripts/scrape-counters.ts` | wiki `/Counters` scraper → `wiki-counters.json` |
@@ -187,6 +188,7 @@ Linken's / Aeon Disk are the honest answers. Output lands in `EngineResult.defen
 | `web/index.html` | static shell + styles |
 | `scripts/build-web.ts` | emit `web/kb.json` + `web/roster.json` + bundle `web/app.js` |
 | `scripts/build-roster.ts` | regenerate `data/roster.json` from OpenDota (one-off) |
+| `scripts/howdoiplay-review.ts` | `npm run review:howdoiplay -- --site <clone>`: counters named on howdoiplay.com that the engine does not suggest (review aid, ADR-021) |
 | `test/engine.test.ts` | behavior + guard tests |
 
 ## Not in this MVP (by ADR)

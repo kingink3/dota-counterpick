@@ -149,6 +149,9 @@ fit:
   wraith_pact:          [0.2,   0.3,   0.7,    0.9]
   yasha:                [0.9,   0.3,   0.4,    0.1]
   yasha_and_kaya:       [0.7,   0.8,   0.3,    0.1]
+  orb_of_frost:         [0.7,   0.2,   0.5,    0.4]
+  orb_of_corrosion:     [0.8,   0.2,   0.7,    0.3]
+  essence_distiller:    [0.2,   0.4,   0.5,    1.0]
 
 # no longer buyable (removed from the shop / turned into neutral items) - the loader
 # drops every edge that recommends them. Maintained from `npm run patch:check` (B6).

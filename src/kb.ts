@@ -62,8 +62,22 @@ export function readRawKB(root: string = REPO_ROOT): RawKB {
     source: "curated" as const,
   }));
 
-  // Combos come entirely from the wiki "Works well with" sections (no curated list).
   const wiki = loadWiki(root, taxonomy.hero_tags, curated, curatedItems);
+  // curated combos (data/combos.yaml, ADR-021) first; a curated pair replaces the wiki line
+  let combosDoc: { combos?: Array<{ pair: [string, string]; mechanism: string; strength?: number }> } = {};
+  try {
+    combosDoc = readYaml(join(root, "data", "combos.yaml"));
+  } catch {
+    /* optional layer */
+  }
+  const curatedCombos: Combo[] = (combosDoc.combos ?? []).map((c) => ({
+    pair: c.pair,
+    lane: "synergy",
+    mechanism: c.mechanism.trim(),
+    source: "curated" as const,
+    strength: c.strength ?? 2,
+  }));
+  const curatedPairs = new Set(curatedCombos.map((c) => pairKey(c.pair)));
 
   const itemFit = loadItemFit(root);
   const canon = (id: string) => itemFit?.alias[id] ?? id;
@@ -88,7 +102,7 @@ export function readRawKB(root: string = REPO_ROOT): RawKB {
     heroEdges: [...curated, ...wiki.heroEdges],
     itemEdges,
     defenseEdges: (defenseDoc.defense ?? []).map((d) => ({ ...d, item: canon(d.item) })).filter((d) => !gone.has(d.item)),
-    combos: wiki.combos,
+    combos: [...curatedCombos, ...wiki.combos.filter((c) => !curatedPairs.has(pairKey(c.pair)))],
     ...(itemFit ? { itemFit } : {}),
     heroAttack: loadHeroAttack(root, Object.keys(taxonomy.hero_tags)),
   };

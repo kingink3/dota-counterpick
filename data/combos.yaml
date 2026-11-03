@@ -1,0 +1,23 @@
+# =============================================================================
+#  Curated combos (ADR-021) - synergies the wiki "Works well with" lists miss or
+#  bury. Listed before wiki combos; a pair present here replaces the wiki line.
+#  Source: howdoiplay.com review 2026-11-04, mechanisms in our own words.
+#    pair:      two hero codes (hero_tags keys)
+#    mechanism: why the pair works (required)
+#    strength:  2 = ranked like a mutual wiki combo (default 2)
+# =============================================================================
+
+combos:
+  - { pair: [lifestealer, storm_spirit], mechanism: "Infest rides Ball Lightning into the backline, then Lifestealer bursts out on the target." }
+  - { pair: [lifestealer, rattletrap], mechanism: "Infest Clockwerk and arrive with Hookshot - Lifestealer lands inside the Cogs with the target." }
+  - { pair: [lifestealer, batrider], mechanism: "Infest Batrider: the Lasso drags the target to your team with Lifestealer already on top of it." }
+  - { pair: [lifestealer, wisp], mechanism: "Infest Io and Relocate - Lifestealer appears anywhere on the map for a gank." }
+  - { pair: [lifestealer, spirit_breaker], mechanism: "Infest Spirit Breaker and Charge: the bash lands and Lifestealer pops out on the stunned target." }
+  - { pair: [lifestealer, natures_prophet], mechanism: "Infest Nature's Prophet and Teleport - a global Lifestealer gank." }
+  - { pair: [dark_seer, doom], mechanism: "Surge (plus Ion Shell) lets Doom catch his target before it can run from the Doom cast." }
+  - { pair: [dark_seer, batrider], mechanism: "Surge on a Lassoing Batrider drags the target far deeper into your team." }
+  - { pair: [dark_seer, spirit_breaker], mechanism: "Surge after the Charge connects keeps Spirit Breaker glued to the target with bashes." }
+  - { pair: [undying, winter_wyvern], mechanism: "Flesh Golem's damage amplification lets your team hurt a target under Winter's Curse." }
+  - { pair: [bounty_hunter, winter_wyvern], mechanism: "Track's damage amplification lets your team hurt a target under Winter's Curse." }
+  - { pair: [skywrath_mage, natures_prophet], mechanism: "Sprout traps the target alone, which is exactly what Mystic Flare needs to deal full damage." }
+  - { pair: [skywrath_mage, rattletrap], mechanism: "Power Cogs isolate one hero in a box - a full single-target Mystic Flare." }

@@ -29,17 +29,17 @@ items:
   monkey_king_bar:   { label: "Monkey King Bar",       tool: { true_strike: 1.0 } }
   bloodthorn:        { label: "Bloodthorn",            tool: { true_strike: 1.0, silence: 1.0 } }
   silver_edge:       { label: "Silver Edge",           tool: { break: 1.0 } }
-  euls_scepter:      { label: "Eul's Scepter",         tool: { interrupt: 0.8, kite: 0.7 } }
-  scythe_of_vyse:    { label: "Scythe of Vyse (Hex)",  tool: { interrupt: 0.9, lockdown_root: 0.8 } }   # hex locks a blink-escape (like a root), but it is magical -> not through BKB
+  euls_scepter:      { label: "Eul's Scepter",         tool: { interrupt: 0.8, kite: 0.7, purge: 0.4 } }   # cyclone on an enemy applies a basic dispel
+  scythe_of_vyse:    { label: "Scythe of Vyse (Hex)",  tool: { interrupt: 0.9, lockdown_root: 0.8, illusion_execute: 0.4 } }   # hex locks a blink-escape (like a root), but it is magical -> not through BKB
   spirit_vessel:     { label: "Spirit Vessel",         tool: { healing_reduction: 1.0 } }
   eye_of_skadi:      { label: "Eye of Skadi",          tool: { healing_reduction: 0.8 } }
   desolator:         { label: "Desolator",             tool: { armor_reduction: 1.0 } }
   solar_crest:       { label: "Solar Crest",           tool: { armor_reduction: 0.8 } }
   orchid:            { label: "Orchid Malevolence",    tool: { silence: 1.0 } }
   heavens_halberd:   { label: "Heaven's Halberd",      tool: { disarm: 1.0 } }
-  force_staff:       { label: "Force Staff",           tool: { kite: 0.8 } }
+  force_staff:       { label: "Force Staff",           tool: { kite: 0.8, ally_save: 0.4 } }
   hurricane_pike:    { label: "Hurricane Pike",        tool: { kite: 0.9 } }
-  glimmer_cape:      { label: "Glimmer Cape",          tool: { kite: 0.6 } }
+  glimmer_cape:      { label: "Glimmer Cape",          tool: { kite: 0.6, ally_save: 0.5 } }
 
   # --- v0.2: items for tools that used to be "heroes only" ---
   #     bkb_piercing_disable / lockdown_root / magic_burst had no item at all -
@@ -47,7 +47,7 @@ items:
   abyssal_blade:     { label: "Abyssal Blade",         tool: { bkb_piercing_disable: 0.9 } }   # Overwhelm - a stun through BKB
   rod_of_atos:       { label: "Rod of Atos",           tool: { lockdown_root: 0.9 } }            # single-target root
   gleipnir:          { label: "Gleipnir",              tool: { lockdown_root: 1.0, aoe_clear: 0.4 } }  # AoE root + chain lightning on illusions
-  dagon:             { label: "Dagon",                 tool: { magic_burst: 0.8 } }              # pure magic-burst instant
+  dagon:             { label: "Dagon",                 tool: { magic_burst: 0.8, illusion_execute: 0.6 } }              # pure magic-burst instant
   ethereal_blade:    { label: "Ethereal Blade",        tool: { magic_burst: 0.7 } }              # ethereal + magic-damage amplification in the combo
   radiance:          { label: "Radiance",              tool: { aoe_clear: 0.5 } }                # burn aura kills fragile summons/illusions
   revenant_s_brooch: { label: "Revenant's Brooch",     tool: { magic_damage: 1.0 } }             # right-clicks become magic damage -> ignores armor, shreds high-armor tanks
@@ -90,3 +90,8 @@ items:
   wraith_pact:       { label: "Wraith Pact",           tool: {} }
   yasha:             { label: "Yasha",                 tool: {} }
   yasha_and_kaya:    { label: "Yasha and Kaya",        tool: {} }
+  # --- v0.8 (howdoiplay review, 2026-11-04; effects checked against dotaconstants 7.41) ---
+  nullifier:         { label: "Nullifier",             tool: { purge: 1.0 } }                     # Nullify: basic dispel + continuous dispel for 4 s
+  orb_of_frost:      { label: "Orb of Frost",          tool: { healing_reduction: 0.3 } }         # attacks: -13% health restoration (cheap component)
+  orb_of_corrosion:  { label: "Orb of Corrosion",      tool: { healing_reduction: 0.4, armor_reduction: 0.3 } }   # -16% restoration, -2 armor
+  essence_distiller: { label: "Essence Distiller",     tool: { detection: 0.4 } }                 # True Sight on the debuffed enemy (ground-targetable)

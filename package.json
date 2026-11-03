@@ -16,7 +16,8 @@
     "gsi": "tsx scripts/gsi-bridge.ts",
     "companion": "npm run build:web && tsx scripts/gsi-bridge.ts",
     "patch:check": "tsx scripts/patch-check.ts",
-    "build:pages": "npm run build:web && tsx scripts/build-pages.ts"
+    "build:pages": "npm run build:web && tsx scripts/build-pages.ts",
+    "review:howdoiplay": "tsx scripts/howdoiplay-review.ts"
   },
   "dependencies": {
     "yaml": "^2.4.5"

@@ -410,6 +410,50 @@ Time Walk, Dark Willow Shadow Realm, Puck Phase Shift — механика «у�
 
 ---
 
+## ADR-021 — Сверка с howdoiplay.com: словарь шире, точечные правила — только явные
+
+**Контекст.** Пользователь попросил дополнить контрпики и комбо по howdoiplay.com
+(Tsunami's Dota Tips and Counters). Сайт — SPA; исходники лежат в публичном
+`tsunami643/tsunami643.github.io` (обновлён 31.10.2026): 127 страниц, у каждой разделы
+Tips и Counters. Лицензии нет → текст не копируем в публичный репозиторий.
+
+**Метод.** Экстрактор (теперь `npm run review:howdoiplay`): разбор пунктов, распознавание
+героев по имени/прозвищу/уникальной способности (dotaconstants 7.41) и предметов;
+сравнение с тем, что движок уже предлагает против одиночной цели. До правок: 706 пар
+«герой из Counters → цель», не предлагалось 50%, в топ-10 — 17%.
+
+**Решение.** Главный вывод: пробелы — не пары, а механики, которые сайт перечисляет
+списками на десятках страниц. Поэтому сначала словарь:
+- tools: `purge` (снять бафф врага: Demonic Purge, Fortune's End, Enchant, Catchy Lick,
+  Tornado, Nullifier, Eul's), `illusion_execute` (Hex, Glimpse, Hook, Mystic Flare, Dagon,
+  Dispel Magic), `creep_execute` (Devour, Death Pact, Enchant, Infest, Arrow, Hook,
+  Midnight Feast), `ally_save` (Grave, False Promise, Cold Embrace, банши, GA, Relocate,
+  Glimmer, Force Staff);
+- reliance: `dispellable_buffs` (Ion Shell, Flame Guard, Windrun, Overpower, Ghost
+  Shroud…), `pickoff_reliant` (Duel, Battle Trance, Scythe…) — у ally_save это и риск для
+  убийцы-одиночки (ADR-020 risk);
+- новые носители: break (Hoodwink, Nyx; Aghs-версии слабо), снижение лечения
+  (Withering Mist, Saltwater Shiv, Doom), контроль сквозь BKB (Hook, Swap, Golem,
+  Overgrowth, Curse), mana burn (Fiend's Grip, Mana Drain, EMP, Glaives); WK
+  `mana_dependent` (Reincarnation), Chen `summon_clearable` 0.8; ребро
+  armor_reduction → summon_tanky (Spirit Bear);
+- предметы: Nullifier, Orb of Frost, Orb of Corrosion, Essence Distiller (эффекты
+  сверены с dotaconstants); Dagon/Vyse — illusion_execute, Eul's — purge,
+  Glimmer/Force — ally_save.
+Затем 43 точечных `hero_edges` — только явные контрпики («X is a notable counter»,
+списки «heroes that counter Brood»), веса 0.4–1.0, ниже классических. Новый слой
+`data/combos.yaml` (13 связок: Infest + Storm/Clock/Bat/Io/SB/NP, Surge + Doom/Bat/SB,
+усиление урона под Winter's Curse, Mystic Flare в Sprout/Cogs) — раньше комбо были
+только из wiki; курированная пара заменяет wiki-строку.
+
+**Итог.** Не предлагается 32% пар (было 50%), в топ-10 — 23% (было 17%). Оставшееся —
+в основном механические тонкости и Aghs-зависимые упоминания, не контрпики. Тесты: 62.
+
+**Границы.** Веса — экспертные. Пары, где сайт говорит «не работает»
+(Lifesteal/усиление урона против Medusa), сюда не вошли — это материал для resist-оси.
+
+---
+
 ## Дорожная карта (фазы)
 
 1. **MVP (KB-only):** парсер `taxonomy.yaml` → rule-engine (резолвер edges +

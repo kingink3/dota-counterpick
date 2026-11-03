@@ -59,6 +59,12 @@
    (включая `resist` и `pierced_by` — ADR-020: новая защита/обход защиты),
    `special_cases` (ловушки вроде Shadow Dance ≠ invis), `hero_edges.yaml`,
    `item_fit.yaml` → `archetype_override`, если сменилась роль.
+   Сверка с howdoiplay.com (обновляется под патчи):
+   `git clone --depth 1 https://github.com/tsunami643/tsunami643.github.io <dir>` →
+   `npm run review:howdoiplay -- --site <dir>` → `howdoiplay-report.md`: контрпики,
+   названные на сайте, которых движок не предлагает. Повторяющуюся механику — в теги,
+   явный контрпик — в `hero_edges.yaml`, связку — в `data/combos.yaml`; текст сайта не
+   копировать (лицензии нет), писать своими словами (ADR-021).
 6. **Предметы:**
    - удалённые → убрать из items.yaml, item_fit.yaml, defense.yaml, item_edges.yaml;
    - новые → tool-теги (items.yaml) + строка fit (тест не пропустит предмет без неё);
