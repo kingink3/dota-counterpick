@@ -39,3 +39,17 @@ items:
   parasma: devastator
   refresher_orb: refresher
   vladmirs_offering: vladmir
+
+# Abilities that still exist but belong to summons / sub-units / neutrals, so they are
+# not in a hero's ability list (patch:check would otherwise flag wiki texts naming them).
+abilities_still_current:
+  - Hurl Boulder        # Brewmaster: Earth spirit
+  - Dispel Magic        # Brewmaster: Storm spirit
+  - Entangling Claws    # Lone Druid: Spirit Bear
+  - War Stomp           # neutral Centaur Conqueror (Doom can Devour it)
+
+# Game mechanic terms that also match the name of an old ability - not stale when a
+# wiki text uses them ("goes through Spell Immunity", "gives True Strike").
+mechanic_terms:
+  - Spell Immunity
+  - True Strike

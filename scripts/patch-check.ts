@@ -48,13 +48,13 @@ const flag = (name: string) => argv.includes(name);
 interface DCHero { name: string; localized_name: string; attack_type: "Melee" | "Ranged"; primary_attr: string }
 interface DCItem {
   dname?: string;
+  abilities?: Array<{ title?: string; description?: string }>;
   cost?: number | null;
   qual?: string | null;
   tier?: number | null;
   cd?: number | false;
   mc?: number | false;
   attrib?: Array<{ key: string; value: unknown }>;
-  abilities?: Array<{ title?: string; description?: string }>;
 }
 interface DCAbility { dname?: string; desc?: string; attrib?: Array<{ key: string; value: unknown }>; cd?: unknown; mc?: unknown; dmg_type?: string; bkbpierce?: string; behavior?: unknown }
 interface DCHeroAbilities { abilities: string[]; facets?: Array<{ name?: string; title?: string; description?: string }> }
@@ -188,7 +188,12 @@ async function main(): Promise<void> {
   const roster = JSON.parse(readFileSync(join(ROOT, "data", "roster.json"), "utf8")) as {
     heroes: Array<{ valve: string; label: string; attr: string; attack?: string }>;
   };
-  const map = (parseYaml(readFileSync(join(ROOT, "data", "constants-map.yaml"), "utf8")) as { items?: Record<string, string> }).items ?? {};
+  const mapDoc = parseYaml(readFileSync(join(ROOT, "data", "constants-map.yaml"), "utf8")) as {
+    items?: Record<string, string>;
+    abilities_still_current?: string[];
+    mechanic_terms?: string[];
+  };
+  const map = mapDoc.items ?? {};
   const tax = parseYaml(readFileSync(join(ROOT, "taxonomy.yaml"), "utf8")) as { meta?: { patch?: string; reviewed?: string } };
   const prev: Snapshot | undefined = existsSync(SNAPSHOT) ? JSON.parse(readFileSync(SNAPSHOT, "utf8")) : undefined;
   const now = snapshotOf(c);
@@ -312,6 +317,62 @@ async function main(): Promise<void> {
     ),
   ].sort();
   if (uncovered.length) lines.push(`- shop items ≥2000 gold the KB never recommends (${uncovered.length}, info): ${uncovered.join(", ")}`);
+
+  // ---- wiki texts naming abilities that are not in the game any more ------------
+  h("Wiki texts mentioning abilities not in the current game");
+  const current = new Set<string>();
+  const dn = (a: DCAbility | undefined) => (typeof a?.dname === "string" ? a.dname : undefined);
+  for (const ha of Object.values(c.heroAbilities)) {
+    for (const k of ha.abilities ?? []) {
+      const d = typeof k === "string" ? dn(c.abilities[k]) : undefined;
+      if (d) current.add(d.toLowerCase());
+    }
+    for (const f of ha.facets ?? []) if (typeof f?.title === "string") current.add(f.title.toLowerCase());
+  }
+  for (const it of Object.values(c.items)) {
+    if (it.dname) current.add(it.dname.toLowerCase());
+    for (const a of it.abilities ?? []) if (typeof a.title === "string") current.add(a.title.toLowerCase());
+  }
+  // summon / sub-unit abilities (Brewmaster spirits, Spirit Bear, neutral creeps) are
+  // not in the hero kits but still exist - curated in data/constants-map.yaml
+  for (const a of mapDoc.abilities_still_current ?? []) current.add(a.toLowerCase());
+  // game terms that happen to match old ability names ("Spell Immunity", "True Strike")
+  for (const a of mapDoc.mechanic_terms ?? []) current.add(a.toLowerCase());
+  // only multi-word names: single words ("Poison", "Purge", "Tempest") are ordinary
+  // English / parts of current names and drown the signal
+  const gone = [
+    ...new Set(
+      Object.values(c.abilities)
+        .map(dn)
+        .filter((d): d is string => !!d && /\s/.test(d.trim()) && !current.has(d.toLowerCase()) && !/\bpierces\b/i.test(d)),
+    ),
+  ].sort((a, b) => b.length - a.length);
+  const texts: Array<{ kind: string; who: string; text: string }> = [
+    ...raw.combos.map((x) => ({ kind: "combo", who: x.pair.join(" + "), text: x.mechanism })),
+    ...raw.heroEdges.filter((e) => e.source === "wiki").map((e) => ({ kind: "counter", who: `${e.subject} vs ${e.target}`, text: e.mechanism })),
+    ...raw.itemEdges.filter((e) => e.source === "wiki").map((e) => ({ kind: "item", who: `${e.item} vs ${e.target}`, text: e.mechanism })),
+  ];
+  const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const rx = gone.length ? new RegExp(`(?<![A-Za-z])(${gone.map(esc).join("|")})(?![A-Za-z])`, "g") : undefined;
+  const stale = new Map<string, string[]>();
+  for (const t of texts) {
+    for (const m of new Set(rx ? t.text.match(rx) ?? [] : [])) {
+      stale.set(m, [...(stale.get(m) ?? []), `${t.kind} ${t.who}`]);
+    }
+  }
+  if (stale.size) {
+    const n = new Set([...stale.values()].flat()).size;
+    lines.push(`- **${n} text(s)** name ${stale.size} ability name(s) that are not in any current hero kit or item:`);
+    for (const [name, where] of [...stale].sort((a, b) => b[1].length - a[1].length)) {
+      lines.push(`  - "${name}" ×${where.length}: ${where.slice(0, 4).join("; ")}${where.length > 4 ? "; …" : ""}`);
+    }
+    lines.push(
+      "  - fix: re-scrape the wiki (A4) or correct the text; if the ability still exists (a summon's / neutral's), add it to `abilities_still_current` in data/constants-map.yaml",
+    );
+    actions.push(`${n} wiki text(s) mention ${stale.size} ability name(s) no longer in the game (rename / re-scrape)`);
+  } else {
+    lines.push("- none");
+  }
 
   // ---- other layers -------------------------------------------------------------
   h("Data freshness");
