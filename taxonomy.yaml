@@ -526,6 +526,9 @@ resistance:
   - code: cheat_death
     label: "Cheat death / save"
     hook: "Survives lethal damage for a window (Borrowed Time, Reincarnation, Shallow Grave, False Promise)"
+  - code: spell_block
+    label: "Spell block (Linken's)"
+    hook: "The first targeted spell is blocked - single-target lockdown and pickoff need a second spell to pop it"
   - code: no_mana_pool
     label: "No mana pool"
     hook: "Spells cost health, not mana (Blood Magic) - mana burn and mana drain have nothing to take"
@@ -564,6 +567,22 @@ resist_edges:
     reliance: sustain_dependent
     weight: 0.5
     mechanism: "lifesteal is computed from the HP damage dealt, and Mana Shield leaves almost none - lifesteal sustain stops working"
+  - resistance: spell_block
+    tool: bkb_piercing_disable
+    weight: 0.4
+    mechanism: "Linken's blocks the targeted ult (Doom, Duel, Fiend's Grip) unless something pops it first"
+  - resistance: spell_block
+    tool: pickoff
+    weight: 0.4
+    mechanism: "the targeted pickoff spell is blocked - the gank needs a cheap spell first"
+  - resistance: spell_block
+    tool: silence
+    weight: 0.3
+    mechanism: "a targeted silence or hex is blocked by Linken's"
+  - resistance: spell_block
+    tool: lockdown_root
+    weight: 0.3
+    mechanism: "a targeted root or stun is blocked by Linken's"
   - resistance: no_mana_pool
     tool: mana_burn
     weight: 1.0

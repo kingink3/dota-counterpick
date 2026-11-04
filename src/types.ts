@@ -267,8 +267,18 @@ export interface DraftState {
   myRole?: number;
   /** if already locked, the engine skips hero recs and focuses on items. */
   myHero?: string;
-  /** allied picks, reserved for future synergy scoring; unused in MVP. */
+  /** allied picks: synergy (combos) and composition (ADR-023). */
   allyHeroes?: string[];
+  /** items seen on enemy heroes (Tab scoreboard / manual), our item ids (ADR-024). */
+  enemyItems?: Record<string, string[]>;
+}
+
+/** What holding an item adds to an enemy hero's tags (data/item_traits.yaml, ADR-024). */
+export interface ItemTrait {
+  label: string;
+  reliance?: Record<string, number>;
+  resist?: Record<string, number>;
+  tool?: Record<string, number>;
 }
 
 export type CandidateKind = "hero" | "item";
@@ -309,6 +319,8 @@ export interface Reason {
   };
   /** any guard notes (e.g. "BKB-pierced via bkb_piercing_disable"). */
   notes?: string[];
+  /** enemy items that created this match (ADR-024), display labels. */
+  via?: string[];
   /** provenance for enrichment reasons (e.g. "wiki" for scraped counters). */
   source?: "curated" | "wiki";
 }

@@ -21,6 +21,7 @@ import type {
   ResistEdge,
   Taxonomy,
   Tool,
+  ItemTrait,
 } from "./types.js";
 
 /**
@@ -56,6 +57,8 @@ export interface KnowledgeBase {
   matchups?: Matchups;
   itemFit?: ItemFitTable;
   heroAttack?: Record<string, AttackType>;
+  /** enemy-item traits (data/item_traits.yaml, ADR-024). */
+  itemTraits?: Record<string, ItemTrait>;
 
   // indices -----------------------------------------------------------------
   relianceByCode: Map<string, Reliance>;
@@ -89,6 +92,7 @@ export interface RawKB {
   itemFit?: ItemFitTable;
   /** hero code (KB code AND roster valve name) -> melee / ranged. */
   heroAttack?: Record<string, AttackType>;
+  itemTraits?: Record<string, ItemTrait>;
 }
 
 export function indexKB(raw: RawKB): KnowledgeBase {
@@ -175,6 +179,13 @@ export function indexKB(raw: RawKB): KnowledgeBase {
     if (re.reliance) resistEdgesByReliance.set(re.reliance, [...(resistEdgesByReliance.get(re.reliance) ?? []), re]);
   }
 
+  const knownResistCodes = new Set((taxonomy.resistance ?? []).map((r) => r.code));
+  for (const [item, t] of Object.entries(raw.itemTraits ?? {})) {
+    for (const c of Object.keys(t.reliance ?? {})) if (!knownReliance.has(c)) warnings.push(`item trait "${item}" has unknown reliance "${c}"`);
+    for (const c of Object.keys(t.resist ?? {})) if (!knownResistCodes.has(c)) warnings.push(`item trait "${item}" has unknown resistance "${c}"`);
+    for (const c of Object.keys(t.tool ?? {})) if (!knownTools.has(c)) warnings.push(`item trait "${item}" has unknown tool "${c}"`);
+  }
+
   for (const n of taxonomy.team_needs ?? []) {
     for (const t of Object.keys(n.tools)) {
       if (!knownTools.has(t)) warnings.push(`team need "${n.code}" references unknown tool "${t}"`);
@@ -197,6 +208,7 @@ export function indexKB(raw: RawKB): KnowledgeBase {
     combos,
     ...(raw.itemFit ? { itemFit: raw.itemFit } : {}),
     ...(raw.heroAttack ? { heroAttack: raw.heroAttack } : {}),
+    ...(raw.itemTraits ? { itemTraits: raw.itemTraits } : {}),
     relianceByCode,
     toolByCode,
     edgesByTool,

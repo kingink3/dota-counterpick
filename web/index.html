@@ -93,6 +93,15 @@
       .slot.filled .rm { position: absolute; top: 3px; right: 5px; font-weight: 700; color: #fff; text-shadow: 0 0 4px #000; opacity: 0; }
       .slot.filled:hover .rm, .slot.filled:focus-visible .rm { opacity: 1; }
       .slot.untagged img { filter: grayscale(.6) brightness(.7); }
+      .item-row { margin-top: -6px; }
+      .item-col { display: flex; flex-wrap: wrap; gap: 3px; align-content: flex-start; min-width: 0; }
+      .item-chip { font: 500 11px/1.4 var(--sans, inherit); background: var(--panel); border: 1px solid var(--line); border-radius: 3px;
+        padding: 0 4px; color: var(--text2, var(--text)); cursor: pointer; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+      .item-chip:hover { border-color: var(--bad); }
+      .item-add { font: 600 11px/1.4 inherit; background: none; border: 1px dashed var(--line2); border-radius: 3px; color: var(--muted); padding: 0 5px; cursor: pointer; }
+      .item-add:hover { color: var(--text); }
+      .item-input { width: 100%; font-size: 12px; background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 3px; padding: 2px 4px; }
+      .why .via, ul.reasons .via { color: var(--muted); font-size: 12px; }
       .slot.no-art img { display: none; }
       .slot.mine .p { outline: 2px solid var(--gold); outline-offset: -2px; }
       .slot.mine .bar { background: var(--gold) !important; }
@@ -321,6 +330,8 @@
         <div class="team enemy">
           <div class="team-l">Enemy team <span id="enemy-count" class="count">0/5</span></div>
           <div id="enemy-strip" class="slots"></div>
+          <div id="enemy-items" class="slots item-row" aria-label="Enemy items"></div>
+          <datalist id="item-list"></datalist>
         </div>
       </section>
 

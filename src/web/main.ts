@@ -44,6 +44,8 @@ interface UIState {
   showFactors: boolean;
   search: string;
   activeTab: TabId;
+  /** items seen on enemy heroes (manual or Tab scoreboard), our item ids (ADR-024). */
+  enemyItems: Map<string, string[]>;
 }
 
 const ATTR_ORDER: Attr[] = ["str", "agi", "int", "all"];
@@ -61,6 +63,7 @@ const state: UIState = {
   showFactors: false,
   search: "",
   activeTab: "heroes",
+  enemyItems: new Map(),
 };
 let kb: KnowledgeBase;
 let grid: GridHero[] = [];
@@ -88,6 +91,7 @@ async function boot(): Promise<void> {
   ]);
   kb = indexKB(rawKb);
   if (matchups?.heroes) kb.matchups = matchups.heroes;
+  buildItemLabels();
 
   // link roster -> KB by valve name (KB code's portrait name == roster valve)
   const valveToCode = new Map<string, string>();
@@ -314,6 +318,7 @@ function renderInner(): void {
         : "Any position";
   }
   renderStrip("#enemy-strip", state.enemies, "enemy");
+  renderEnemyItems();
   renderStrip("#ally-strip", state.allies, "ally");
 
   const draft: DraftState = {
@@ -321,6 +326,7 @@ function renderInner(): void {
     ...(state.allies.size ? { allyHeroes: [...state.allies] } : {}),
     ...(state.myHero ? { myHero: state.myHero } : {}),
     ...(state.role !== undefined ? { myRole: state.role } : {}),
+    ...(state.enemyItems.size ? { enemyItems: Object.fromEntries(state.enemyItems) } : {}),
   };
 
   const out = el("#results");
@@ -477,6 +483,95 @@ function renderStrip(sel: string, set: Set<string>, side: "enemy" | "ally"): voi
     }
     strip.appendChild(slot);
   }
+}
+
+// ---------------------------------------------------------------------------
+//  Enemy items (ADR-024): manual chips under each enemy slot; the Tab-scoreboard
+//  reader fills the same state.
+// ---------------------------------------------------------------------------
+
+/** our item id <-> display label, for every item the engine knows something about. */
+let itemLabels = new Map<string, string>();
+function buildItemLabels(): void {
+  itemLabels = new Map();
+  for (const i of kb.items) itemLabels.set(i.code, i.label);
+  for (const d of kb.defenseEdges) if (!itemLabels.has(d.item)) itemLabels.set(d.item, d.label);
+  for (const [id, t] of Object.entries(kb.itemTraits ?? {})) itemLabels.set(id, t.label);
+  const list = document.querySelector<HTMLDataListElement>("#item-list");
+  if (list) {
+    list.innerHTML = [...itemLabels.values()].sort().map((l) => `<option value="${esc(l)}"></option>`).join("");
+  }
+}
+const itemIdByLabel = (label: string) => {
+  const want = label.trim().toLowerCase();
+  for (const [id, l] of itemLabels) if (l.toLowerCase() === want) return id;
+  return undefined;
+};
+
+let itemInputFor: string | undefined;
+function renderEnemyItems(): void {
+  const row = document.querySelector<HTMLElement>("#enemy-items");
+  if (!row) return;
+  for (const id of [...state.enemyItems.keys()]) if (!state.enemies.has(id)) state.enemyItems.delete(id);
+  row.innerHTML = "";
+  const ids = [...state.enemies];
+  row.hidden = ids.length === 0;
+  for (let i = 0; i < MAX_TEAM; i++) {
+    const col = document.createElement("div");
+    col.className = "item-col";
+    const hero = ids[i];
+    if (hero) {
+      for (const it of state.enemyItems.get(hero) ?? []) {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "item-chip";
+        chip.textContent = itemLabels.get(it) ?? it;
+        chip.title = `${labelFor(hero)} has ${chip.textContent} - click to remove`;
+        chip.addEventListener("click", () => setEnemyItems(hero, (state.enemyItems.get(hero) ?? []).filter((x) => x !== it)));
+        col.appendChild(chip);
+      }
+      if (itemInputFor === hero) {
+        const input = document.createElement("input");
+        input.className = "item-input";
+        input.setAttribute("list", "item-list");
+        input.placeholder = "Item…";
+        input.setAttribute("aria-label", `Add an item to ${labelFor(hero)}`);
+        const commit = () => {
+          const id = itemIdByLabel(input.value);
+          itemInputFor = undefined;
+          if (id) setEnemyItems(hero, [...new Set([...(state.enemyItems.get(hero) ?? []), id])]);
+          else render();
+        };
+        input.addEventListener("change", commit);
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") {
+            itemInputFor = undefined;
+            render();
+          }
+        });
+        col.appendChild(input);
+        queueMicrotask(() => input.focus());
+      } else if ((state.enemyItems.get(hero) ?? []).length < 7) {
+        const add = document.createElement("button");
+        add.type = "button";
+        add.className = "item-add";
+        add.textContent = "+ item";
+        add.title = `Add an item ${labelFor(hero)} has (BKB, Butterfly, Blink…) - recommendations adapt`;
+        add.addEventListener("click", () => {
+          itemInputFor = hero;
+          render();
+        });
+        col.appendChild(add);
+      }
+    }
+    row.appendChild(col);
+  }
+}
+
+function setEnemyItems(hero: string, items: string[]): void {
+  if (items.length) state.enemyItems.set(hero, items);
+  else state.enemyItems.delete(hero);
+  render();
 }
 
 function damageRead(d: DamageRead): HTMLElement {
@@ -786,8 +881,13 @@ function riskHead(r: Reason): string {
     : `exposed: ${esc(toolLabel(r.tool))} → ${esc(relLabel(r.reliance))}`;
 }
 
+const viaText = (r: Reason) => (r.via?.length ? ` <span class="via">(their ${esc(r.via.join(", "))})</span>` : "");
+
 /** one-line lead: "<tool → reliance> vs <enemy>: mechanism". */
 function reasonSummary(reason: Reason, rec: Recommendation): string {
+  return reasonSummaryText(reason, rec) + viaText(reason);
+}
+function reasonSummaryText(reason: Reason, rec: Recommendation): string {
   const who = esc(labelFor(reason.enemy));
   const mech = esc(mechanismText(reason, rec));
   if (reason.basis === "synergy") return `<span class="lead">Combo with ${who}:</span> ${mech}`;
@@ -844,7 +944,7 @@ function reasonItem(reason: Reason, rec: Recommendation): HTMLElement {
     const head = tool && rel ? `<span class="edge">${esc(tool)} → ${esc(rel)}</span> ` : "";
     body = head + esc(mechanismText(reason, rec));
   }
-  li.innerHTML = enemy + body;
+  li.innerHTML = enemy + body + viaText(reason);
 
   if (state.showFactors) {
     const f = reason.factors;

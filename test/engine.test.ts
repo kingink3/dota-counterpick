@@ -246,6 +246,7 @@ function fakeCensus(relianceCount: Record<string, number>): Census {
     unknownEnemies: [],
     allSelected: [],
     tagsOf: () => undefined,
+    viaOf: () => undefined,
   };
 }
 
@@ -575,4 +576,31 @@ test("lane: with a role, reasons vs the enemies you lane against weigh more", ()
   const h = r.heroes.find((x) => x.reasons.some((y) => y.notes?.includes("lane opponent")));
   assert.ok(h, "some reason is tagged as a lane matchup");
   for (const x of h!.reasons) if (x.notes?.includes("lane opponent")) assert.ok(["crystal_maiden", "phantom_assassin"].includes(x.enemy));
+});
+
+// ---------------------------------------------------------------------------
+//  ADR-024: enemy items change the enemy's tags
+// ---------------------------------------------------------------------------
+
+test("enemy items: Butterfly raises true strike, BKB blunts silences, reasons name the item", () => {
+  const plain = engine.recommend({ enemyHeroes: ["troll_warlord"] });
+  const geared = engine.recommend({ enemyHeroes: ["troll_warlord"], enemyItems: { troll_warlord: ["butterfly", "black_king_bar"] } });
+  const mkb = rec(geared.items, "monkey_king_bar");
+  assert.ok(mkb?.reasons.some((x) => x.tool === "true_strike" && x.via?.includes("Butterfly")), "MKB vs Butterfly, labelled");
+  assert.equal(rec(plain.items, "monkey_king_bar"), undefined, "no MKB vs a Troll without evasion");
+  const silencer = rec(geared.heroes, "silencer");
+  assert.ok(!silencer || silencer.reasons.some((x) => x.resistance === "self_debuff_immunity" && x.via?.includes("Black King Bar")));
+});
+
+test("enemy items: Linken's blunts targeted lockdown, Manta makes illusion clear count", () => {
+  const r = engine.recommend({ enemyHeroes: ["sniper"], enemyItems: { sniper: ["linkens_sphere"] } });
+  assert.ok(rec(r.heroes, "pudge")?.reasons.some((x) => x.resistance === "spell_block" && x.contribution < 0));
+  const am = engine.recommend({ enemyHeroes: ["anti_mage"], enemyItems: { anti_mage: ["manta_style"] } });
+  assert.ok(rec(am.heroes, "earthshaker")?.reasons.some((x) => x.reliance === "illusion_based" && x.via?.includes("Manta Style")));
+});
+
+test("item traits reference only known tags; an unknown item id is ignored", () => {
+  assert.deepEqual(engine.warnings, []);
+  const r = engine.recommend({ enemyHeroes: ["sniper"], enemyItems: { sniper: ["not_an_item"] } });
+  assert.ok(r.heroes.length > 0);
 });

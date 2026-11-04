@@ -41,7 +41,7 @@ interface Subject {
 }
 
 export function resolve(kb: KnowledgeBase, draft: DraftState): EngineResult {
-  const census = buildCensus(kb, draft.enemyHeroes);
+  const census = buildCensus(kb, draft.enemyHeroes, draft.enemyItems);
   const allies = new Set(draft.allyHeroes ?? []);
   const synergy = buildSynergyIndex(kb, allies);
 
@@ -384,6 +384,7 @@ function resolveDefense(
         mechanism: d.mechanism,
         contribution: threatWeight * d.weight,
         factors: { threatWeight, defenseWeight: d.weight },
+        ...viaField(d.threat ? census.viaOf(enemy, "tool", d.threat) : undefined),
       });
       byItem.set(d.item, entry);
     }
@@ -659,6 +660,7 @@ function scoreSubject(
             relianceWeight,
           },
           ...(guard.notes.length ? { notes: guard.notes } : {}),
+          ...viaField(census.viaOf(enemy, "reliance", edge.target)),
         });
       }
     }
@@ -740,6 +742,7 @@ function scoreTwoSided(subject: Subject, kb: KnowledgeBase, census: Census, out:
           mechanism: re.mechanism,
           contribution: RESIST_WEIGHT * rw * re.weight * ew,
           factors: { resistWeight: rw, edgeWeight: re.weight, enemyWeight: ew },
+          ...viaField(re.tool ? census.viaOf(enemy, "tool", re.tool) : census.viaOf(enemy, "reliance", re.reliance!)),
         });
       }
     }
@@ -764,6 +767,7 @@ function scoreTwoSided(subject: Subject, kb: KnowledgeBase, census: Census, out:
             mechanism: edge.mechanism,
             contribution: -RISK_WEIGHT * tw * edge.weight * cw,
             factors: { toolWeight: tw, edgeWeight: edge.weight, relianceWeight: cw },
+            ...viaField(census.viaOf(enemy, "tool", toolCode)),
           });
         }
       }
@@ -786,6 +790,7 @@ function scoreTwoSided(subject: Subject, kb: KnowledgeBase, census: Census, out:
             mechanism: re.mechanism,
             contribution: -BLUNT_WEIGHT * tw * re.weight * ew,
             factors: { toolWeight: tw, edgeWeight: re.weight, enemyWeight: ew },
+            ...viaField(census.viaOf(enemy, "resist", code)),
           });
         }
       }
@@ -803,6 +808,7 @@ function scoreTwoSided(subject: Subject, kb: KnowledgeBase, census: Census, out:
             mechanism: re.mechanism,
             contribution: -BLUNT_WEIGHT * cw * re.weight * ew,
             factors: { relianceWeight: cw, edgeWeight: re.weight, enemyWeight: ew },
+            ...viaField(census.viaOf(enemy, "resist", code)),
           });
         }
       }
@@ -810,6 +816,10 @@ function scoreTwoSided(subject: Subject, kb: KnowledgeBase, census: Census, out:
 
     out.push(...capped(resist, RESIST_CAP), ...capped(risk, RISK_CAP));
   }
+}
+
+function viaField(v: string[] | undefined): { via?: string[] } {
+  return v?.length ? { via: v } : {};
 }
 
 /** scale a group of same-sign reasons so |sum| <= cap (keeps the mix, bounds the total). */

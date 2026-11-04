@@ -1,0 +1,39 @@
+# =============================================================================
+#  Enemy items (ADR-024): what HOLDING an item changes about an enemy hero.
+#
+#  Two halves, so nothing is described twice:
+#    - offence: the item's `tool` table in items.yaml (MKB -> true_strike, Vessel ->
+#      healing_reduction, Abyssal -> bkb_piercing_disable ...) is added to the holder
+#      automatically, scaled by ITEM_TOOL_SCALE in census.ts;
+#    - defence / dependencies: this file - reliance and resist the item gives
+#      (BKB -> debuff immunity, Butterfly -> evasion, Blink -> mobility ...).
+#  Merging takes the max with the hero's own tag (an item never lowers a tag).
+#  Ids are our item namespace (constants-map.yaml maps them to dotaconstants).
+#  Weights are expert estimates.
+# =============================================================================
+
+traits:
+  black_king_bar:    { label: "Black King Bar",      reliance: { bkb_reliant: 1.0 }, resist: { self_debuff_immunity: 0.6 } }
+  butterfly:         { label: "Butterfly",           reliance: { evasion: 0.6 }, resist: { evades_attacks: 0.6 } }
+  satanic:           { label: "Satanic",             reliance: { sustain_dependent: 0.6 }, resist: { self_dispel: 0.3 } }
+  heart_of_tarrasque: { label: "Heart of Tarrasque", reliance: { sustain_dependent: 0.4 } }
+  blink_dagger:      { label: "Blink Dagger",        reliance: { mobility_dependent: 0.5 } }
+  overwhelming_blink: { label: "Overwhelming Blink", reliance: { mobility_dependent: 0.5 } }
+  swift_blink:       { label: "Swift Blink",         reliance: { mobility_dependent: 0.5 } }
+  arcane_blink:      { label: "Arcane Blink",        reliance: { mobility_dependent: 0.5 } }
+  shadow_blade:      { label: "Shadow Blade",        reliance: { relies_on_invisibility: 0.6 } }
+  silver_edge:       { label: "Silver Edge",         reliance: { relies_on_invisibility: 0.6 } }
+  glimmer_cape:      { label: "Glimmer Cape",        reliance: { relies_on_invisibility: 0.3 }, resist: { magic_resistance: 0.2 } }
+  manta_style:       { label: "Manta Style",         reliance: { illusion_based: 0.4 }, resist: { self_dispel: 0.4 } }
+  linkens_sphere:    { label: "Linken's Sphere",     resist: { spell_block: 0.7 } }
+  lotus_orb:         { label: "Lotus Orb",           resist: { spell_block: 0.3, self_dispel: 0.3 } }
+  aeon_disk:         { label: "Aeon Disk",           resist: { cheat_death: 0.6 } }
+  ghost_scepter:     { label: "Ghost Scepter",       resist: { active_damage_reduction: 0.3 } }
+  ethereal_blade:    { label: "Ethereal Blade",      resist: { active_damage_reduction: 0.3 } }
+  mage_slayer:       { label: "Mage Slayer",         resist: { magic_resistance: 0.3 } }
+  pipe_of_insight:   { label: "Pipe of Insight",     resist: { magic_resistance: 0.4 } }
+  eternal_shroud:    { label: "Eternal Shroud",      resist: { magic_resistance: 0.4 } }
+  crimson_guard:     { label: "Crimson Guard",       resist: { physical_damage_block: 0.4 } }
+  vanguard:          { label: "Vanguard",            resist: { physical_damage_block: 0.3 } }
+  assault_cuirass:   { label: "Assault Cuirass",     reliance: { high_armor: 0.4 } }
+  shivas_guard:      { label: "Shiva's Guard",       reliance: { high_armor: 0.4 } }

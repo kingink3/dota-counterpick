@@ -519,6 +519,34 @@ vs Huskar: mana burn у Nyx/Lion притуплён. 67 тестов.
 
 ---
 
+## ADR-024 — Предметы врага меняют рекомендации
+
+**Контекст.** После драфта главный вопрос — «что собирать против того, что они уже
+купили». Butterfly делает MKB обязательным, BKB обесценивает тишину, Linken's ломает
+одиночный контроль, Manta делает иллюзии мишенью для AoE.
+
+**Решение.** У предмета две стороны, и обе ложатся на уже существующие теги — движок
+не знает про предметы ничего особенного:
+- атака: таблица `tool` предмета из items.yaml добавляется владельцу × 0.8
+  (MKB → true_strike, Vessel → снижение лечения, Abyssal → контроль сквозь BKB);
+- защита и зависимости: новый `data/item_traits.yaml` — reliance / resist, которые даёт
+  предмет (BKB → bkb_reliant + self_debuff_immunity, Butterfly → evasion +
+  evades_attacks, Blink → mobility_dependent, Satanic/Heart → sustain_dependent,
+  Manta → illusion_based + self_dispel, Linken's/Lotus → новая защита `spell_block`,
+  Aeon Disk → cheat_death, Pipe/Shroud/Mage Slayer → magic_resistance, AC/Shiva's →
+  high_armor …).
+Слияние — максимум (предмет никогда не понижает тег). `DraftState.enemyItems`; перепись
+врага (census) строится по «тегам героя + предметы» и помнит, какой предмет поднял какой
+тег, — причина подписывается «(their Butterfly)».
+
+UI: под каждым вражеским слотом — чипы предметов и «+ item» (поиск по названию); тот же
+state будет заполнять чтение таблицы Tab.
+
+**Границы.** Веса — экспертные. Нейтральные предметы и Aghanim's/Shard пока не
+описаны (у Aghs эффект свой для каждого героя).
+
+---
+
 ## Дорожная карта (фазы)
 
 1. **MVP (KB-only):** парсер `taxonomy.yaml` → rule-engine (резолвер edges +

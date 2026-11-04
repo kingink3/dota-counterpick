@@ -20,24 +20,39 @@ export interface Census {
   unknownEnemies: string[];
   /** every selected enemy code (tagged + untagged) - what edges match against. */
   allSelected: string[];
-  /** quick lookup of a single enemy's tag table. */
+  /** quick lookup of a single enemy's tag table (hero tags + items, ADR-024). */
   tagsOf(enemy: string): HeroTags | undefined;
+  /** labels of the enemy's items that raised this tag above the hero's own value. */
+  viaOf(enemy: string, kind: "reliance" | "tool" | "resist", code: string): string[] | undefined;
 }
 
-export function buildCensus(kb: KnowledgeBase, enemyHeroes: string[]): Census {
+/** an item's offensive tools count a bit less than a hero's own kit (one slot, often
+ *  bought for something else). Traits from item_traits.yaml are used as written. */
+export const ITEM_TOOL_SCALE = 0.8;
+
+export function buildCensus(kb: KnowledgeBase, enemyHeroes: string[], enemyItems?: Record<string, string[]>): Census {
   const heroTags = kb.taxonomy.hero_tags;
   const relianceCount = new Map<string, number>();
   const toolCount = new Map<string, number>();
   const enemies: string[] = [];
   const unknownEnemies: string[] = [];
+  const merged = new Map<string, HeroTags>();
+  const via = new Map<string, Map<string, string[]>>();
+  const itemTools = new Map(kb.items.map((i) => [i.code, i]));
 
   for (const code of enemyHeroes) {
-    const tags = heroTags[code];
-    if (!tags) {
+    const base = heroTags[code];
+    if (!base) {
       unknownEnemies.push(code);
       continue;
     }
     enemies.push(code);
+    const tags = withItems(base, enemyItems?.[code] ?? [], kb, itemTools, (key, label) => {
+      const m = via.get(code) ?? new Map<string, string[]>();
+      m.set(key, [...new Set([...(m.get(key) ?? []), label])]);
+      via.set(code, m);
+    });
+    merged.set(code, tags);
     for (const [tag, weight] of Object.entries(tags.reliance ?? {})) {
       if (weight > 0) {
         relianceCount.set(tag, (relianceCount.get(tag) ?? 0) + 1);
@@ -56,6 +71,41 @@ export function buildCensus(kb: KnowledgeBase, enemyHeroes: string[]): Census {
     enemies,
     unknownEnemies,
     allSelected: [...enemies, ...unknownEnemies],
-    tagsOf: (enemy) => heroTags[enemy],
+    tagsOf: (enemy) => merged.get(enemy) ?? heroTags[enemy],
+    viaOf: (enemy, kind, code) => via.get(enemy)?.get(`${kind}:${code}`),
   };
+}
+
+/** hero tags + what the held items add (max-merge; an item never lowers a tag). */
+function withItems(
+  base: HeroTags,
+  items: string[],
+  kb: KnowledgeBase,
+  itemTools: Map<string, { label: string; tool: Record<string, number> }>,
+  mark: (key: string, label: string) => void,
+): HeroTags {
+  if (!items.length) return base;
+  const out: HeroTags = {
+    pos: base.pos,
+    reliance: { ...(base.reliance ?? {}) },
+    tool: { ...(base.tool ?? {}) },
+    resist: { ...(base.resist ?? {}) },
+  };
+  const raise = (kind: "reliance" | "tool" | "resist", code: string, w: number, label: string) => {
+    const table = out[kind]!;
+    if (w > (table[code] ?? 0)) {
+      table[code] = w;
+      mark(`${kind}:${code}`, label);
+    }
+  };
+  for (const id of items) {
+    const trait = kb.itemTraits?.[id];
+    const def = itemTools.get(id);
+    const label = trait?.label ?? def?.label ?? id;
+    for (const [t, w] of Object.entries(def?.tool ?? {})) raise("tool", t, w * ITEM_TOOL_SCALE, label);
+    for (const [t, w] of Object.entries(trait?.tool ?? {})) raise("tool", t, w, label);
+    for (const [r, w] of Object.entries(trait?.reliance ?? {})) raise("reliance", r, w, label);
+    for (const [r, w] of Object.entries(trait?.resist ?? {})) raise("resist", r, w, label);
+  }
+  return out;
 }

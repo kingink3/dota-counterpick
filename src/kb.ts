@@ -19,6 +19,7 @@ import type {
   ItemEdge,
   ItemFitTable,
   Taxonomy,
+  ItemTrait,
 } from "./types.js";
 import { heroValveName } from "./web/hero-art.js";
 import { clipSentence } from "./combos.js";
@@ -105,7 +106,17 @@ export function readRawKB(root: string = REPO_ROOT): RawKB {
     combos: [...curatedCombos, ...wiki.combos.filter((c) => !curatedPairs.has(pairKey(c.pair)))],
     ...(itemFit ? { itemFit } : {}),
     heroAttack: loadHeroAttack(root, Object.keys(taxonomy.hero_tags)),
+    itemTraits: loadItemTraits(root),
   };
+}
+
+/** data/item_traits.yaml -> item -> what holding it adds to an enemy (ADR-024). */
+function loadItemTraits(root: string): Record<string, ItemTrait> {
+  try {
+    return readYaml<{ traits?: Record<string, ItemTrait> }>(join(root, "data", "item_traits.yaml")).traits ?? {};
+  } catch {
+    return {};
+  }
 }
 
 /** data/item_fit.yaml -> ItemFitTable (optional layer, ADR-018). */

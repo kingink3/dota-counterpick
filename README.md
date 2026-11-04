@@ -172,6 +172,7 @@ Linken's / Aeon Disk are the honest answers. Output lands in `EngineResult.defen
 | `data/items.yaml` | curated item → tool catalog |
 | `data/hero_edges.yaml` | hero → hero point counters (e.g. Huskar vs Anti-Mage) |
 | `data/item_edges.yaml` | item → hero point counters (e.g. Nullifier vs Necrophos) |
+| `data/item_traits.yaml` | what holding an item adds to an enemy hero (BKB, Butterfly, Linken's…) - ADR-024 |
 | `data/combos.yaml` | curated combos (Infest + initiators, Surge + Doom…); listed before wiki combos (ADR-021) |
 | `data/wiki-counters.json` | scraped Fandom wiki counters + synergies (generated, CC-BY-SA) |
 | `data/matchups.json` | hero-vs-hero win rates (stat layer, from OpenDota; generated) |
