@@ -96,6 +96,7 @@ async function boot(): Promise<void> {
   ]);
   kb = indexKB(rawKb);
   if (matchups?.heroes) kb.matchups = matchups.heroes;
+  if (matchups && "source" in matchups && typeof matchups.source === "string") matchupSource = matchups.source;
   itemStats =
     (BUNDLE ? BUNDLE.itemStats : await fetch("./item-stats.json").then((r) => (r.ok ? r.json() : null)).catch(() => null)) ??
     undefined;
@@ -152,6 +153,8 @@ function setMode(m: Mode): void {
 
 let game: GameView | undefined;
 let itemStats: ItemStats | undefined;
+/** where the draft win rates come from (data/matchups.json). */
+let matchupSource = "public matches";
 
 /** Game tab, right column: the plan for the hero you play vs this draft. */
 function renderGamePlan(result: ReturnType<typeof resolveDraft>): void {
@@ -988,7 +991,7 @@ function winrateBadge(rec: Recommendation): string {
   if (rec.winrate === undefined) return "";
   const pct = Math.round(rec.winrate * 100);
   const cls = pct >= 52 ? "wr good" : pct <= 48 ? "wr bad" : "wr";
-  const tip = `${pct}% win rate vs their team across ${rec.winrateGames} public matches`;
+  const tip = `${pct}% win rate vs their team across ${rec.winrateGames} matches (${matchupSource})`;
   return `<span class="${cls}" title="${esc(tip)}">${pct}% WR</span>`;
 }
 

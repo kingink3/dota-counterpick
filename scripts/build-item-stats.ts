@@ -153,6 +153,7 @@ function main(): void {
 
   // --- STRATZ: per position, Crusader-Archon + Legend-Ancient (preferred by the plan)
   const stratzDir = arg("stratz");
+  let curveFrom = "win rate by match length";
   let stratzPairs = 0;
   let stratzAt: string | undefined;
   if (stratzDir) {
@@ -186,6 +187,35 @@ function main(): void {
       (hs.byPos ??= {})[m[2]!] = ps.stats;
       stratzPairs++;
     }
+    // win rate by match length per position, exactly Archon + Legend, latest patch:
+    // durationMinute is a 5-minute bucket index
+    let curves = 0;
+    for (const p of ["1", "2", "3", "4", "5"]) {
+      const rows = readJson<{ heroStats: { winGameVersion: Array<{ heroId: number; durationMinute: number; winCount: number; matchCount: number }> } }>(
+        join(stratzDir, "durations", `durations_${p}.json`),
+      )?.heroStats.winGameVersion;
+      if (!rows) continue;
+      const byHero = new Map<number, Map<number, { g: number; w: number }>>();
+      for (const r of rows) {
+        const m = byHero.get(r.heroId) ?? new Map<number, { g: number; w: number }>();
+        const b = m.get(r.durationMinute * 5) ?? { g: 0, w: 0 };
+        b.g += r.matchCount;
+        b.w += r.winCount;
+        m.set(r.durationMinute * 5, b);
+        byHero.set(r.heroId, m);
+      }
+      for (const [id, bins] of byHero) {
+        const code = idToCode.get(id);
+        const hs = code ? heroes[code] : undefined;
+        const pos = hs?.byPos?.[p];
+        const curve = toCurve(new Map([...bins].filter(([min]) => min >= 10)));
+        if (pos && curve) {
+          pos.curve = curve;
+          curves++;
+        }
+      }
+    }
+    if (curves) curveFrom = "win rate by match length, Archon + Legend, latest patch (STRATZ)";
     for (const hs of Object.values(heroes)) {
       if (!hs.byPos) continue;
       hs.mainPos = Object.entries(hs.byPos).sort((a, b) => (b[1].games ?? 0) - (a[1].games ?? 0))[0]![0];
@@ -210,7 +240,7 @@ function main(): void {
     ...(fetchedAt ? { fetchedAt } : {}),
     phasesFrom: "item popularity by game phase, professional matches",
     timingsFrom: "purchase times in parsed public matches",
-    curveFrom: "win rate by match length",
+    curveFrom,
     items,
     heroes,
   };

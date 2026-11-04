@@ -203,10 +203,11 @@ Linken's / Aeon Disk are the honest answers. Output lands in `EngineResult.defen
 
 ## Not in this MVP (by ADR)
 
-- Bracket/positional matchup granularity - Phase 3 (STRATZ, ADR-005). The current win
-  rates are public-match aggregates from OpenDota with small per-pair samples, so the
-  UI shows the games-weighted aggregate vs the *whole* enemy team (steadier) plus the
-  sample size; `data/matchups.json` is built by `scripts/build-matchups.ts`.
+- Bracket/positional matchup granularity - Phase 3 (STRATZ, ADR-005). Win rates now come
+  from STRATZ, Crusader-Archon + Legend-Ancient (thousands of games per pair); the UI
+  shows the games-weighted aggregate vs the whole enemy team plus the sample size.
+  `data/matchups.json` is built by `scripts/build-stratz-matchups.ts` (OpenDota fallback:
+  `scripts/build-matchups.ts`).
 - Input UI (hero grid) - separate, sits behind the same `DraftState` (ADR-002).
 
 Weights in the KB are calibrated expert estimates, not measurements; the first engine

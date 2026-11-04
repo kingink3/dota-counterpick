@@ -156,7 +156,7 @@ export function buildPlan(inp: PlanInput): ItemPlan | undefined {
   if (!base) return undefined;
   const posKey = inp.role !== undefined && base.byPos?.[String(inp.role)] ? String(inp.role) : base.mainPos;
   const pos = posKey ? base.byPos?.[posKey] : undefined;
-  const hs: HeroStats = pos ? { ...pos, ...(base.curve ? { curve: base.curve } : {}) } : base;
+  const hs: HeroStats = pos ? { ...pos, ...(pos.curve ?? base.curve ? { curve: pos.curve ?? base.curve } : {}) } : base;
   const basis = pos
     ? `${inp.stats.posFrom ?? "by position"}: position ${posKey}${inp.role !== undefined && String(inp.role) !== posKey ? ` (no data for position ${inp.role})` : ""}, ${Math.round((pos.games ?? 0) / 1000)}k games`
     : inp.stats.phasesFrom;
@@ -408,9 +408,15 @@ export interface TeamWindow {
 
 export function teamWindow(stats: ItemStats, allies: string[], enemies: string[]): TeamWindow | undefined {
   const missing: string[] = [];
+  // the hero's main position (STRATZ, rank-filtered) when known, else all games
+  const curveOf = (h: string) => {
+    const hs = stats.heroes[h];
+    const pos = hs?.mainPos ? hs.byPos?.[hs.mainPos] : undefined;
+    return heroCurve(pos?.curve ? pos : hs);
+  };
   const curves = (hs: string[]) =>
     hs.flatMap((h) => {
-      const c = heroCurve(stats.heroes[h]);
+      const c = curveOf(h);
       if (!c) missing.push(h);
       return c ? [{ hero: h, c }] : [];
     });
