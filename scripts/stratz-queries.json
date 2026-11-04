@@ -1,12 +1,1303 @@
 {
+ "brackets": "bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT]",
+ "pairs": [
+  [
+   1,
+   "POSITION_1"
+  ],
+  [
+   2,
+   "POSITION_3"
+  ],
+  [
+   3,
+   "POSITION_5"
+  ],
+  [
+   3,
+   "POSITION_4"
+  ],
+  [
+   4,
+   "POSITION_1"
+  ],
+  [
+   4,
+   "POSITION_2"
+  ],
+  [
+   4,
+   "POSITION_3"
+  ],
+  [
+   5,
+   "POSITION_5"
+  ],
+  [
+   5,
+   "POSITION_4"
+  ],
+  [
+   6,
+   "POSITION_1"
+  ],
+  [
+   7,
+   "POSITION_3"
+  ],
+  [
+   7,
+   "POSITION_2"
+  ],
+  [
+   7,
+   "POSITION_4"
+  ],
+  [
+   7,
+   "POSITION_5"
+  ],
+  [
+   8,
+   "POSITION_1"
+  ],
+  [
+   9,
+   "POSITION_4"
+  ],
+  [
+   9,
+   "POSITION_5"
+  ],
+  [
+   10,
+   "POSITION_1"
+  ],
+  [
+   11,
+   "POSITION_2"
+  ],
+  [
+   11,
+   "POSITION_1"
+  ],
+  [
+   12,
+   "POSITION_1"
+  ],
+  [
+   13,
+   "POSITION_2"
+  ],
+  [
+   14,
+   "POSITION_4"
+  ],
+  [
+   14,
+   "POSITION_5"
+  ],
+  [
+   14,
+   "POSITION_3"
+  ],
+  [
+   14,
+   "POSITION_2"
+  ],
+  [
+   15,
+   "POSITION_3"
+  ],
+  [
+   15,
+   "POSITION_2"
+  ],
+  [
+   15,
+   "POSITION_1"
+  ],
+  [
+   16,
+   "POSITION_3"
+  ],
+  [
+   16,
+   "POSITION_2"
+  ],
+  [
+   17,
+   "POSITION_2"
+  ],
+  [
+   18,
+   "POSITION_1"
+  ],
+  [
+   19,
+   "POSITION_3"
+  ],
+  [
+   19,
+   "POSITION_1"
+  ],
+  [
+   19,
+   "POSITION_4"
+  ],
+  [
+   19,
+   "POSITION_2"
+  ],
+  [
+   20,
+   "POSITION_5"
+  ],
+  [
+   20,
+   "POSITION_4"
+  ],
+  [
+   20,
+   "POSITION_1"
+  ],
+  [
+   21,
+   "POSITION_4"
+  ],
+  [
+   21,
+   "POSITION_2"
+  ],
+  [
+   21,
+   "POSITION_1"
+  ],
+  [
+   21,
+   "POSITION_5"
+  ],
+  [
+   22,
+   "POSITION_4"
+  ],
+  [
+   22,
+   "POSITION_2"
+  ],
+  [
+   22,
+   "POSITION_5"
+  ],
+  [
+   23,
+   "POSITION_3"
+  ],
+  [
+   23,
+   "POSITION_2"
+  ],
+  [
+   25,
+   "POSITION_2"
+  ],
+  [
+   25,
+   "POSITION_4"
+  ],
+  [
+   26,
+   "POSITION_5"
+  ],
+  [
+   26,
+   "POSITION_4"
+  ],
+  [
+   26,
+   "POSITION_2"
+  ],
+  [
+   27,
+   "POSITION_5"
+  ],
+  [
+   27,
+   "POSITION_4"
+  ],
+  [
+   28,
+   "POSITION_3"
+  ],
+  [
+   29,
+   "POSITION_3"
+  ],
+  [
+   30,
+   "POSITION_5"
+  ],
+  [
+   30,
+   "POSITION_4"
+  ],
+  [
+   31,
+   "POSITION_5"
+  ],
+  [
+   31,
+   "POSITION_4"
+  ],
+  [
+   32,
+   "POSITION_1"
+  ],
+  [
+   32,
+   "POSITION_2"
+  ],
+  [
+   33,
+   "POSITION_3"
+  ],
+  [
+   33,
+   "POSITION_4"
+  ],
+  [
+   33,
+   "POSITION_5"
+  ],
+  [
+   34,
+   "POSITION_2"
+  ],
+  [
+   35,
+   "POSITION_2"
+  ],
+  [
+   35,
+   "POSITION_4"
+  ],
+  [
+   35,
+   "POSITION_1"
+  ],
+  [
+   36,
+   "POSITION_2"
+  ],
+  [
+   36,
+   "POSITION_3"
+  ],
+  [
+   37,
+   "POSITION_5"
+  ],
+  [
+   37,
+   "POSITION_4"
+  ],
+  [
+   38,
+   "POSITION_3"
+  ],
+  [
+   38,
+   "POSITION_2"
+  ],
+  [
+   39,
+   "POSITION_2"
+  ],
+  [
+   39,
+   "POSITION_4"
+  ],
+  [
+   40,
+   "POSITION_4"
+  ],
+  [
+   40,
+   "POSITION_5"
+  ],
+  [
+   41,
+   "POSITION_1"
+  ],
+  [
+   42,
+   "POSITION_3"
+  ],
+  [
+   42,
+   "POSITION_1"
+  ],
+  [
+   43,
+   "POSITION_2"
+  ],
+  [
+   43,
+   "POSITION_3"
+  ],
+  [
+   44,
+   "POSITION_1"
+  ],
+  [
+   45,
+   "POSITION_4"
+  ],
+  [
+   45,
+   "POSITION_5"
+  ],
+  [
+   45,
+   "POSITION_2"
+  ],
+  [
+   46,
+   "POSITION_1"
+  ],
+  [
+   46,
+   "POSITION_2"
+  ],
+  [
+   47,
+   "POSITION_2"
+  ],
+  [
+   47,
+   "POSITION_3"
+  ],
+  [
+   48,
+   "POSITION_1"
+  ],
+  [
+   49,
+   "POSITION_3"
+  ],
+  [
+   49,
+   "POSITION_2"
+  ],
+  [
+   50,
+   "POSITION_5"
+  ],
+  [
+   50,
+   "POSITION_4"
+  ],
+  [
+   51,
+   "POSITION_4"
+  ],
+  [
+   51,
+   "POSITION_5"
+  ],
+  [
+   51,
+   "POSITION_3"
+  ],
+  [
+   52,
+   "POSITION_2"
+  ],
+  [
+   53,
+   "POSITION_4"
+  ],
+  [
+   53,
+   "POSITION_1"
+  ],
+  [
+   53,
+   "POSITION_2"
+  ],
+  [
+   53,
+   "POSITION_5"
+  ],
+  [
+   54,
+   "POSITION_1"
+  ],
+  [
+   55,
+   "POSITION_3"
+  ],
+  [
+   56,
+   "POSITION_1"
+  ],
+  [
+   56,
+   "POSITION_2"
+  ],
+  [
+   57,
+   "POSITION_3"
+  ],
+  [
+   57,
+   "POSITION_5"
+  ],
+  [
+   57,
+   "POSITION_4"
+  ],
+  [
+   58,
+   "POSITION_4"
+  ],
+  [
+   58,
+   "POSITION_5"
+  ],
+  [
+   59,
+   "POSITION_2"
+  ],
+  [
+   59,
+   "POSITION_3"
+  ],
+  [
+   60,
+   "POSITION_3"
+  ],
+  [
+   61,
+   "POSITION_2"
+  ],
+  [
+   62,
+   "POSITION_4"
+  ],
+  [
+   62,
+   "POSITION_5"
+  ],
+  [
+   63,
+   "POSITION_1"
+  ],
+  [
+   63,
+   "POSITION_4"
+  ],
+  [
+   63,
+   "POSITION_2"
+  ],
+  [
+   63,
+   "POSITION_5"
+  ],
+  [
+   64,
+   "POSITION_5"
+  ],
+  [
+   64,
+   "POSITION_4"
+  ],
+  [
+   65,
+   "POSITION_4"
+  ],
+  [
+   66,
+   "POSITION_5"
+  ],
+  [
+   67,
+   "POSITION_1"
+  ],
+  [
+   68,
+   "POSITION_5"
+  ],
+  [
+   68,
+   "POSITION_4"
+  ],
+  [
+   69,
+   "POSITION_3"
+  ],
+  [
+   70,
+   "POSITION_1"
+  ],
+  [
+   71,
+   "POSITION_4"
+  ],
+  [
+   71,
+   "POSITION_3"
+  ],
+  [
+   71,
+   "POSITION_5"
+  ],
+  [
+   72,
+   "POSITION_4"
+  ],
+  [
+   72,
+   "POSITION_5"
+  ],
+  [
+   72,
+   "POSITION_1"
+  ],
+  [
+   73,
+   "POSITION_1"
+  ],
+  [
+   73,
+   "POSITION_3"
+  ],
+  [
+   73,
+   "POSITION_2"
+  ],
+  [
+   73,
+   "POSITION_4"
+  ],
+  [
+   74,
+   "POSITION_2"
+  ],
+  [
+   74,
+   "POSITION_4"
+  ],
+  [
+   75,
+   "POSITION_4"
+  ],
+  [
+   75,
+   "POSITION_5"
+  ],
+  [
+   75,
+   "POSITION_2"
+  ],
+  [
+   76,
+   "POSITION_2"
+  ],
+  [
+   77,
+   "POSITION_3"
+  ],
+  [
+   78,
+   "POSITION_3"
+  ],
+  [
+   79,
+   "POSITION_5"
+  ],
+  [
+   79,
+   "POSITION_4"
+  ],
+  [
+   80,
+   "POSITION_1"
+  ],
+  [
+   80,
+   "POSITION_2"
+  ],
+  [
+   81,
+   "POSITION_3"
+  ],
+  [
+   81,
+   "POSITION_1"
+  ],
+  [
+   82,
+   "POSITION_2"
+  ],
+  [
+   83,
+   "POSITION_5"
+  ],
+  [
+   83,
+   "POSITION_4"
+  ],
+  [
+   84,
+   "POSITION_5"
+  ],
+  [
+   84,
+   "POSITION_4"
+  ],
+  [
+   84,
+   "POSITION_3"
+  ],
+  [
+   84,
+   "POSITION_2"
+  ],
+  [
+   85,
+   "POSITION_4"
+  ],
+  [
+   85,
+   "POSITION_5"
+  ],
+  [
+   85,
+   "POSITION_3"
+  ],
+  [
+   86,
+   "POSITION_4"
+  ],
+  [
+   86,
+   "POSITION_5"
+  ],
+  [
+   86,
+   "POSITION_2"
+  ],
+  [
+   87,
+   "POSITION_5"
+  ],
+  [
+   87,
+   "POSITION_4"
+  ],
+  [
+   88,
+   "POSITION_4"
+  ],
+  [
+   88,
+   "POSITION_2"
+  ],
+  [
+   88,
+   "POSITION_5"
+  ],
+  [
+   89,
+   "POSITION_1"
+  ],
+  [
+   90,
+   "POSITION_2"
+  ],
+  [
+   90,
+   "POSITION_4"
+  ],
+  [
+   90,
+   "POSITION_5"
+  ],
+  [
+   91,
+   "POSITION_5"
+  ],
+  [
+   91,
+   "POSITION_2"
+  ],
+  [
+   91,
+   "POSITION_4"
+  ],
+  [
+   92,
+   "POSITION_3"
+  ],
+  [
+   92,
+   "POSITION_2"
+  ],
+  [
+   93,
+   "POSITION_1"
+  ],
+  [
+   93,
+   "POSITION_2"
+  ],
+  [
+   94,
+   "POSITION_1"
+  ],
+  [
+   94,
+   "POSITION_2"
+  ],
+  [
+   95,
+   "POSITION_1"
+  ],
+  [
+   96,
+   "POSITION_3"
+  ],
+  [
+   97,
+   "POSITION_3"
+  ],
+  [
+   97,
+   "POSITION_2"
+  ],
+  [
+   97,
+   "POSITION_4"
+  ],
+  [
+   97,
+   "POSITION_5"
+  ],
+  [
+   98,
+   "POSITION_3"
+  ],
+  [
+   99,
+   "POSITION_3"
+  ],
+  [
+   100,
+   "POSITION_4"
+  ],
+  [
+   100,
+   "POSITION_5"
+  ],
+  [
+   100,
+   "POSITION_3"
+  ],
+  [
+   101,
+   "POSITION_4"
+  ],
+  [
+   101,
+   "POSITION_5"
+  ],
+  [
+   101,
+   "POSITION_2"
+  ],
+  [
+   102,
+   "POSITION_5"
+  ],
+  [
+   102,
+   "POSITION_3"
+  ],
+  [
+   102,
+   "POSITION_4"
+  ],
+  [
+   103,
+   "POSITION_3"
+  ],
+  [
+   104,
+   "POSITION_3"
+  ],
+  [
+   105,
+   "POSITION_4"
+  ],
+  [
+   105,
+   "POSITION_5"
+  ],
+  [
+   106,
+   "POSITION_2"
+  ],
+  [
+   107,
+   "POSITION_2"
+  ],
+  [
+   107,
+   "POSITION_4"
+  ],
+  [
+   107,
+   "POSITION_3"
+  ],
+  [
+   107,
+   "POSITION_5"
+  ],
+  [
+   108,
+   "POSITION_3"
+  ],
+  [
+   109,
+   "POSITION_1"
+  ],
+  [
+   110,
+   "POSITION_4"
+  ],
+  [
+   110,
+   "POSITION_2"
+  ],
+  [
+   110,
+   "POSITION_3"
+  ],
+  [
+   110,
+   "POSITION_5"
+  ],
+  [
+   111,
+   "POSITION_5"
+  ],
+  [
+   111,
+   "POSITION_4"
+  ],
+  [
+   112,
+   "POSITION_5"
+  ],
+  [
+   112,
+   "POSITION_4"
+  ],
+  [
+   113,
+   "POSITION_2"
+  ],
+  [
+   114,
+   "POSITION_1"
+  ],
+  [
+   114,
+   "POSITION_2"
+  ],
+  [
+   119,
+   "POSITION_4"
+  ],
+  [
+   119,
+   "POSITION_5"
+  ],
+  [
+   120,
+   "POSITION_2"
+  ],
+  [
+   120,
+   "POSITION_3"
+  ],
+  [
+   121,
+   "POSITION_5"
+  ],
+  [
+   121,
+   "POSITION_4"
+  ],
+  [
+   123,
+   "POSITION_4"
+  ],
+  [
+   123,
+   "POSITION_5"
+  ],
+  [
+   126,
+   "POSITION_2"
+  ],
+  [
+   128,
+   "POSITION_4"
+  ],
+  [
+   128,
+   "POSITION_5"
+  ],
+  [
+   128,
+   "POSITION_2"
+  ],
+  [
+   129,
+   "POSITION_3"
+  ],
+  [
+   131,
+   "POSITION_5"
+  ],
+  [
+   131,
+   "POSITION_4"
+  ],
+  [
+   135,
+   "POSITION_3"
+  ],
+  [
+   136,
+   "POSITION_2"
+  ],
+  [
+   136,
+   "POSITION_4"
+  ],
+  [
+   136,
+   "POSITION_3"
+  ],
+  [
+   136,
+   "POSITION_5"
+  ],
+  [
+   137,
+   "POSITION_3"
+  ],
+  [
+   137,
+   "POSITION_2"
+  ],
+  [
+   138,
+   "POSITION_1"
+  ],
+  [
+   138,
+   "POSITION_2"
+  ],
+  [
+   145,
+   "POSITION_1"
+  ],
+  [
+   145,
+   "POSITION_2"
+  ],
+  [
+   155,
+   "POSITION_3"
+  ],
+  [
+   155,
+   "POSITION_5"
+  ],
+  [
+   155,
+   "POSITION_4"
+  ]
+ ],
  "batches": [
   {
    "name": "positions",
    "query": "{ heroStats { stats(bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], groupByPosition: true) { heroId position matchCount winCount } } }"
   },
   {
-   "name": "probe_am",
-   "query": "{ heroStats { full: itemFullPurchase(heroId: 1, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount bracketBasicIds position } start: itemStartingPurchase(heroId: 1, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } boots: itemBootPurchase(heroId: 1, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } curve: stats(heroIds: [1], bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1], groupByTime: true) { time position matchCount winCount } } }"
+   "name": "items_000",
+   "query": "{ heroStats { h1_1_full: itemFullPurchase(heroId: 1, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h1_1_start: itemStartingPurchase(heroId: 1, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h1_1_boots: itemBootPurchase(heroId: 1, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h2_3_full: itemFullPurchase(heroId: 2, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h2_3_start: itemStartingPurchase(heroId: 2, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h2_3_boots: itemBootPurchase(heroId: 2, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h3_5_full: itemFullPurchase(heroId: 3, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h3_5_start: itemStartingPurchase(heroId: 3, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h3_5_boots: itemBootPurchase(heroId: 3, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h3_4_full: itemFullPurchase(heroId: 3, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h3_4_start: itemStartingPurchase(heroId: 3, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h3_4_boots: itemBootPurchase(heroId: 3, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_001",
+   "query": "{ heroStats { h4_1_full: itemFullPurchase(heroId: 4, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h4_1_start: itemStartingPurchase(heroId: 4, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h4_1_boots: itemBootPurchase(heroId: 4, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h4_2_full: itemFullPurchase(heroId: 4, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h4_2_start: itemStartingPurchase(heroId: 4, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h4_2_boots: itemBootPurchase(heroId: 4, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h4_3_full: itemFullPurchase(heroId: 4, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h4_3_start: itemStartingPurchase(heroId: 4, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h4_3_boots: itemBootPurchase(heroId: 4, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h5_5_full: itemFullPurchase(heroId: 5, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h5_5_start: itemStartingPurchase(heroId: 5, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h5_5_boots: itemBootPurchase(heroId: 5, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_002",
+   "query": "{ heroStats { h5_4_full: itemFullPurchase(heroId: 5, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h5_4_start: itemStartingPurchase(heroId: 5, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h5_4_boots: itemBootPurchase(heroId: 5, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h6_1_full: itemFullPurchase(heroId: 6, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h6_1_start: itemStartingPurchase(heroId: 6, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h6_1_boots: itemBootPurchase(heroId: 6, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h7_3_full: itemFullPurchase(heroId: 7, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h7_3_start: itemStartingPurchase(heroId: 7, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h7_3_boots: itemBootPurchase(heroId: 7, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h7_2_full: itemFullPurchase(heroId: 7, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h7_2_start: itemStartingPurchase(heroId: 7, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h7_2_boots: itemBootPurchase(heroId: 7, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_003",
+   "query": "{ heroStats { h7_4_full: itemFullPurchase(heroId: 7, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h7_4_start: itemStartingPurchase(heroId: 7, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h7_4_boots: itemBootPurchase(heroId: 7, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h7_5_full: itemFullPurchase(heroId: 7, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h7_5_start: itemStartingPurchase(heroId: 7, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h7_5_boots: itemBootPurchase(heroId: 7, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h8_1_full: itemFullPurchase(heroId: 8, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h8_1_start: itemStartingPurchase(heroId: 8, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h8_1_boots: itemBootPurchase(heroId: 8, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h9_4_full: itemFullPurchase(heroId: 9, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h9_4_start: itemStartingPurchase(heroId: 9, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h9_4_boots: itemBootPurchase(heroId: 9, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_004",
+   "query": "{ heroStats { h9_5_full: itemFullPurchase(heroId: 9, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h9_5_start: itemStartingPurchase(heroId: 9, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h9_5_boots: itemBootPurchase(heroId: 9, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h10_1_full: itemFullPurchase(heroId: 10, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h10_1_start: itemStartingPurchase(heroId: 10, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h10_1_boots: itemBootPurchase(heroId: 10, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h11_2_full: itemFullPurchase(heroId: 11, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h11_2_start: itemStartingPurchase(heroId: 11, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h11_2_boots: itemBootPurchase(heroId: 11, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h11_1_full: itemFullPurchase(heroId: 11, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h11_1_start: itemStartingPurchase(heroId: 11, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h11_1_boots: itemBootPurchase(heroId: 11, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_005",
+   "query": "{ heroStats { h12_1_full: itemFullPurchase(heroId: 12, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h12_1_start: itemStartingPurchase(heroId: 12, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h12_1_boots: itemBootPurchase(heroId: 12, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h13_2_full: itemFullPurchase(heroId: 13, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h13_2_start: itemStartingPurchase(heroId: 13, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h13_2_boots: itemBootPurchase(heroId: 13, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h14_4_full: itemFullPurchase(heroId: 14, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h14_4_start: itemStartingPurchase(heroId: 14, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h14_4_boots: itemBootPurchase(heroId: 14, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h14_5_full: itemFullPurchase(heroId: 14, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h14_5_start: itemStartingPurchase(heroId: 14, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h14_5_boots: itemBootPurchase(heroId: 14, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_006",
+   "query": "{ heroStats { h14_3_full: itemFullPurchase(heroId: 14, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h14_3_start: itemStartingPurchase(heroId: 14, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h14_3_boots: itemBootPurchase(heroId: 14, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h14_2_full: itemFullPurchase(heroId: 14, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h14_2_start: itemStartingPurchase(heroId: 14, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h14_2_boots: itemBootPurchase(heroId: 14, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h15_3_full: itemFullPurchase(heroId: 15, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h15_3_start: itemStartingPurchase(heroId: 15, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h15_3_boots: itemBootPurchase(heroId: 15, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h15_2_full: itemFullPurchase(heroId: 15, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h15_2_start: itemStartingPurchase(heroId: 15, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h15_2_boots: itemBootPurchase(heroId: 15, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_007",
+   "query": "{ heroStats { h15_1_full: itemFullPurchase(heroId: 15, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h15_1_start: itemStartingPurchase(heroId: 15, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h15_1_boots: itemBootPurchase(heroId: 15, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h16_3_full: itemFullPurchase(heroId: 16, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h16_3_start: itemStartingPurchase(heroId: 16, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h16_3_boots: itemBootPurchase(heroId: 16, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h16_2_full: itemFullPurchase(heroId: 16, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h16_2_start: itemStartingPurchase(heroId: 16, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h16_2_boots: itemBootPurchase(heroId: 16, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h17_2_full: itemFullPurchase(heroId: 17, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h17_2_start: itemStartingPurchase(heroId: 17, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h17_2_boots: itemBootPurchase(heroId: 17, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_008",
+   "query": "{ heroStats { h18_1_full: itemFullPurchase(heroId: 18, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h18_1_start: itemStartingPurchase(heroId: 18, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h18_1_boots: itemBootPurchase(heroId: 18, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h19_3_full: itemFullPurchase(heroId: 19, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h19_3_start: itemStartingPurchase(heroId: 19, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h19_3_boots: itemBootPurchase(heroId: 19, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h19_1_full: itemFullPurchase(heroId: 19, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h19_1_start: itemStartingPurchase(heroId: 19, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h19_1_boots: itemBootPurchase(heroId: 19, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h19_4_full: itemFullPurchase(heroId: 19, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h19_4_start: itemStartingPurchase(heroId: 19, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h19_4_boots: itemBootPurchase(heroId: 19, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_009",
+   "query": "{ heroStats { h19_2_full: itemFullPurchase(heroId: 19, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h19_2_start: itemStartingPurchase(heroId: 19, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h19_2_boots: itemBootPurchase(heroId: 19, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h20_5_full: itemFullPurchase(heroId: 20, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h20_5_start: itemStartingPurchase(heroId: 20, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h20_5_boots: itemBootPurchase(heroId: 20, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h20_4_full: itemFullPurchase(heroId: 20, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h20_4_start: itemStartingPurchase(heroId: 20, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h20_4_boots: itemBootPurchase(heroId: 20, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h20_1_full: itemFullPurchase(heroId: 20, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h20_1_start: itemStartingPurchase(heroId: 20, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h20_1_boots: itemBootPurchase(heroId: 20, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_010",
+   "query": "{ heroStats { h21_4_full: itemFullPurchase(heroId: 21, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h21_4_start: itemStartingPurchase(heroId: 21, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h21_4_boots: itemBootPurchase(heroId: 21, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h21_2_full: itemFullPurchase(heroId: 21, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h21_2_start: itemStartingPurchase(heroId: 21, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h21_2_boots: itemBootPurchase(heroId: 21, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h21_1_full: itemFullPurchase(heroId: 21, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h21_1_start: itemStartingPurchase(heroId: 21, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h21_1_boots: itemBootPurchase(heroId: 21, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h21_5_full: itemFullPurchase(heroId: 21, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h21_5_start: itemStartingPurchase(heroId: 21, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h21_5_boots: itemBootPurchase(heroId: 21, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_011",
+   "query": "{ heroStats { h22_4_full: itemFullPurchase(heroId: 22, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h22_4_start: itemStartingPurchase(heroId: 22, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h22_4_boots: itemBootPurchase(heroId: 22, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h22_2_full: itemFullPurchase(heroId: 22, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h22_2_start: itemStartingPurchase(heroId: 22, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h22_2_boots: itemBootPurchase(heroId: 22, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h22_5_full: itemFullPurchase(heroId: 22, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h22_5_start: itemStartingPurchase(heroId: 22, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h22_5_boots: itemBootPurchase(heroId: 22, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h23_3_full: itemFullPurchase(heroId: 23, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h23_3_start: itemStartingPurchase(heroId: 23, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h23_3_boots: itemBootPurchase(heroId: 23, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_012",
+   "query": "{ heroStats { h23_2_full: itemFullPurchase(heroId: 23, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h23_2_start: itemStartingPurchase(heroId: 23, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h23_2_boots: itemBootPurchase(heroId: 23, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h25_2_full: itemFullPurchase(heroId: 25, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h25_2_start: itemStartingPurchase(heroId: 25, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h25_2_boots: itemBootPurchase(heroId: 25, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h25_4_full: itemFullPurchase(heroId: 25, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h25_4_start: itemStartingPurchase(heroId: 25, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h25_4_boots: itemBootPurchase(heroId: 25, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h26_5_full: itemFullPurchase(heroId: 26, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h26_5_start: itemStartingPurchase(heroId: 26, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h26_5_boots: itemBootPurchase(heroId: 26, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_013",
+   "query": "{ heroStats { h26_4_full: itemFullPurchase(heroId: 26, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h26_4_start: itemStartingPurchase(heroId: 26, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h26_4_boots: itemBootPurchase(heroId: 26, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h26_2_full: itemFullPurchase(heroId: 26, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h26_2_start: itemStartingPurchase(heroId: 26, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h26_2_boots: itemBootPurchase(heroId: 26, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h27_5_full: itemFullPurchase(heroId: 27, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h27_5_start: itemStartingPurchase(heroId: 27, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h27_5_boots: itemBootPurchase(heroId: 27, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h27_4_full: itemFullPurchase(heroId: 27, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h27_4_start: itemStartingPurchase(heroId: 27, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h27_4_boots: itemBootPurchase(heroId: 27, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_014",
+   "query": "{ heroStats { h28_3_full: itemFullPurchase(heroId: 28, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h28_3_start: itemStartingPurchase(heroId: 28, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h28_3_boots: itemBootPurchase(heroId: 28, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h29_3_full: itemFullPurchase(heroId: 29, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h29_3_start: itemStartingPurchase(heroId: 29, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h29_3_boots: itemBootPurchase(heroId: 29, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h30_5_full: itemFullPurchase(heroId: 30, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h30_5_start: itemStartingPurchase(heroId: 30, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h30_5_boots: itemBootPurchase(heroId: 30, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h30_4_full: itemFullPurchase(heroId: 30, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h30_4_start: itemStartingPurchase(heroId: 30, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h30_4_boots: itemBootPurchase(heroId: 30, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_015",
+   "query": "{ heroStats { h31_5_full: itemFullPurchase(heroId: 31, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h31_5_start: itemStartingPurchase(heroId: 31, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h31_5_boots: itemBootPurchase(heroId: 31, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h31_4_full: itemFullPurchase(heroId: 31, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h31_4_start: itemStartingPurchase(heroId: 31, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h31_4_boots: itemBootPurchase(heroId: 31, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h32_1_full: itemFullPurchase(heroId: 32, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h32_1_start: itemStartingPurchase(heroId: 32, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h32_1_boots: itemBootPurchase(heroId: 32, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h32_2_full: itemFullPurchase(heroId: 32, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h32_2_start: itemStartingPurchase(heroId: 32, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h32_2_boots: itemBootPurchase(heroId: 32, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_016",
+   "query": "{ heroStats { h33_3_full: itemFullPurchase(heroId: 33, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h33_3_start: itemStartingPurchase(heroId: 33, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h33_3_boots: itemBootPurchase(heroId: 33, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h33_4_full: itemFullPurchase(heroId: 33, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h33_4_start: itemStartingPurchase(heroId: 33, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h33_4_boots: itemBootPurchase(heroId: 33, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h33_5_full: itemFullPurchase(heroId: 33, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h33_5_start: itemStartingPurchase(heroId: 33, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h33_5_boots: itemBootPurchase(heroId: 33, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h34_2_full: itemFullPurchase(heroId: 34, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h34_2_start: itemStartingPurchase(heroId: 34, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h34_2_boots: itemBootPurchase(heroId: 34, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_017",
+   "query": "{ heroStats { h35_2_full: itemFullPurchase(heroId: 35, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h35_2_start: itemStartingPurchase(heroId: 35, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h35_2_boots: itemBootPurchase(heroId: 35, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h35_4_full: itemFullPurchase(heroId: 35, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h35_4_start: itemStartingPurchase(heroId: 35, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h35_4_boots: itemBootPurchase(heroId: 35, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h35_1_full: itemFullPurchase(heroId: 35, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h35_1_start: itemStartingPurchase(heroId: 35, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h35_1_boots: itemBootPurchase(heroId: 35, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h36_2_full: itemFullPurchase(heroId: 36, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h36_2_start: itemStartingPurchase(heroId: 36, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h36_2_boots: itemBootPurchase(heroId: 36, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_018",
+   "query": "{ heroStats { h36_3_full: itemFullPurchase(heroId: 36, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h36_3_start: itemStartingPurchase(heroId: 36, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h36_3_boots: itemBootPurchase(heroId: 36, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h37_5_full: itemFullPurchase(heroId: 37, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h37_5_start: itemStartingPurchase(heroId: 37, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h37_5_boots: itemBootPurchase(heroId: 37, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h37_4_full: itemFullPurchase(heroId: 37, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h37_4_start: itemStartingPurchase(heroId: 37, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h37_4_boots: itemBootPurchase(heroId: 37, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h38_3_full: itemFullPurchase(heroId: 38, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h38_3_start: itemStartingPurchase(heroId: 38, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h38_3_boots: itemBootPurchase(heroId: 38, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_019",
+   "query": "{ heroStats { h38_2_full: itemFullPurchase(heroId: 38, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h38_2_start: itemStartingPurchase(heroId: 38, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h38_2_boots: itemBootPurchase(heroId: 38, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h39_2_full: itemFullPurchase(heroId: 39, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h39_2_start: itemStartingPurchase(heroId: 39, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h39_2_boots: itemBootPurchase(heroId: 39, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h39_4_full: itemFullPurchase(heroId: 39, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h39_4_start: itemStartingPurchase(heroId: 39, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h39_4_boots: itemBootPurchase(heroId: 39, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h40_4_full: itemFullPurchase(heroId: 40, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h40_4_start: itemStartingPurchase(heroId: 40, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h40_4_boots: itemBootPurchase(heroId: 40, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_020",
+   "query": "{ heroStats { h40_5_full: itemFullPurchase(heroId: 40, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h40_5_start: itemStartingPurchase(heroId: 40, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h40_5_boots: itemBootPurchase(heroId: 40, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h41_1_full: itemFullPurchase(heroId: 41, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h41_1_start: itemStartingPurchase(heroId: 41, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h41_1_boots: itemBootPurchase(heroId: 41, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h42_3_full: itemFullPurchase(heroId: 42, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h42_3_start: itemStartingPurchase(heroId: 42, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h42_3_boots: itemBootPurchase(heroId: 42, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h42_1_full: itemFullPurchase(heroId: 42, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h42_1_start: itemStartingPurchase(heroId: 42, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h42_1_boots: itemBootPurchase(heroId: 42, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_021",
+   "query": "{ heroStats { h43_2_full: itemFullPurchase(heroId: 43, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h43_2_start: itemStartingPurchase(heroId: 43, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h43_2_boots: itemBootPurchase(heroId: 43, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h43_3_full: itemFullPurchase(heroId: 43, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h43_3_start: itemStartingPurchase(heroId: 43, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h43_3_boots: itemBootPurchase(heroId: 43, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h44_1_full: itemFullPurchase(heroId: 44, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h44_1_start: itemStartingPurchase(heroId: 44, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h44_1_boots: itemBootPurchase(heroId: 44, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h45_4_full: itemFullPurchase(heroId: 45, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h45_4_start: itemStartingPurchase(heroId: 45, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h45_4_boots: itemBootPurchase(heroId: 45, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_022",
+   "query": "{ heroStats { h45_5_full: itemFullPurchase(heroId: 45, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h45_5_start: itemStartingPurchase(heroId: 45, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h45_5_boots: itemBootPurchase(heroId: 45, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h45_2_full: itemFullPurchase(heroId: 45, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h45_2_start: itemStartingPurchase(heroId: 45, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h45_2_boots: itemBootPurchase(heroId: 45, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h46_1_full: itemFullPurchase(heroId: 46, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h46_1_start: itemStartingPurchase(heroId: 46, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h46_1_boots: itemBootPurchase(heroId: 46, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h46_2_full: itemFullPurchase(heroId: 46, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h46_2_start: itemStartingPurchase(heroId: 46, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h46_2_boots: itemBootPurchase(heroId: 46, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_023",
+   "query": "{ heroStats { h47_2_full: itemFullPurchase(heroId: 47, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h47_2_start: itemStartingPurchase(heroId: 47, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h47_2_boots: itemBootPurchase(heroId: 47, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h47_3_full: itemFullPurchase(heroId: 47, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h47_3_start: itemStartingPurchase(heroId: 47, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h47_3_boots: itemBootPurchase(heroId: 47, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h48_1_full: itemFullPurchase(heroId: 48, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h48_1_start: itemStartingPurchase(heroId: 48, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h48_1_boots: itemBootPurchase(heroId: 48, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h49_3_full: itemFullPurchase(heroId: 49, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h49_3_start: itemStartingPurchase(heroId: 49, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h49_3_boots: itemBootPurchase(heroId: 49, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_024",
+   "query": "{ heroStats { h49_2_full: itemFullPurchase(heroId: 49, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h49_2_start: itemStartingPurchase(heroId: 49, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h49_2_boots: itemBootPurchase(heroId: 49, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h50_5_full: itemFullPurchase(heroId: 50, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h50_5_start: itemStartingPurchase(heroId: 50, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h50_5_boots: itemBootPurchase(heroId: 50, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h50_4_full: itemFullPurchase(heroId: 50, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h50_4_start: itemStartingPurchase(heroId: 50, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h50_4_boots: itemBootPurchase(heroId: 50, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h51_4_full: itemFullPurchase(heroId: 51, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h51_4_start: itemStartingPurchase(heroId: 51, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h51_4_boots: itemBootPurchase(heroId: 51, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_025",
+   "query": "{ heroStats { h51_5_full: itemFullPurchase(heroId: 51, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h51_5_start: itemStartingPurchase(heroId: 51, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h51_5_boots: itemBootPurchase(heroId: 51, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h51_3_full: itemFullPurchase(heroId: 51, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h51_3_start: itemStartingPurchase(heroId: 51, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h51_3_boots: itemBootPurchase(heroId: 51, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h52_2_full: itemFullPurchase(heroId: 52, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h52_2_start: itemStartingPurchase(heroId: 52, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h52_2_boots: itemBootPurchase(heroId: 52, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h53_4_full: itemFullPurchase(heroId: 53, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h53_4_start: itemStartingPurchase(heroId: 53, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h53_4_boots: itemBootPurchase(heroId: 53, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_026",
+   "query": "{ heroStats { h53_1_full: itemFullPurchase(heroId: 53, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h53_1_start: itemStartingPurchase(heroId: 53, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h53_1_boots: itemBootPurchase(heroId: 53, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h53_2_full: itemFullPurchase(heroId: 53, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h53_2_start: itemStartingPurchase(heroId: 53, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h53_2_boots: itemBootPurchase(heroId: 53, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h53_5_full: itemFullPurchase(heroId: 53, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h53_5_start: itemStartingPurchase(heroId: 53, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h53_5_boots: itemBootPurchase(heroId: 53, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h54_1_full: itemFullPurchase(heroId: 54, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h54_1_start: itemStartingPurchase(heroId: 54, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h54_1_boots: itemBootPurchase(heroId: 54, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_027",
+   "query": "{ heroStats { h55_3_full: itemFullPurchase(heroId: 55, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h55_3_start: itemStartingPurchase(heroId: 55, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h55_3_boots: itemBootPurchase(heroId: 55, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h56_1_full: itemFullPurchase(heroId: 56, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h56_1_start: itemStartingPurchase(heroId: 56, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h56_1_boots: itemBootPurchase(heroId: 56, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h56_2_full: itemFullPurchase(heroId: 56, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h56_2_start: itemStartingPurchase(heroId: 56, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h56_2_boots: itemBootPurchase(heroId: 56, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h57_3_full: itemFullPurchase(heroId: 57, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h57_3_start: itemStartingPurchase(heroId: 57, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h57_3_boots: itemBootPurchase(heroId: 57, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_028",
+   "query": "{ heroStats { h57_5_full: itemFullPurchase(heroId: 57, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h57_5_start: itemStartingPurchase(heroId: 57, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h57_5_boots: itemBootPurchase(heroId: 57, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h57_4_full: itemFullPurchase(heroId: 57, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h57_4_start: itemStartingPurchase(heroId: 57, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h57_4_boots: itemBootPurchase(heroId: 57, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h58_4_full: itemFullPurchase(heroId: 58, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h58_4_start: itemStartingPurchase(heroId: 58, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h58_4_boots: itemBootPurchase(heroId: 58, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h58_5_full: itemFullPurchase(heroId: 58, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h58_5_start: itemStartingPurchase(heroId: 58, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h58_5_boots: itemBootPurchase(heroId: 58, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_029",
+   "query": "{ heroStats { h59_2_full: itemFullPurchase(heroId: 59, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h59_2_start: itemStartingPurchase(heroId: 59, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h59_2_boots: itemBootPurchase(heroId: 59, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h59_3_full: itemFullPurchase(heroId: 59, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h59_3_start: itemStartingPurchase(heroId: 59, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h59_3_boots: itemBootPurchase(heroId: 59, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h60_3_full: itemFullPurchase(heroId: 60, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h60_3_start: itemStartingPurchase(heroId: 60, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h60_3_boots: itemBootPurchase(heroId: 60, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h61_2_full: itemFullPurchase(heroId: 61, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h61_2_start: itemStartingPurchase(heroId: 61, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h61_2_boots: itemBootPurchase(heroId: 61, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_030",
+   "query": "{ heroStats { h62_4_full: itemFullPurchase(heroId: 62, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h62_4_start: itemStartingPurchase(heroId: 62, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h62_4_boots: itemBootPurchase(heroId: 62, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h62_5_full: itemFullPurchase(heroId: 62, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h62_5_start: itemStartingPurchase(heroId: 62, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h62_5_boots: itemBootPurchase(heroId: 62, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h63_1_full: itemFullPurchase(heroId: 63, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h63_1_start: itemStartingPurchase(heroId: 63, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h63_1_boots: itemBootPurchase(heroId: 63, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h63_4_full: itemFullPurchase(heroId: 63, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h63_4_start: itemStartingPurchase(heroId: 63, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h63_4_boots: itemBootPurchase(heroId: 63, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_031",
+   "query": "{ heroStats { h63_2_full: itemFullPurchase(heroId: 63, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h63_2_start: itemStartingPurchase(heroId: 63, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h63_2_boots: itemBootPurchase(heroId: 63, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h63_5_full: itemFullPurchase(heroId: 63, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h63_5_start: itemStartingPurchase(heroId: 63, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h63_5_boots: itemBootPurchase(heroId: 63, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h64_5_full: itemFullPurchase(heroId: 64, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h64_5_start: itemStartingPurchase(heroId: 64, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h64_5_boots: itemBootPurchase(heroId: 64, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h64_4_full: itemFullPurchase(heroId: 64, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h64_4_start: itemStartingPurchase(heroId: 64, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h64_4_boots: itemBootPurchase(heroId: 64, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_032",
+   "query": "{ heroStats { h65_4_full: itemFullPurchase(heroId: 65, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h65_4_start: itemStartingPurchase(heroId: 65, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h65_4_boots: itemBootPurchase(heroId: 65, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h66_5_full: itemFullPurchase(heroId: 66, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h66_5_start: itemStartingPurchase(heroId: 66, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h66_5_boots: itemBootPurchase(heroId: 66, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h67_1_full: itemFullPurchase(heroId: 67, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h67_1_start: itemStartingPurchase(heroId: 67, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h67_1_boots: itemBootPurchase(heroId: 67, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h68_5_full: itemFullPurchase(heroId: 68, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h68_5_start: itemStartingPurchase(heroId: 68, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h68_5_boots: itemBootPurchase(heroId: 68, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_033",
+   "query": "{ heroStats { h68_4_full: itemFullPurchase(heroId: 68, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h68_4_start: itemStartingPurchase(heroId: 68, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h68_4_boots: itemBootPurchase(heroId: 68, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h69_3_full: itemFullPurchase(heroId: 69, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h69_3_start: itemStartingPurchase(heroId: 69, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h69_3_boots: itemBootPurchase(heroId: 69, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h70_1_full: itemFullPurchase(heroId: 70, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h70_1_start: itemStartingPurchase(heroId: 70, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h70_1_boots: itemBootPurchase(heroId: 70, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h71_4_full: itemFullPurchase(heroId: 71, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h71_4_start: itemStartingPurchase(heroId: 71, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h71_4_boots: itemBootPurchase(heroId: 71, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_034",
+   "query": "{ heroStats { h71_3_full: itemFullPurchase(heroId: 71, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h71_3_start: itemStartingPurchase(heroId: 71, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h71_3_boots: itemBootPurchase(heroId: 71, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h71_5_full: itemFullPurchase(heroId: 71, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h71_5_start: itemStartingPurchase(heroId: 71, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h71_5_boots: itemBootPurchase(heroId: 71, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h72_4_full: itemFullPurchase(heroId: 72, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h72_4_start: itemStartingPurchase(heroId: 72, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h72_4_boots: itemBootPurchase(heroId: 72, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h72_5_full: itemFullPurchase(heroId: 72, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h72_5_start: itemStartingPurchase(heroId: 72, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h72_5_boots: itemBootPurchase(heroId: 72, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_035",
+   "query": "{ heroStats { h72_1_full: itemFullPurchase(heroId: 72, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h72_1_start: itemStartingPurchase(heroId: 72, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h72_1_boots: itemBootPurchase(heroId: 72, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h73_1_full: itemFullPurchase(heroId: 73, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h73_1_start: itemStartingPurchase(heroId: 73, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h73_1_boots: itemBootPurchase(heroId: 73, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h73_3_full: itemFullPurchase(heroId: 73, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h73_3_start: itemStartingPurchase(heroId: 73, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h73_3_boots: itemBootPurchase(heroId: 73, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h73_2_full: itemFullPurchase(heroId: 73, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h73_2_start: itemStartingPurchase(heroId: 73, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h73_2_boots: itemBootPurchase(heroId: 73, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_036",
+   "query": "{ heroStats { h73_4_full: itemFullPurchase(heroId: 73, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h73_4_start: itemStartingPurchase(heroId: 73, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h73_4_boots: itemBootPurchase(heroId: 73, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h74_2_full: itemFullPurchase(heroId: 74, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h74_2_start: itemStartingPurchase(heroId: 74, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h74_2_boots: itemBootPurchase(heroId: 74, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h74_4_full: itemFullPurchase(heroId: 74, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h74_4_start: itemStartingPurchase(heroId: 74, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h74_4_boots: itemBootPurchase(heroId: 74, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h75_4_full: itemFullPurchase(heroId: 75, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h75_4_start: itemStartingPurchase(heroId: 75, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h75_4_boots: itemBootPurchase(heroId: 75, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_037",
+   "query": "{ heroStats { h75_5_full: itemFullPurchase(heroId: 75, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h75_5_start: itemStartingPurchase(heroId: 75, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h75_5_boots: itemBootPurchase(heroId: 75, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h75_2_full: itemFullPurchase(heroId: 75, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h75_2_start: itemStartingPurchase(heroId: 75, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h75_2_boots: itemBootPurchase(heroId: 75, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h76_2_full: itemFullPurchase(heroId: 76, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h76_2_start: itemStartingPurchase(heroId: 76, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h76_2_boots: itemBootPurchase(heroId: 76, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h77_3_full: itemFullPurchase(heroId: 77, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h77_3_start: itemStartingPurchase(heroId: 77, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h77_3_boots: itemBootPurchase(heroId: 77, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_038",
+   "query": "{ heroStats { h78_3_full: itemFullPurchase(heroId: 78, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h78_3_start: itemStartingPurchase(heroId: 78, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h78_3_boots: itemBootPurchase(heroId: 78, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h79_5_full: itemFullPurchase(heroId: 79, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h79_5_start: itemStartingPurchase(heroId: 79, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h79_5_boots: itemBootPurchase(heroId: 79, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h79_4_full: itemFullPurchase(heroId: 79, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h79_4_start: itemStartingPurchase(heroId: 79, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h79_4_boots: itemBootPurchase(heroId: 79, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h80_1_full: itemFullPurchase(heroId: 80, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h80_1_start: itemStartingPurchase(heroId: 80, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h80_1_boots: itemBootPurchase(heroId: 80, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_039",
+   "query": "{ heroStats { h80_2_full: itemFullPurchase(heroId: 80, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h80_2_start: itemStartingPurchase(heroId: 80, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h80_2_boots: itemBootPurchase(heroId: 80, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h81_3_full: itemFullPurchase(heroId: 81, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h81_3_start: itemStartingPurchase(heroId: 81, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h81_3_boots: itemBootPurchase(heroId: 81, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h81_1_full: itemFullPurchase(heroId: 81, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h81_1_start: itemStartingPurchase(heroId: 81, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h81_1_boots: itemBootPurchase(heroId: 81, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h82_2_full: itemFullPurchase(heroId: 82, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h82_2_start: itemStartingPurchase(heroId: 82, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h82_2_boots: itemBootPurchase(heroId: 82, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_040",
+   "query": "{ heroStats { h83_5_full: itemFullPurchase(heroId: 83, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h83_5_start: itemStartingPurchase(heroId: 83, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h83_5_boots: itemBootPurchase(heroId: 83, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h83_4_full: itemFullPurchase(heroId: 83, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h83_4_start: itemStartingPurchase(heroId: 83, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h83_4_boots: itemBootPurchase(heroId: 83, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h84_5_full: itemFullPurchase(heroId: 84, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h84_5_start: itemStartingPurchase(heroId: 84, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h84_5_boots: itemBootPurchase(heroId: 84, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h84_4_full: itemFullPurchase(heroId: 84, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h84_4_start: itemStartingPurchase(heroId: 84, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h84_4_boots: itemBootPurchase(heroId: 84, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_041",
+   "query": "{ heroStats { h84_3_full: itemFullPurchase(heroId: 84, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h84_3_start: itemStartingPurchase(heroId: 84, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h84_3_boots: itemBootPurchase(heroId: 84, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h84_2_full: itemFullPurchase(heroId: 84, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h84_2_start: itemStartingPurchase(heroId: 84, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h84_2_boots: itemBootPurchase(heroId: 84, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h85_4_full: itemFullPurchase(heroId: 85, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h85_4_start: itemStartingPurchase(heroId: 85, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h85_4_boots: itemBootPurchase(heroId: 85, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h85_5_full: itemFullPurchase(heroId: 85, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h85_5_start: itemStartingPurchase(heroId: 85, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h85_5_boots: itemBootPurchase(heroId: 85, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_042",
+   "query": "{ heroStats { h85_3_full: itemFullPurchase(heroId: 85, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h85_3_start: itemStartingPurchase(heroId: 85, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h85_3_boots: itemBootPurchase(heroId: 85, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h86_4_full: itemFullPurchase(heroId: 86, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h86_4_start: itemStartingPurchase(heroId: 86, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h86_4_boots: itemBootPurchase(heroId: 86, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h86_5_full: itemFullPurchase(heroId: 86, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h86_5_start: itemStartingPurchase(heroId: 86, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h86_5_boots: itemBootPurchase(heroId: 86, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h86_2_full: itemFullPurchase(heroId: 86, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h86_2_start: itemStartingPurchase(heroId: 86, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h86_2_boots: itemBootPurchase(heroId: 86, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_043",
+   "query": "{ heroStats { h87_5_full: itemFullPurchase(heroId: 87, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h87_5_start: itemStartingPurchase(heroId: 87, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h87_5_boots: itemBootPurchase(heroId: 87, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h87_4_full: itemFullPurchase(heroId: 87, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h87_4_start: itemStartingPurchase(heroId: 87, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h87_4_boots: itemBootPurchase(heroId: 87, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h88_4_full: itemFullPurchase(heroId: 88, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h88_4_start: itemStartingPurchase(heroId: 88, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h88_4_boots: itemBootPurchase(heroId: 88, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h88_2_full: itemFullPurchase(heroId: 88, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h88_2_start: itemStartingPurchase(heroId: 88, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h88_2_boots: itemBootPurchase(heroId: 88, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_044",
+   "query": "{ heroStats { h88_5_full: itemFullPurchase(heroId: 88, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h88_5_start: itemStartingPurchase(heroId: 88, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h88_5_boots: itemBootPurchase(heroId: 88, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h89_1_full: itemFullPurchase(heroId: 89, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h89_1_start: itemStartingPurchase(heroId: 89, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h89_1_boots: itemBootPurchase(heroId: 89, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h90_2_full: itemFullPurchase(heroId: 90, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h90_2_start: itemStartingPurchase(heroId: 90, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h90_2_boots: itemBootPurchase(heroId: 90, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h90_4_full: itemFullPurchase(heroId: 90, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h90_4_start: itemStartingPurchase(heroId: 90, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h90_4_boots: itemBootPurchase(heroId: 90, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_045",
+   "query": "{ heroStats { h90_5_full: itemFullPurchase(heroId: 90, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h90_5_start: itemStartingPurchase(heroId: 90, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h90_5_boots: itemBootPurchase(heroId: 90, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h91_5_full: itemFullPurchase(heroId: 91, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h91_5_start: itemStartingPurchase(heroId: 91, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h91_5_boots: itemBootPurchase(heroId: 91, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h91_2_full: itemFullPurchase(heroId: 91, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h91_2_start: itemStartingPurchase(heroId: 91, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h91_2_boots: itemBootPurchase(heroId: 91, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h91_4_full: itemFullPurchase(heroId: 91, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h91_4_start: itemStartingPurchase(heroId: 91, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h91_4_boots: itemBootPurchase(heroId: 91, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_046",
+   "query": "{ heroStats { h92_3_full: itemFullPurchase(heroId: 92, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h92_3_start: itemStartingPurchase(heroId: 92, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h92_3_boots: itemBootPurchase(heroId: 92, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h92_2_full: itemFullPurchase(heroId: 92, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h92_2_start: itemStartingPurchase(heroId: 92, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h92_2_boots: itemBootPurchase(heroId: 92, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h93_1_full: itemFullPurchase(heroId: 93, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h93_1_start: itemStartingPurchase(heroId: 93, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h93_1_boots: itemBootPurchase(heroId: 93, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h93_2_full: itemFullPurchase(heroId: 93, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h93_2_start: itemStartingPurchase(heroId: 93, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h93_2_boots: itemBootPurchase(heroId: 93, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_047",
+   "query": "{ heroStats { h94_1_full: itemFullPurchase(heroId: 94, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h94_1_start: itemStartingPurchase(heroId: 94, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h94_1_boots: itemBootPurchase(heroId: 94, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h94_2_full: itemFullPurchase(heroId: 94, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h94_2_start: itemStartingPurchase(heroId: 94, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h94_2_boots: itemBootPurchase(heroId: 94, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h95_1_full: itemFullPurchase(heroId: 95, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h95_1_start: itemStartingPurchase(heroId: 95, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h95_1_boots: itemBootPurchase(heroId: 95, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h96_3_full: itemFullPurchase(heroId: 96, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h96_3_start: itemStartingPurchase(heroId: 96, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h96_3_boots: itemBootPurchase(heroId: 96, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_048",
+   "query": "{ heroStats { h97_3_full: itemFullPurchase(heroId: 97, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h97_3_start: itemStartingPurchase(heroId: 97, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h97_3_boots: itemBootPurchase(heroId: 97, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h97_2_full: itemFullPurchase(heroId: 97, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h97_2_start: itemStartingPurchase(heroId: 97, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h97_2_boots: itemBootPurchase(heroId: 97, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h97_4_full: itemFullPurchase(heroId: 97, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h97_4_start: itemStartingPurchase(heroId: 97, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h97_4_boots: itemBootPurchase(heroId: 97, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h97_5_full: itemFullPurchase(heroId: 97, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h97_5_start: itemStartingPurchase(heroId: 97, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h97_5_boots: itemBootPurchase(heroId: 97, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_049",
+   "query": "{ heroStats { h98_3_full: itemFullPurchase(heroId: 98, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h98_3_start: itemStartingPurchase(heroId: 98, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h98_3_boots: itemBootPurchase(heroId: 98, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h99_3_full: itemFullPurchase(heroId: 99, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h99_3_start: itemStartingPurchase(heroId: 99, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h99_3_boots: itemBootPurchase(heroId: 99, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h100_4_full: itemFullPurchase(heroId: 100, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h100_4_start: itemStartingPurchase(heroId: 100, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h100_4_boots: itemBootPurchase(heroId: 100, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h100_5_full: itemFullPurchase(heroId: 100, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h100_5_start: itemStartingPurchase(heroId: 100, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h100_5_boots: itemBootPurchase(heroId: 100, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_050",
+   "query": "{ heroStats { h100_3_full: itemFullPurchase(heroId: 100, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h100_3_start: itemStartingPurchase(heroId: 100, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h100_3_boots: itemBootPurchase(heroId: 100, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h101_4_full: itemFullPurchase(heroId: 101, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h101_4_start: itemStartingPurchase(heroId: 101, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h101_4_boots: itemBootPurchase(heroId: 101, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h101_5_full: itemFullPurchase(heroId: 101, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h101_5_start: itemStartingPurchase(heroId: 101, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h101_5_boots: itemBootPurchase(heroId: 101, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h101_2_full: itemFullPurchase(heroId: 101, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h101_2_start: itemStartingPurchase(heroId: 101, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h101_2_boots: itemBootPurchase(heroId: 101, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_051",
+   "query": "{ heroStats { h102_5_full: itemFullPurchase(heroId: 102, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h102_5_start: itemStartingPurchase(heroId: 102, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h102_5_boots: itemBootPurchase(heroId: 102, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h102_3_full: itemFullPurchase(heroId: 102, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h102_3_start: itemStartingPurchase(heroId: 102, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h102_3_boots: itemBootPurchase(heroId: 102, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h102_4_full: itemFullPurchase(heroId: 102, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h102_4_start: itemStartingPurchase(heroId: 102, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h102_4_boots: itemBootPurchase(heroId: 102, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h103_3_full: itemFullPurchase(heroId: 103, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h103_3_start: itemStartingPurchase(heroId: 103, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h103_3_boots: itemBootPurchase(heroId: 103, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_052",
+   "query": "{ heroStats { h104_3_full: itemFullPurchase(heroId: 104, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h104_3_start: itemStartingPurchase(heroId: 104, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h104_3_boots: itemBootPurchase(heroId: 104, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h105_4_full: itemFullPurchase(heroId: 105, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h105_4_start: itemStartingPurchase(heroId: 105, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h105_4_boots: itemBootPurchase(heroId: 105, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h105_5_full: itemFullPurchase(heroId: 105, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h105_5_start: itemStartingPurchase(heroId: 105, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h105_5_boots: itemBootPurchase(heroId: 105, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h106_2_full: itemFullPurchase(heroId: 106, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h106_2_start: itemStartingPurchase(heroId: 106, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h106_2_boots: itemBootPurchase(heroId: 106, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_053",
+   "query": "{ heroStats { h107_2_full: itemFullPurchase(heroId: 107, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h107_2_start: itemStartingPurchase(heroId: 107, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h107_2_boots: itemBootPurchase(heroId: 107, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h107_4_full: itemFullPurchase(heroId: 107, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h107_4_start: itemStartingPurchase(heroId: 107, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h107_4_boots: itemBootPurchase(heroId: 107, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h107_3_full: itemFullPurchase(heroId: 107, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h107_3_start: itemStartingPurchase(heroId: 107, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h107_3_boots: itemBootPurchase(heroId: 107, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h107_5_full: itemFullPurchase(heroId: 107, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h107_5_start: itemStartingPurchase(heroId: 107, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h107_5_boots: itemBootPurchase(heroId: 107, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_054",
+   "query": "{ heroStats { h108_3_full: itemFullPurchase(heroId: 108, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h108_3_start: itemStartingPurchase(heroId: 108, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h108_3_boots: itemBootPurchase(heroId: 108, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h109_1_full: itemFullPurchase(heroId: 109, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h109_1_start: itemStartingPurchase(heroId: 109, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h109_1_boots: itemBootPurchase(heroId: 109, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h110_4_full: itemFullPurchase(heroId: 110, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h110_4_start: itemStartingPurchase(heroId: 110, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h110_4_boots: itemBootPurchase(heroId: 110, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h110_2_full: itemFullPurchase(heroId: 110, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h110_2_start: itemStartingPurchase(heroId: 110, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h110_2_boots: itemBootPurchase(heroId: 110, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_055",
+   "query": "{ heroStats { h110_3_full: itemFullPurchase(heroId: 110, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h110_3_start: itemStartingPurchase(heroId: 110, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h110_3_boots: itemBootPurchase(heroId: 110, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h110_5_full: itemFullPurchase(heroId: 110, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h110_5_start: itemStartingPurchase(heroId: 110, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h110_5_boots: itemBootPurchase(heroId: 110, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h111_5_full: itemFullPurchase(heroId: 111, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h111_5_start: itemStartingPurchase(heroId: 111, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h111_5_boots: itemBootPurchase(heroId: 111, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h111_4_full: itemFullPurchase(heroId: 111, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h111_4_start: itemStartingPurchase(heroId: 111, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h111_4_boots: itemBootPurchase(heroId: 111, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_056",
+   "query": "{ heroStats { h112_5_full: itemFullPurchase(heroId: 112, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h112_5_start: itemStartingPurchase(heroId: 112, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h112_5_boots: itemBootPurchase(heroId: 112, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h112_4_full: itemFullPurchase(heroId: 112, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h112_4_start: itemStartingPurchase(heroId: 112, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h112_4_boots: itemBootPurchase(heroId: 112, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h113_2_full: itemFullPurchase(heroId: 113, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h113_2_start: itemStartingPurchase(heroId: 113, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h113_2_boots: itemBootPurchase(heroId: 113, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h114_1_full: itemFullPurchase(heroId: 114, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h114_1_start: itemStartingPurchase(heroId: 114, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h114_1_boots: itemBootPurchase(heroId: 114, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_057",
+   "query": "{ heroStats { h114_2_full: itemFullPurchase(heroId: 114, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h114_2_start: itemStartingPurchase(heroId: 114, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h114_2_boots: itemBootPurchase(heroId: 114, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h119_4_full: itemFullPurchase(heroId: 119, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h119_4_start: itemStartingPurchase(heroId: 119, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h119_4_boots: itemBootPurchase(heroId: 119, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h119_5_full: itemFullPurchase(heroId: 119, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h119_5_start: itemStartingPurchase(heroId: 119, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h119_5_boots: itemBootPurchase(heroId: 119, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h120_2_full: itemFullPurchase(heroId: 120, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h120_2_start: itemStartingPurchase(heroId: 120, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h120_2_boots: itemBootPurchase(heroId: 120, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_058",
+   "query": "{ heroStats { h120_3_full: itemFullPurchase(heroId: 120, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h120_3_start: itemStartingPurchase(heroId: 120, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h120_3_boots: itemBootPurchase(heroId: 120, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h121_5_full: itemFullPurchase(heroId: 121, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h121_5_start: itemStartingPurchase(heroId: 121, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h121_5_boots: itemBootPurchase(heroId: 121, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h121_4_full: itemFullPurchase(heroId: 121, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h121_4_start: itemStartingPurchase(heroId: 121, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h121_4_boots: itemBootPurchase(heroId: 121, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h123_4_full: itemFullPurchase(heroId: 123, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h123_4_start: itemStartingPurchase(heroId: 123, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h123_4_boots: itemBootPurchase(heroId: 123, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_059",
+   "query": "{ heroStats { h123_5_full: itemFullPurchase(heroId: 123, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h123_5_start: itemStartingPurchase(heroId: 123, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h123_5_boots: itemBootPurchase(heroId: 123, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h126_2_full: itemFullPurchase(heroId: 126, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h126_2_start: itemStartingPurchase(heroId: 126, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h126_2_boots: itemBootPurchase(heroId: 126, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h128_4_full: itemFullPurchase(heroId: 128, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h128_4_start: itemStartingPurchase(heroId: 128, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h128_4_boots: itemBootPurchase(heroId: 128, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h128_5_full: itemFullPurchase(heroId: 128, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h128_5_start: itemStartingPurchase(heroId: 128, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h128_5_boots: itemBootPurchase(heroId: 128, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_060",
+   "query": "{ heroStats { h128_2_full: itemFullPurchase(heroId: 128, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h128_2_start: itemStartingPurchase(heroId: 128, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h128_2_boots: itemBootPurchase(heroId: 128, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h129_3_full: itemFullPurchase(heroId: 129, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h129_3_start: itemStartingPurchase(heroId: 129, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h129_3_boots: itemBootPurchase(heroId: 129, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h131_5_full: itemFullPurchase(heroId: 131, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h131_5_start: itemStartingPurchase(heroId: 131, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h131_5_boots: itemBootPurchase(heroId: 131, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h131_4_full: itemFullPurchase(heroId: 131, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h131_4_start: itemStartingPurchase(heroId: 131, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h131_4_boots: itemBootPurchase(heroId: 131, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_061",
+   "query": "{ heroStats { h135_3_full: itemFullPurchase(heroId: 135, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h135_3_start: itemStartingPurchase(heroId: 135, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h135_3_boots: itemBootPurchase(heroId: 135, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h136_2_full: itemFullPurchase(heroId: 136, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h136_2_start: itemStartingPurchase(heroId: 136, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h136_2_boots: itemBootPurchase(heroId: 136, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h136_4_full: itemFullPurchase(heroId: 136, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h136_4_start: itemStartingPurchase(heroId: 136, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h136_4_boots: itemBootPurchase(heroId: 136, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h136_3_full: itemFullPurchase(heroId: 136, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h136_3_start: itemStartingPurchase(heroId: 136, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h136_3_boots: itemBootPurchase(heroId: 136, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_062",
+   "query": "{ heroStats { h136_5_full: itemFullPurchase(heroId: 136, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h136_5_start: itemStartingPurchase(heroId: 136, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h136_5_boots: itemBootPurchase(heroId: 136, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h137_3_full: itemFullPurchase(heroId: 137, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h137_3_start: itemStartingPurchase(heroId: 137, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h137_3_boots: itemBootPurchase(heroId: 137, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h137_2_full: itemFullPurchase(heroId: 137, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h137_2_start: itemStartingPurchase(heroId: 137, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h137_2_boots: itemBootPurchase(heroId: 137, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h138_1_full: itemFullPurchase(heroId: 138, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h138_1_start: itemStartingPurchase(heroId: 138, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h138_1_boots: itemBootPurchase(heroId: 138, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_063",
+   "query": "{ heroStats { h138_2_full: itemFullPurchase(heroId: 138, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h138_2_start: itemStartingPurchase(heroId: 138, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h138_2_boots: itemBootPurchase(heroId: 138, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h145_1_full: itemFullPurchase(heroId: 145, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h145_1_start: itemStartingPurchase(heroId: 145, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } h145_1_boots: itemBootPurchase(heroId: 145, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } h145_2_full: itemFullPurchase(heroId: 145, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h145_2_start: itemStartingPurchase(heroId: 145, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance wasGiven matchCount winCount } h145_2_boots: itemBootPurchase(heroId: 145, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { itemId instance time matchCount winCount } h155_3_full: itemFullPurchase(heroId: 155, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } h155_3_start: itemStartingPurchase(heroId: 155, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance wasGiven matchCount winCount } h155_3_boots: itemBootPurchase(heroId: 155, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { itemId instance time matchCount winCount } } }"
+  },
+  {
+   "name": "items_064",
+   "query": "{ heroStats { h155_5_full: itemFullPurchase(heroId: 155, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h155_5_start: itemStartingPurchase(heroId: 155, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance wasGiven matchCount winCount } h155_5_boots: itemBootPurchase(heroId: 155, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { itemId instance time matchCount winCount } h155_4_full: itemFullPurchase(heroId: 155, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } h155_4_start: itemStartingPurchase(heroId: 155, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance wasGiven matchCount winCount } h155_4_boots: itemBootPurchase(heroId: 155, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { itemId instance time matchCount winCount } } }"
   }
  ]
 }
