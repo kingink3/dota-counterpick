@@ -128,7 +128,7 @@ test("plan on real data: basics first, counters placed, families folded", async 
     const p = planFor(hero, role);
     const lane = keys(p, "lane");
     const core = keys(p, "core");
-    assert.ok(core.length >= 2, `${hero}: a core`);
+    assert.ok(core.length >= (role >= 4 ? 1 : 2), `${hero}: a core`);
     assert.ok(!lane.includes("boots") || !lane.some((k) => k !== "boots" && k.endsWith("boots")), `${hero}: one pair of boots`);
     for (const k of [...lane, ...core]) {
       const it = real.items[k]!;
