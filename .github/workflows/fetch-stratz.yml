@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "schema, fetch (a dataset) or sample (one fresh public ranked match)"
+        description: "schema, fetch (a dataset), sample (a fresh public ranked match) or own (the token owner's latest match, anonymised)"
         required: true
         default: fetch
       dataset:
@@ -38,8 +38,8 @@ jobs:
         run: |
           if [ "${{ inputs.mode }}" = "schema" ]; then
             npx tsx scripts/stratz-fetch.ts --mode schema --out /tmp/stratz/schema
-          elif [ "${{ inputs.mode }}" = "sample" ]; then
-            npx tsx scripts/stratz-fetch.ts --mode sample --out /tmp/stratz/sample
+          elif [ "${{ inputs.mode }}" = "sample" ] || [ "${{ inputs.mode }}" = "own" ]; then
+            npx tsx scripts/stratz-fetch.ts --mode "${{ inputs.mode }}" --out "/tmp/stratz/${{ inputs.mode }}"
           else
             npx tsx scripts/stratz-fetch.ts --mode fetch --spec "scripts/stratz/${{ inputs.dataset }}.json" --out "/tmp/stratz/${{ inputs.dataset }}"
           fi
@@ -47,7 +47,7 @@ jobs:
         if: always()
         run: |
           set -e
-          name="${{ inputs.mode == 'schema' && 'schema' || inputs.mode == 'sample' && 'sample' || inputs.dataset }}"
+          name="${{ (inputs.mode == 'schema' || inputs.mode == 'sample' || inputs.mode == 'own') && inputs.mode || inputs.dataset }}"
           [ -d "/tmp/stratz/$name" ] || exit 0
           url="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
           git clone -q --depth 1 --branch stratz-raw --single-branch "$url" /tmp/raw || {

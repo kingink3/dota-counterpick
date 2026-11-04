@@ -56,6 +56,40 @@ async function gql<T>(query: string, variables: Record<string, unknown> = {}): P
   }
 }
 
+/** the "SteamId" claim of a STRATZ token. */
+function ownerOf(token: string): number | undefined {
+  try {
+    const json = JSON.parse(Buffer.from(token.split(".")[1] ?? "", "base64url").toString("utf8")) as { SteamId?: string };
+    const n = Number(json.SteamId);
+    return n > 0 ? n : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** players -> 1..10 (the owner -> 1), match id -> 1, no start time. */
+function anonymise(d: { account: number; summary: unknown; me: unknown; positions: unknown }): void {
+  const map = new Map<number, number>([[d.account, 1]]);
+  const walk = (x: unknown): void => {
+    if (Array.isArray(x)) x.forEach(walk);
+    else if (x && typeof x === "object") {
+      const o = x as Record<string, unknown>;
+      for (const [k, v] of Object.entries(o)) {
+        if (k === "steamAccountId" && typeof v === "number") {
+          if (!map.has(v)) map.set(v, map.size + 1);
+          o[k] = map.get(v);
+        } else if ((k === "id" || k === "matchId") && typeof v === "number" && v > 1e8) o[k] = 1;
+        else if (k === "startDateTime" || k === "parsedDateTime" || k === "endDateTime") delete o[k];
+        else walk(v);
+      }
+    }
+  };
+  walk(d.summary);
+  walk(d.me);
+  walk(d.positions);
+  d.account = 1;
+}
+
 const INTROSPECTION = `
 query {
   __schema {
@@ -98,12 +132,20 @@ async function main(): Promise<void> {
       }
     }
     console.log(`${spec.batches.length - failed}/${spec.batches.length} batches ok`);
-  } else if (mode === "sample") {
-    // the shape of a fresh parsed ranked match, from a public leaderboard player
-    // (never the token owner's own games: the raw branch is public)
-    const lb = await gql<{ leaderboard: { season: { players: Array<{ steamAccountId: number }> } } }>(leaderboardQuery(10));
+  } else if (mode === "sample" || mode === "own") {
+    // "sample": a fresh parsed ranked match of a public leaderboard player;
+    // "own": the token owner's latest parsed match (id read from the token, never
+    // logged), anonymised before it is written - the raw branch is public
     let found: { acc: number; id: number } | undefined;
-    for (const p of lb.leaderboard?.season?.players ?? []) {
+    const owner = mode === "own" ? ownerOf(process.env.STRATZ_TOKEN ?? "") : undefined;
+    if (mode === "own") {
+      if (!owner) throw new Error("no SteamId in the token");
+      const r = await gql<{ player: { matches: Array<{ id: number; parsedDateTime?: number | null }> } }>(recentMatchesQuery(owner, 5));
+      const m = (r.player?.matches ?? []).find((x) => x.parsedDateTime);
+      if (m) found = { acc: owner, id: m.id };
+    }
+    const lb = mode === "sample" ? await gql<{ leaderboard: { season: { players: Array<{ steamAccountId: number }> } } }>(leaderboardQuery(10)) : undefined;
+    for (const p of lb?.leaderboard?.season?.players ?? []) {
       const r = await gql<{ player: { matches: Array<{ id: number; lobbyType?: string; parsedDateTime?: number | null }> } }>(recentMatchesQuery(p.steamAccountId, 3));
       const m = (r.player?.matches ?? []).find((x) => x.parsedDateTime && /RANKED/.test(x.lobbyType ?? ""));
       if (m) {
@@ -127,8 +169,10 @@ async function main(): Promise<void> {
     } catch (e) {
       console.log(`positions failed: ${String(e).slice(0, 200)}`);
     }
-    writeFileSync(join(out, "match.json"), JSON.stringify({ account: found.acc, summary: summary.match, me, positions }));
-    console.log(`sample match ${found.id}`);
+    const data = { account: found.acc, summary: summary.match, me, positions };
+    if (mode === "own") anonymise(data);
+    writeFileSync(join(out, "match.json"), JSON.stringify(data));
+    console.log(mode === "own" ? "own latest match fetched (anonymised)" : `sample match ${found.id}`);
   } else {
     throw new Error(`unknown mode ${mode}`);
   }
