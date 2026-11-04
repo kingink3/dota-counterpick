@@ -1,0 +1,50 @@
+# Per patch (2-3 weeks after it, for sample size): download hero item / timing / game-length
+# statistics from the OpenDota API (ADR-026 phase 2-3). The dev container cannot reach
+# OpenDota, so this runs here. Raw responses go to the `opendota-raw` branch (force-pushed,
+# one commit); the compact build in data/ is made from them by scripts/build-item-stats.ts.
+# OpenDota free tier: 60 calls/min -> ~1.1 s between calls, ~10 min for all heroes.
+name: Fetch OpenDota stats
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download
+        run: |
+          set -u
+          mkdir -p /tmp/od/pop /tmp/od/timings /tmp/od/durations /tmp/od/lanes
+          get() { # url out: curl with retries; OpenDota rejects Node's fetch (Cloudflare)
+            for i in 1 2 3 4; do
+              code=$(curl -s -m 60 -A "dota-counterpick-stats" -o "$2" -w "%{http_code}" "$1")
+              [ "$code" = "200" ] && { sleep 1.1; return 0; }
+              echo "  $code on $1 (try $i)"; sleep $((i * 15))
+            done
+            return 1
+          }
+          get https://api.opendota.com/api/heroes /tmp/od/heroes.json
+          get https://api.opendota.com/api/heroStats /tmp/od/heroStats.json
+          for id in $(jq -r '.[].id' /tmp/od/heroes.json); do
+            get "https://api.opendota.com/api/heroes/$id/itemPopularity" /tmp/od/pop/$id.json || true
+            get "https://api.opendota.com/api/scenarios/itemTimings?hero_id=$id" /tmp/od/timings/$id.json || true
+            get "https://api.opendota.com/api/heroes/$id/durations" /tmp/od/durations/$id.json || true
+            get "https://api.opendota.com/api/scenarios/laneRoles?hero_id=$id" /tmp/od/lanes/$id.json || true
+          done
+          date -u +%Y-%m-%dT%H:%MZ > /tmp/od/fetched-at.txt
+          du -sh /tmp/od; ls /tmp/od/pop | wc -l
+      - name: Push to the opendota-raw branch
+        run: |
+          cd /tmp/od
+          git init -q -b opendota-raw
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "OpenDota raw stats $(cat fetched-at.txt)"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" opendota-raw
