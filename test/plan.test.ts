@@ -154,3 +154,22 @@ test("plan on real data: basics first, counters placed, families folded", async 
   );
   assert.ok(keys(planFor("lion", 5), "core").includes("blink"), "Lion's core has Blink");
 });
+
+test("match plan: damage split, threats with answers, a focus per phase", async () => {
+  const { loadKB } = await import("../src/kb.js");
+  const { resolve } = await import("../src/resolver.js");
+  const { buildMatchPlan, phaseAt } = await import("../src/game-plan.js");
+  const kb = loadKB();
+  const enemies = ["phantom_assassin", "zeus", "lion", "axe", "necrophos"];
+  const result = resolve(kb, { enemyHeroes: enemies, allyHeroes: ["anti_mage", "crystal_maiden"], myHero: "anti_mage", myRole: 1 });
+  const m = buildMatchPlan({ kb, result, enemies, allies: ["anti_mage", "crystal_maiden"], myHero: "anti_mage", label: (h) => h, itemLabel: (k) => k, dcKey: (id) => kb.itemDcKey?.[id] });
+  assert.ok(Math.abs(m.damage.magic + m.damage.physical - 1) < 1e-9);
+  assert.ok(m.damage.magic > m.damage.physical, "Zeus / Lion / Necro: mostly magic");
+  assert.ok(m.damage.physBy.includes("phantom_assassin"));
+  const pa = m.threats.find((t) => t.enemy === "phantom_assassin")!;
+  assert.ok(pa.tools.length && pa.answer, "PA: a threat with an item answer");
+  const axe = m.threats.find((t) => t.enemy === "axe")!;
+  assert.ok(axe.answer && axe.answer.rec.reasons.some((r) => r.enemy === "axe"), "Axe: the answer is about Axe");
+  for (const ph of ["lane", "mid", "late"] as const) assert.ok(m.focus[ph].title.length > 0);
+  assert.deepEqual([phaseAt(-30), phaseAt(599), phaseAt(600), phaseAt(1499), phaseAt(1500)], ["lane", "lane", "mid", "mid", "late"]);
+});

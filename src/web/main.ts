@@ -19,7 +19,8 @@ import { AutoInputAdapter, defaultBridgeUrl, type AutoStatus, type DraftPatch } 
 import type { GamePhase, GsiSnapshot } from "../gsi.js";
 import { buildItemTemplates, buildTemplates, ScreenReader, type ScreenStatus } from "./screen-reader.js";
 import { GameView } from "./game-view.js";
-import { renderPlan } from "./plan-view.js";
+import type { PlanView } from "./plan-view.js";
+import { buildMatchPlan } from "../game-plan.js";
 import { buildPlan, teamWindow, type ItemStats } from "../item-plan.js";
 import { identifyPlate, type HudRead, type LearnedPlate } from "../item-match.js";
 import type { Frame, ScreenChange, Side } from "../screen-match.js";
@@ -175,7 +176,14 @@ function renderGamePlan(result: ReturnType<typeof resolveDraft>): void {
       : undefined;
   const window = itemStats && state.allies.size && state.enemies.size ? teamWindow(itemStats, [...state.allies], [...state.enemies]) : undefined;
   const prompt = hudPrompt();
-  renderPlan(game.planRoot(), {
+  const plainReason = (rec: Recommendation, r: Reason | undefined) => {
+    if (!r) return "";
+    // reasonSummaryText is markup for the cards; the plan wants plain text, one sentence
+    const tmp = document.createElement("div");
+    tmp.innerHTML = reasonSummaryText(r, rec);
+    return firstSentence(tmp.textContent ?? "");
+  };
+  const view: PlanView = {
     ...(prompt ? { prompt } : {}),
     ...(myItems ? { have: myItems } : {}),
     ...(plan ? { plan } : {}),
@@ -186,16 +194,36 @@ function renderGamePlan(result: ReturnType<typeof resolveDraft>): void {
         ? "Mark the hero you play (★ on your team in Draft) to get an item plan."
         : `No statistics for ${labelFor(hero)} yet.`,
     heroLabel: labelFor,
-    reasonText: (rec) => {
-      const r = leadReason(rec);
-      if (!r) return "";
-      // reasonSummaryText is markup for the cards; the plan wants plain text
-      const tmp = document.createElement("div");
-      tmp.innerHTML = reasonSummaryText(r, rec);
-      return tmp.textContent ?? "";
-    },
+    reasonText: (rec) => plainReason(rec, leadReason(rec)),
+    reasonFor: (rec, enemy) =>
+      plainReason(
+        rec,
+        rec.reasons.filter((x) => x.enemy === enemy && x.contribution > 0).sort((a, b) => b.contribution - a.contribution)[0],
+      ),
     ...(itemStats ? { source: planSource(itemStats) } : {}),
-  });
+  };
+  const match = state.enemies.size
+    ? buildMatchPlan({
+        kb,
+        result,
+        enemies: [...state.enemies],
+        allies: [...state.allies],
+        ...(hero ? { myHero: hero } : {}),
+        ...(plan ? { plan } : {}),
+        ...(window ? { window } : {}),
+        enemyItems: state.enemyItems,
+        label: labelFor,
+        itemLabel: (id) => itemLabels.get(id) ?? id,
+        dcKey: (id) => kb.itemDcKey?.[id],
+      })
+    : undefined;
+  game.setData({ view, ...(match ? { match } : {}) });
+}
+/** the first sentence, at most ~150 characters (wiki notes run long). */
+function firstSentence(s: string): string {
+  const cut = s.search(/[.;]\s|\s-\s/);
+  const one = cut > 30 ? s.slice(0, cut) : s;
+  return one.length > 150 ? `${one.slice(0, 147).replace(/\s+\S*$/, "")}…` : one;
 }
 function planSource(s: ItemStats): string {
   return [

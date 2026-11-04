@@ -1,9 +1,11 @@
 // =============================================================================
-//  Game tab, right column: item plan + power spikes (ADR-026 phases 2-3).
-//  Pure DOM rendering of an ItemPlan / TeamWindow built by src/item-plan.ts.
+//  Game tab rendering (ADR-028): the "Match plan" zone (right) and the item target /
+//  power window line of the "Now" zone (left). Pure DOM from ItemPlan, TeamWindow and
+//  MatchPlan (src/item-plan.ts, src/game-plan.ts).
 // =============================================================================
 
 import { CURVE_LABELS, mmss, type ItemPlan, type PlanItem, type TeamWindow } from "../item-plan.js";
+import { PHASES, type GamePhase, type MatchPlan } from "../game-plan.js";
 import type { Recommendation } from "../types.js";
 
 export interface PlanView {
@@ -14,6 +16,8 @@ export interface PlanView {
   heroLabel: (code: string) => string;
   /** one-line reason for a counter item (main.ts reasonSummaryText). */
   reasonText: (rec: Recommendation) => string;
+  /** the reason of `rec` that concerns one enemy (threat rows). */
+  reasonFor?: (rec: Recommendation, enemy: string) => string;
   /** data provenance line. */
   source?: string;
   /** items in your inventory (bottom HUD, your hero selected). */
@@ -22,50 +26,218 @@ export interface PlanView {
   prompt?: HTMLElement;
 }
 
-export function renderPlan(root: HTMLElement, v: PlanView): void {
+export interface ZoneData {
+  view: PlanView;
+  match?: MatchPlan;
+}
+
+export interface PlanZone extends ZoneData {
+  phase: GamePhase;
+  /** the phase follows the clock (no manual pick). */
+  auto: boolean;
+  onPhase: (p: GamePhase) => void;
+}
+
+/** right column: phase switcher, phase focus, damage, threats, item plan, other phases. */
+export function renderPlanZone(root: HTMLElement, z: PlanZone): void {
+  const v = z.view;
   root.replaceChildren();
-  const h = document.createElement("h3");
-  h.className = "game-h";
-  h.textContent = v.plan ? `Item plan - ${v.heroLabel(v.plan.hero)}` : "Item plan";
-  root.append(h);
   if (v.prompt) root.append(v.prompt);
-  if (!v.plan) {
-    root.append(p("muted", v.empty ?? "Mark the hero you play (★) in Draft."));
-  } else {
-    for (const ph of v.plan.phases) {
-      if (!ph.items.length) continue;
-      const sec = document.createElement("div");
-      sec.className = `plan-phase ph-${ph.id}`;
-      const t = document.createElement("div");
-      t.className = "plan-ph";
-      t.textContent = ph.label;
-      if (ph.id === "start") t.textContent += ` · ${ph.items.reduce((s, i) => s + i.cost, 0)} gold`;
-      sec.append(t);
-      const ul = document.createElement("ul");
-      ul.className = "plan-items";
-      for (const it of ph.items) ul.append(itemRow(it, ph.id, v));
-      sec.append(ul);
-      root.append(sec);
-    }
+  const chips = document.createElement("div");
+  chips.className = "gz-phases";
+  for (const ph of PHASES) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = `gz-ph${ph.id === z.phase ? " on" : ""}`;
+    b.textContent = ph.label + (ph.id === z.phase && z.auto ? " ●" : "");
+    b.title = ph.id === z.phase && z.auto ? "Follows the game clock" : "Show this phase (click the current one to follow the clock again)";
+    b.addEventListener("click", () => z.onPhase(ph.id));
+    chips.append(b);
   }
-  if (v.window) root.append(windowBlock(v.window, v.heroLabel));
-  if (v.plan?.spikes.length) {
-    const s = document.createElement("div");
-    s.className = "plan-phase";
-    s.append(div("plan-ph", "Item timings"));
+  root.append(chips);
+  const m = z.match;
+  if (m) {
+    const f = m.focus[z.phase];
+    const box = document.createElement("div");
+    box.className = "gz-focus";
+    box.append(el("h3", "", f.title));
     const ul = document.createElement("ul");
-    ul.className = "plan-spikes";
-    for (const sp of v.plan.spikes) {
-      const li = document.createElement("li");
-      li.dataset.at = String(sp.at);
-      li.append(span("sp-at", mmss(sp.at)), span("sp-what", sp.label), span("sp-why", sp.why));
-      ul.append(li);
+    for (const line of f.lines) ul.append(el("li", "", line));
+    if (!f.lines.length) ul.append(el("li", "muted", "Add both teams in Draft for a fuller read."));
+    box.append(ul);
+    root.append(box);
+    const grid = document.createElement("div");
+    grid.className = "gz-grid";
+    grid.append(damageCard(m, v), threatCard(m, v));
+    root.append(grid);
+  }
+  root.append(itemCard(v));
+  if (m) {
+    for (const ph of PHASES) {
+      if (ph.id === z.phase) continue;
+      const f = m.focus[ph.id];
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "gz-later";
+      b.textContent = `▸ ${ph.label}: ${f.title}${f.lines[0] ? ` - ${f.lines[0]}` : ""}`;
+      b.addEventListener("click", () => z.onPhase(ph.id));
+      root.append(b);
     }
-    s.append(ul);
-    root.append(s);
   }
   if (v.plan?.basis) root.append(p("muted plan-src", `Standard items: ${v.plan.basis}.`));
   if (v.source) root.append(p("muted plan-src", v.source));
+}
+
+function damageCard(m: MatchPlan, v: PlanView): HTMLElement {
+  const c = card("Damage & defence");
+  const bar = document.createElement("div");
+  bar.className = "gz-dmg";
+  const mag = Math.round(m.damage.magic * 100);
+  bar.append(el("i", "mag", ""), el("i", "phy", ""));
+  (bar.children[0] as HTMLElement).style.width = `${mag}%`;
+  (bar.children[1] as HTMLElement).style.width = `${100 - mag}%`;
+  c.append(bar);
+  const who = (xs: string[]) => (xs.length ? ` (${xs.map(v.heroLabel).join(", ")})` : "");
+  c.append(p("gz-sub", `${mag}% magic${who(m.damage.magicBy)} · ${100 - mag}% physical${who(m.damage.physBy)}`));
+  for (const d of m.defence) c.append(row(d.key, d.rec.label, v.reasonText(d.rec)));
+  if (!m.defence.length) c.append(p("muted", "No defensive item stands out against this lineup."));
+  return c;
+}
+
+function threatCard(m: MatchPlan, v: PlanView): HTMLElement {
+  const c = card("Threats & answers");
+  for (const t of m.threats) {
+    const r = document.createElement("div");
+    r.className = "gz-row";
+    r.append(el("span", "gz-w", v.heroLabel(t.enemy)));
+    const a = el("span", "gz-a", t.tools.join(", ").toLowerCase());
+    if (t.answer) {
+      a.append(" → ");
+      a.append(el("b", "", t.answer.rec.label));
+      const why = v.reasonFor?.(t.answer.rec, t.enemy);
+      if (why) a.append(`: ${why}`);
+    }
+    r.append(a);
+    c.append(r);
+  }
+  if (!m.threats.length) c.append(p("muted", "Add the enemy heroes in Draft."));
+  return c;
+}
+
+function itemCard(v: PlanView): HTMLElement {
+  const c = card(v.plan ? `Item plan - ${v.heroLabel(v.plan.hero)}` : "Item plan");
+  if (!v.plan) {
+    c.append(p("muted", v.empty ?? "Mark the hero you play (★) in Draft."));
+    return c;
+  }
+  const cols = document.createElement("div");
+  cols.className = "gz-cols";
+  const group = (ids: string[]) => {
+    const col = document.createElement("div");
+    for (const id of ids) {
+      const ph = v.plan!.phases.find((x) => x.id === id);
+      if (!ph?.items.length) continue;
+      const head = ph.id === "start" ? `${ph.label} · ${ph.items.reduce((s, i) => s + i.cost, 0)} gold` : ph.label;
+      col.append(el("div", "plan-ph", head));
+      const ul = document.createElement("ul");
+      ul.className = "plan-items";
+      for (const it of ph.items) ul.append(itemRow(it, ph.id, v));
+      col.append(ul);
+    }
+    return col;
+  };
+  cols.append(group(["start", "lane"]), group(["core", "situational"]), group(["late"]));
+  c.append(cols);
+  return c;
+}
+
+/** left column: the next item to finish, with what its timing is worth. */
+export function renderTarget(root: HTMLElement, plan: ItemPlan | undefined, have: Set<string> | undefined, t: number | undefined): void {
+  root.replaceChildren();
+  if (!plan) {
+    root.append(p("muted", "Mark the hero you play (★) in Draft."));
+    return;
+  }
+  const seq = ["lane", "core", "late"].flatMap((id) => plan.phases.find((x) => x.id === id)?.items ?? []);
+  const draft = plan.phases.find((x) => x.id === "situational")?.items ?? [];
+  // with your inventory: the first item you don't have; without it: by the clock
+  const i = have?.size
+    ? seq.findIndex((x) => !have.has(x.key))
+    : seq.findIndex((x) => t === undefined || x.at === undefined || x.at >= t - 120);
+  const cur = seq[i >= 0 ? i : seq.length - 1];
+  if (!cur) return;
+  const box = document.createElement("div");
+  box.className = "gz-tcard";
+  const img = document.createElement("img");
+  img.src = `./items/${cur.key}.webp`;
+  img.alt = "";
+  img.onerror = () => img.remove();
+  box.append(img, el("span", "gz-tt", `${cur.label}${cur.at !== undefined ? ` · ~${mmss(cur.at)}` : ""}`));
+  const tm = cur.timing;
+  const k = el("span", "gz-tk", "");
+  if (tm?.wrFast !== undefined && tm.wrSlow !== undefined && tm.wrFast > tm.wrSlow) {
+    k.append(`done by ${mmss(tm.fastBy ?? tm.p25)}: `, el("b", "good", pct(tm.wrFast)), ` wins · after ${mmss(tm.slowAfter ?? tm.p75)}: `, el("b", "bad", pct(tm.wrSlow)));
+  } else if (cur.via?.length) k.append(`via ${cur.via.join(", ")}`);
+  box.append(k);
+  if (cur.at !== undefined && t !== undefined && t > 0) {
+    const bar = el("div", "gz-tbar", "");
+    const fill = el("i", "", "");
+    fill.style.width = `${Math.min(100, Math.round((t / cur.at) * 100))}%`;
+    if (t > cur.at) bar.classList.add("late");
+    bar.append(fill);
+    box.append(bar);
+  }
+  root.append(box);
+  const nextCore = plan.phases.find((x) => x.id === "core")?.items ?? [];
+  const after = [...(cur === nextCore[0] ? draft.slice(0, 1) : []), ...seq.slice((i >= 0 ? i : seq.length) + 1)]
+    .filter((x) => !have?.has(x.key))
+    .slice(0, 2)
+    .map((x) => `${x.label}${x.at !== undefined && x.kind !== "counter" ? ` ~${mmss(x.at)}` : ""}`);
+  if (after.length) root.append(p("gz-sub", `then ${after.join(" → ")}`));
+}
+
+/** left column: the four game-length bins on a 0-50 min line, a marker at now. */
+export function renderWindowLine(root: HTMLElement, w: TeamWindow | undefined, t: number | undefined, heroLabel: (c: string) => string): void {
+  root.replaceChildren();
+  if (!w) {
+    root.append(p("muted", "Add both teams in Draft."));
+    return;
+  }
+  const line = el("div", "gz-line", "");
+  const edges = [0, 25, 35, 45, 50];
+  w.diff.forEach((d, i) => {
+    const seg = el("i", d > 0.5 ? "ours" : d < -0.5 ? "theirs" : "even", "");
+    seg.style.left = `${(edges[i]! / 50) * 100}%`;
+    seg.style.width = `${((edges[i + 1]! - edges[i]!) / 50) * 100}%`;
+    seg.title = `${CURVE_LABELS[i]}: ${d >= 0 ? "+" : ""}${d.toFixed(1)} pp`;
+    line.append(seg);
+  });
+  for (const m of [25, 35, 45]) {
+    const lab = el("span", "gz-lab", String(m));
+    lab.style.left = `${(m / 50) * 100}%`;
+    line.append(lab);
+  }
+  if (t !== undefined && t >= 0) {
+    const mk = el("b", "gz-mark", "");
+    mk.style.left = `${Math.min(100, (t / 60 / 50) * 100)}%`;
+    line.append(mk);
+  }
+  root.append(line);
+  const min = (t ?? 0) / 60;
+  const bin = min < 25 ? 0 : min < 35 ? 1 : min < 45 ? 2 : 3;
+  const d = w.diff[bin]!;
+  const until = ["25:00", "35:00", "45:00", ""][bin];
+  root.append(
+    p(
+      "gz-sub",
+      d > 0.5
+        ? `You are stronger now (+${d.toFixed(1)} pp${until ? ` until ${until}` : ""})`
+        : d < -0.5
+          ? `They are stronger now (${d.toFixed(1)} pp${until ? ` until ${until}` : ""})`
+          : `Even right now${until ? ` (until ${until})` : ""}`,
+    ),
+  );
+  root.title = windowText(w, heroLabel);
 }
 
 function itemRow(it: PlanItem, phase: string, v: PlanView): HTMLElement {
@@ -92,29 +264,6 @@ function itemRow(it: PlanItem, phase: string, v: PlanView): HTMLElement {
     li.title = `done by ${mmss(it.timing.fastBy ?? it.timing.p25)}: ${(it.timing.wrFast * 100).toFixed(0)}% wins · after ${mmss(it.timing.slowAfter ?? it.timing.p75)}: ${(it.timing.wrSlow * 100).toFixed(0)}% · ${it.timing.games} games`;
   }
   return li;
-}
-
-function windowBlock(w: TeamWindow, heroLabel: (c: string) => string): HTMLElement {
-  const box = document.createElement("div");
-  box.className = "plan-phase plan-window";
-  box.append(div("plan-ph", "Power windows (heuristic)"));
-  const bars = document.createElement("div");
-  bars.className = "win-bars";
-  const max = Math.max(3, ...w.diff.map((d) => Math.abs(d)));
-  w.diff.forEach((d, i) => {
-    const col = document.createElement("div");
-    col.className = `win-col ${d >= 0 ? "ours" : "theirs"}`;
-    const bar = document.createElement("div");
-    bar.className = "win-bar";
-    bar.style.setProperty("--h", `${Math.round((Math.abs(d) / max) * 100)}%`);
-    col.append(span("win-v", `${d >= 0 ? "+" : ""}${d.toFixed(1)}`), bar, span("win-l", CURVE_LABELS[i]!));
-    const top = w.drivers[i]!.slice(0, 3).map((x) => `${x.side === "ally" ? "" : "enemy "}${heroLabel(x.hero)} ${x.pp >= 0 ? "+" : ""}${x.pp.toFixed(1)}`);
-    col.title = `win rate vs own average, pp: ${top.join(", ")}`;
-    bars.append(col);
-  });
-  box.append(bars);
-  box.append(p("win-text", windowText(w, heroLabel)));
-  return box;
 }
 
 /** the sentence under the bars: where we are stronger, where they are, and why. */
@@ -158,4 +307,30 @@ function span(cls: string, text: string): HTMLElement {
   e.className = cls;
   e.textContent = text;
   return e;
+}
+
+function el(tag: string, cls: string, text: string): HTMLElement {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text) e.textContent = text;
+  return e;
+}
+function card(title: string): HTMLElement {
+  const c = el("div", "gz-card", "");
+  c.append(el("h4", "", title));
+  return c;
+}
+function row(key: string, label: string, why: string): HTMLElement {
+  const r = el("div", "gz-row", "");
+  const name = el("span", "gz-i", "");
+  const img = document.createElement("img");
+  img.src = `./items/${key}.webp`;
+  img.alt = "";
+  img.onerror = () => img.remove();
+  name.append(img, el("b", "", label));
+  r.append(name, el("span", "gz-a", why));
+  return r;
+}
+function pct(x: number): string {
+  return `${Math.round(x * 100)}%`;
 }

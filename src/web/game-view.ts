@@ -11,6 +11,8 @@
 
 import { ClockConfirm, formatClock, isNight, parseClock, upcoming, type Timings, type Upcoming } from "../game-timers.js";
 import type { ClockTick } from "./screen-reader.js";
+import { phaseAt, type GamePhase } from "../game-plan.js";
+import { renderPlanZone, renderTarget, renderWindowLine, type ZoneData } from "./plan-view.js";
 
 interface Clock {
   /** game seconds at `at` (negative before the horn). */
@@ -45,6 +47,10 @@ export class GameView {
   private autoSwitched = false;
   private confirmer = new ClockConfirm();
   private root: HTMLElement;
+  private data?: ZoneData;
+  /** a phase the user picked; undefined = follow the clock. */
+  private phaseManual?: GamePhase;
+  private shownPhase?: GamePhase;
 
   constructor(private readonly d: GameDeps) {
     this.root = document.querySelector<HTMLElement>("#game-view")!;
@@ -94,39 +100,35 @@ export class GameView {
 
   private build(): void {
     this.root.innerHTML = `
-      <section class="game">
-        <div class="game-head">
+      <section class="gz">
+        <aside class="gz-now" aria-label="Now">
           <div class="game-clock-box">
             <div id="game-clock" class="game-clock" aria-live="off">-:--</div>
-            <div class="game-badges"><span id="game-badge"></span><span id="game-cycle"></span></div>
+            <div class="game-badges"><span id="game-badge"></span><span id="game-cycle"></span><span id="game-playing" class="muted"></span></div>
           </div>
-          <div class="game-ctl">
+          <div class="game-row"><div id="game-roles" class="pos" role="group" aria-label="Your position"></div></div>
+          <h3 class="game-h">Next events</h3>
+          <ol id="game-events" class="game-events" aria-label="Next map events"></ol>
+          <h3 class="game-h">Item target</h3>
+          <div id="game-target" class="gz-target"></div>
+          <h3 class="game-h">Power window</h3>
+          <div id="game-wline" class="gz-wline"></div>
+          <h3 class="game-h">Marks</h3>
+          <div class="game-row">
+            <button id="mark-rosh" type="button" class="g-btn mark" data-mark="roshan_killed">Roshan killed</button>
+            <button id="mark-torm" type="button" class="g-btn mark" data-mark="tormentor_killed">Tormentor killed</button>
+          </div>
+          <details class="gz-set">
+            <summary>Clock</summary>
             <div class="game-row">
-              <span class="pos-l">Your position</span>
-              <div id="game-roles" class="pos" role="group" aria-label="Your position"></div>
-              <span id="game-playing" class="muted"></span>
-            </div>
-            <div class="game-row">
-              <label class="muted" for="game-set">Clock</label>
-              <input id="game-set" type="text" inputmode="numeric" placeholder="m:ss" size="6" autocomplete="off" />
+              <input id="game-set" type="text" inputmode="numeric" placeholder="m:ss" size="6" autocomplete="off" aria-label="Set the game clock" />
               <button id="game-set-btn" type="button" class="g-btn">Set</button>
               <button id="game-run-btn" type="button" class="g-btn">Pause</button>
-              <span id="game-src" class="muted"></span>
             </div>
-            <div class="game-row">
-              <button id="mark-rosh" type="button" class="g-btn mark" data-mark="roshan_killed">Roshan killed</button>
-              <button id="mark-torm" type="button" class="g-btn mark" data-mark="tormentor_killed">Tormentor killed</button>
-            </div>
-          </div>
-        </div>
-        <div class="game-cols">
-          <div class="game-col">
-            <h3 class="game-h">Map timers</h3>
-            <ol id="game-events" class="game-events" aria-label="Next map events"></ol>
-            <p id="game-foot" class="muted game-foot"></p>
-          </div>
-          <aside id="game-plan" class="game-col game-plan" aria-label="Item plan and power spikes"></aside>
-        </div>
+          </details>
+          <p class="muted game-foot"><span id="game-src"></span><br /><span id="game-foot"></span></p>
+        </aside>
+        <main id="game-plan" class="gz-plan" aria-label="Match plan"></main>
       </section>`;
     const roles = this.root.querySelector<HTMLElement>("#game-roles")!;
     for (const r of [undefined, 1, 2, 3, 4, 5]) {
@@ -173,13 +175,43 @@ export class GameView {
     }
   }
 
-  /** the plan column (built by main.ts when the draft / hero changes). */
-  planRoot(): HTMLElement {
-    return this.root.querySelector<HTMLElement>("#game-plan")!;
+  /** the plan data (built by main.ts when the draft / hero / items change). */
+  setData(d: ZoneData): void {
+    this.data = d;
+    this.renderZone();
+    this.renderNow(this.now());
+  }
+
+  private phaseNow(): GamePhase {
+    return this.phaseManual ?? phaseAt(this.now());
+  }
+
+  private renderZone(): void {
+    if (!this.data) return;
+    const phase = this.phaseNow();
+    this.shownPhase = phase;
+    renderPlanZone(this.root.querySelector<HTMLElement>("#game-plan")!, {
+      ...this.data,
+      phase,
+      auto: this.phaseManual === undefined,
+      onPhase: (p) => {
+        this.phaseManual = p === phaseAt(this.now()) ? undefined : p;
+        this.renderZone();
+        this.render();
+      },
+    });
+  }
+
+  private renderNow(t: number | undefined): void {
+    const d = this.data;
+    renderTarget(this.root.querySelector<HTMLElement>("#game-target")!, d?.view.plan, d?.view.have, t);
+    renderWindowLine(this.root.querySelector<HTMLElement>("#game-wline")!, d?.view.window, t, d?.view.heroLabel ?? ((x) => x));
   }
 
   render(): void {
     const t = this.now();
+    if (this.data && this.phaseManual === undefined && phaseAt(t) !== this.shownPhase) this.renderZone();
+    this.renderNow(t);
     // plan items due within a minute / already past their typical time
     for (const li of this.root.querySelectorAll<HTMLElement>("#game-plan [data-at]")) {
       const at = Number(li.dataset.at);
@@ -196,7 +228,7 @@ export class GameView {
     badge.textContent = { none: "no clock", paused: "PAUSED", pregame: "PRE-GAME", lost: "clock not visible", live: "" }[kind];
     $("#game-cycle").textContent = t === undefined ? "" : isNight(t) ? "☾ Night" : "☀ Day";
     $("#game-src").textContent = !c
-      ? "Read screen to follow the in-game clock, or set it here."
+      ? "Read screen to follow the in-game clock, or set it under Clock."
       : c.source === "screen"
         ? "from the screen"
         : "manual clock";
@@ -221,7 +253,7 @@ export class GameView {
       $("#game-foot").textContent = tm ? "" : "No timings data in this build.";
       return;
     }
-    list.replaceChildren(...upcoming(tm, t, this.d.role(), this.marks).map((u) => eventRow(u)));
+    list.replaceChildren(...upcoming(tm, t, this.d.role(), this.marks).slice(0, 7).map((u) => eventRow(u)));
     $("#game-foot").textContent =
       `Timings for patch ${tm.patch}${tm.reviewed ? `, reviewed ${tm.reviewed}` : ""}. ` +
       "~ = approximate (depends on the camp / lane).";

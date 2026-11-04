@@ -250,6 +250,14 @@ Tormentor - with a countdown, gold when it is close, green while it is on. Press
 share, set the clock by hand (`12:30`, `-0:45`). The schedule and its patch-note
 sources live in `data/timings.yaml`.
 
+### Game tab layout (ADR-028)
+
+- **Now** (left) is what changes by the second: the clock, the next map events, the item
+  you should be finishing (its typical time and what being early or late is worth), the
+  power-window line with a "now" marker, and Roshan / Tormentor marks.
+- **Match plan** (right) follows the game phase (Lane / Mid / Late; click a phase to pin it):
+  a phase focus, damage & defence, threats & answers, and the full item plan.
+
 ### Item plan and power windows (ADR-027)
 
 Mark the hero you play (★) and your position: the Game tab shows the plan next to the

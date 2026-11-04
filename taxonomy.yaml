@@ -800,7 +800,7 @@ hero_tags:
   # ===========================================================================
   #  POSITION 3 - OFFLANE
   # ===========================================================================
-  axe:             { pos: [3], reliance: {melee_commit: 0.6, low_mobility: 0.5, spell_reliant: 0.4}, tool: {health_based_damage: 0.4} }   # tank, few vulnerabilities
+  axe:             { pos: [3], reliance: {melee_commit: 0.6, low_mobility: 0.5, spell_reliant: 0.4}, tool: {bkb_piercing_disable: 0.8, health_based_damage: 0.4} }   # Berserker's Call pierces debuff immunity; tank, few vulnerabilities
   centaur_warrunner: { pos: [3], reliance: {melee_commit: 0.5, low_mobility: 0.4} }
   tidehunter:      { pos: [3], reliance: {low_mobility: 0.5, spell_reliant: 0.5, high_armor: 0.6, bkb_reliant: 0.4}, tool: {true_strike: 0.2}, resist: {physical_damage_block: 0.4, self_dispel: 0.4} }   # Kraken Shell + armor
   bristleback:     { pos: [3], reliance: {sustain_dependent: 0.8, low_mobility: 0.5, high_armor: 0.7, key_passive: 0.9}, resist: {passive_damage_reduction: 0.8} }   # Bristleback passive cuts ALL damage from behind (resist); break turns it and Warpath off
@@ -831,7 +831,7 @@ hero_tags:
   #  not only tool carriers - ADR-011 amended). Weights are an expert draft for
   #  ~patch 7.41; lines marked TENTATIVE are newer heroes / less certain reads.
   # ===========================================================================
-  lion:            { pos: [4,5], reliance: {squishy_to_burst: 0.7, low_mobility: 0.7, spell_reliant: 0.7, pickoff_reliant: 0.3}, tool: {bkb_piercing_disable: 0.6, magic_burst: 0.7, mana_burn: 0.5, illusion_execute: 0.5} }
+  lion:            { pos: [4,5], reliance: {squishy_to_burst: 0.7, low_mobility: 0.7, spell_reliant: 0.7, pickoff_reliant: 0.3}, tool: {lockdown_early: 0.8, magic_burst: 0.7, mana_burn: 0.5, illusion_execute: 0.5} }   # Earth Spike / Hex: hard disables, but not through debuff immunity
   silencer:        { pos: [4,5], reliance: {low_mobility: 0.6, squishy_to_burst: 0.5, attack_reliant: 0.3}, tool: {silence: 1.0, bkb_piercing_disable: 0.6, mana_burn: 0.3} }
   earthshaker:     { pos: [4,5], reliance: {spell_reliant: 0.7, mobility_dependent: 0.5, squishy_to_burst: 0.4}, tool: {aoe_clear: 0.9, bkb_piercing_disable: 0.4} }   # Blink-initiation: root/lock him before the jump
   ancient_apparition: { pos: [4,5], reliance: {low_mobility: 0.8, squishy_to_burst: 0.7, spell_reliant: 0.6}, tool: {healing_reduction: 1.0, health_based_damage: 0.4} }
