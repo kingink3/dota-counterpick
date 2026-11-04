@@ -107,7 +107,17 @@ export function readRawKB(root: string = REPO_ROOT): RawKB {
     ...(itemFit ? { itemFit } : {}),
     heroAttack: loadHeroAttack(root, Object.keys(taxonomy.hero_tags)),
     itemTraits: loadItemTraits(root),
+    itemDcKey: loadItemDcKey(root),
   };
+}
+
+/** data/constants-map.yaml `items`: our id -> dotaconstants key (only ids that differ). */
+function loadItemDcKey(root: string): Record<string, string> {
+  try {
+    return readYaml<{ items?: Record<string, string> }>(join(root, "data", "constants-map.yaml")).items ?? {};
+  } catch {
+    return {};
+  }
 }
 
 /** data/item_traits.yaml -> item -> what holding it adds to an enemy (ADR-024). */

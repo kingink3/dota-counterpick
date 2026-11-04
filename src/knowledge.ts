@@ -59,6 +59,8 @@ export interface KnowledgeBase {
   heroAttack?: Record<string, AttackType>;
   /** enemy-item traits (data/item_traits.yaml, ADR-024). */
   itemTraits?: Record<string, ItemTrait>;
+  /** our item id -> dotaconstants key where they differ (icons, Tab reader). */
+  itemDcKey?: Record<string, string>;
 
   // indices -----------------------------------------------------------------
   relianceByCode: Map<string, Reliance>;
@@ -93,6 +95,7 @@ export interface RawKB {
   /** hero code (KB code AND roster valve name) -> melee / ranged. */
   heroAttack?: Record<string, AttackType>;
   itemTraits?: Record<string, ItemTrait>;
+  itemDcKey?: Record<string, string>;
 }
 
 export function indexKB(raw: RawKB): KnowledgeBase {
@@ -209,6 +212,7 @@ export function indexKB(raw: RawKB): KnowledgeBase {
     ...(raw.itemFit ? { itemFit: raw.itemFit } : {}),
     ...(raw.heroAttack ? { heroAttack: raw.heroAttack } : {}),
     ...(raw.itemTraits ? { itemTraits: raw.itemTraits } : {}),
+    ...(raw.itemDcKey ? { itemDcKey: raw.itemDcKey } : {}),
     relianceByCode,
     toolByCode,
     edgesByTool,

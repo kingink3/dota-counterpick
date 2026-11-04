@@ -12,7 +12,7 @@
     "fetch:portraits": "tsx scripts/fetch-portraits.ts",
     "serve": "npm run build:web && npx --yes serve web -l 5173",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.web.json",
-    "test": "tsx --test test/engine.test.ts test/gsi.test.ts test/screen.test.ts test/combos.test.ts",
+    "test": "tsx --test test/engine.test.ts test/gsi.test.ts test/screen.test.ts test/combos.test.ts test/items.test.ts",
     "gsi": "tsx scripts/gsi-bridge.ts",
     "companion": "npm run build:web && tsx scripts/gsi-bridge.ts",
     "patch:check": "tsx scripts/patch-check.ts",

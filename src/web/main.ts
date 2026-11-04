@@ -525,8 +525,13 @@ function renderEnemyItems(): void {
         const chip = document.createElement("button");
         chip.type = "button";
         chip.className = "item-chip";
-        chip.textContent = itemLabels.get(it) ?? it;
-        chip.title = `${labelFor(hero)} has ${chip.textContent} - click to remove`;
+        const name = itemLabels.get(it) ?? it;
+        const icon = document.createElement("img");
+        icon.alt = "";
+        icon.src = `./items/${kb.itemDcKey?.[it] ?? it}.webp`;
+        icon.addEventListener("error", () => icon.remove());
+        chip.append(icon, document.createTextNode(name));
+        chip.title = `${labelFor(hero)} has ${name} - click to remove`;
         chip.addEventListener("click", () => setEnemyItems(hero, (state.enemyItems.get(hero) ?? []).filter((x) => x !== it)));
         col.appendChild(chip);
       }
