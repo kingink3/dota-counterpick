@@ -11,6 +11,7 @@
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { leaderboardQuery, matchMeQuery, matchPositionsQuery, matchSummaryQuery, ME_PARTS, recentMatchesQuery } from "../src/stratz-queries.js";
 
 const API = "https://api.stratz.com/graphql";
 const MIN_GAP_MS = 800;
@@ -97,6 +98,37 @@ async function main(): Promise<void> {
       }
     }
     console.log(`${spec.batches.length - failed}/${spec.batches.length} batches ok`);
+  } else if (mode === "sample") {
+    // the shape of a fresh parsed ranked match, from a public leaderboard player
+    // (never the token owner's own games: the raw branch is public)
+    const lb = await gql<{ leaderboard: { season: { players: Array<{ steamAccountId: number }> } } }>(leaderboardQuery(10));
+    let found: { acc: number; id: number } | undefined;
+    for (const p of lb.leaderboard?.season?.players ?? []) {
+      const r = await gql<{ player: { matches: Array<{ id: number; lobbyType?: string; parsedDateTime?: number | null }> } }>(recentMatchesQuery(p.steamAccountId, 3));
+      const m = (r.player?.matches ?? []).find((x) => x.parsedDateTime && /RANKED/.test(x.lobbyType ?? ""));
+      if (m) {
+        found = { acc: p.steamAccountId, id: m.id };
+        break;
+      }
+    }
+    if (!found) throw new Error("no parsed ranked match among the leaderboard players");
+    const summary = await gql<{ match: unknown }>(matchSummaryQuery(found.id));
+    const me: Record<string, unknown> = { playbackData: {} };
+    for (const part of Object.keys(ME_PARTS) as Array<keyof typeof ME_PARTS>) {
+      const r = await gql<{ match: { players: Array<Record<string, unknown>> } }>(matchMeQuery(found.id, found.acc, part));
+      const pl = r.match?.players?.[0] ?? {};
+      const { playbackData, ...rest } = pl as { playbackData?: Record<string, unknown> };
+      Object.assign(me, rest);
+      Object.assign(me.playbackData as Record<string, unknown>, playbackData ?? {});
+    }
+    let positions: unknown;
+    try {
+      positions = (await gql<{ match: unknown }>(matchPositionsQuery(found.id))).match;
+    } catch (e) {
+      console.log(`positions failed: ${String(e).slice(0, 200)}`);
+    }
+    writeFileSync(join(out, "match.json"), JSON.stringify({ account: found.acc, summary: summary.match, me, positions }));
+    console.log(`sample match ${found.id}`);
   } else {
     throw new Error(`unknown mode ${mode}`);
   }

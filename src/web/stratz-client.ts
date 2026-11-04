@@ -8,6 +8,7 @@
 // =============================================================================
 
 import {
+  ME_PARTS,
   matchMeQuery,
   matchPositionsQuery,
   matchSummaryQuery,
@@ -129,16 +130,26 @@ export class StratzClient {
   async match(id: number): Promise<MatchData> {
     const acc = this.s.account!;
     const sum = await this.q<{ match: StratzSummary }>(matchSummaryQuery(id));
-    const me = await this.q<{ match: { players: StratzMe[] } }>(matchMeQuery(id, acc));
-    const mine = me.match?.players?.[0];
-    if (!sum.match || !mine) throw new StratzError("match not found or not parsed by STRATZ yet", "query");
+    if (!sum.match) throw new StratzError("match not found", "query");
+    const me: StratzMe = { playerSlot: -1, heroId: 0, isRadiant: true, playbackData: {} };
+    for (const part of Object.keys(ME_PARTS) as Array<keyof typeof ME_PARTS>) {
+      const r = await this.q<{ match: { players: StratzMe[] } }>(matchMeQuery(id, acc, part));
+      const p = r.match?.players?.[0];
+      if (!p) throw new StratzError("you are not in this match (or it is not parsed yet)", "query");
+      const { playbackData, ...rest } = p;
+      Object.assign(me, rest);
+      if (playbackData) Object.assign(me.playbackData!, playbackData);
+    }
+    if (!me.playbackData?.deathEvents && !me.playbackData?.inventoryEvents) {
+      throw new StratzError("STRATZ has no event data for this match (old or not parsed yet)", "query");
+    }
     let positions: StratzPositions | undefined;
     try {
       positions = (await this.q<{ match: StratzPositions }>(matchPositionsQuery(id))).match;
     } catch {
       positions = undefined; // the "alone" check is skipped
     }
-    return { summary: sum.match, me: mine, ...(positions ? { positions } : {}) };
+    return { summary: sum.match, me, ...(positions ? { positions } : {}) };
   }
 }
 
