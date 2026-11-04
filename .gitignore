@@ -9,6 +9,7 @@ web/app.js.map
 web/kb.json
 web/roster.json
 web/matchups.json
+web/item-stats.json
 # web/heroes/ IS tracked: the Pages build needs the portraits (Valve art)
 
 # local companion (ADR-013): per-machine GSI auth token
