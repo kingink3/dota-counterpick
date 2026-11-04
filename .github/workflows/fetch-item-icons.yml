@@ -1,0 +1,31 @@
+# One-off / per-patch: download item icons into web/items/ and commit them (ADR-025).
+# Run from Actions -> "Fetch item icons" -> Run workflow (the dev container has no
+# access to Valve's CDN). Commits only when something changed.
+name: Fetch item icons
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: dotaconstants
+        run: |
+          mkdir -p /tmp/dc && cd /tmp/dc && npm pack dotaconstants --silent && tar xzf dotaconstants-*.tgz
+      - run: npm run fetch:items -- --constants /tmp/dc/package/build
+      - name: Commit icons
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/items
+          git diff --cached --quiet && echo "no changes" || (git commit -m "Item icons from Valve CDN (fetch-item-icons workflow)" && git push)
