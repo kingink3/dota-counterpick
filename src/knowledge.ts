@@ -68,6 +68,8 @@ export interface KnowledgeBase {
   resistPiercedBy: Map<string, string[]>;
   /** resist edges that name an enemy TOOL, grouped by that tool (blunted term). */
   resistEdgesByTool: Map<string, ResistEdge[]>;
+  /** resist edges that name an enemy damage SOURCE (reliance), grouped by it. */
+  resistEdgesByReliance: Map<string, ResistEdge[]>;
   knownReliance: Set<string>;
   knownTools: Set<string>;
 
@@ -155,6 +157,7 @@ export function indexKB(raw: RawKB): KnowledgeBase {
   const knownResist = new Set((taxonomy.resistance ?? []).map((r) => r.code));
   const resistEdgesBy = new Map<string, ResistEdge[]>();
   const resistEdgesByTool = new Map<string, ResistEdge[]>();
+  const resistEdgesByReliance = new Map<string, ResistEdge[]>();
   const resistPiercedBy = new Map<string, string[]>();
   for (const r of taxonomy.resistance ?? []) {
     for (const t of r.pierced_by ?? []) {
@@ -169,6 +172,7 @@ export function indexKB(raw: RawKB): KnowledgeBase {
     if (re.reliance && !knownReliance.has(re.reliance)) warnings.push(`resist edge references unknown reliance "${re.reliance}"`);
     resistEdgesBy.set(re.resistance, [...(resistEdgesBy.get(re.resistance) ?? []), re]);
     if (re.tool) resistEdgesByTool.set(re.tool, [...(resistEdgesByTool.get(re.tool) ?? []), re]);
+    if (re.reliance) resistEdgesByReliance.set(re.reliance, [...(resistEdgesByReliance.get(re.reliance) ?? []), re]);
   }
 
   for (const [hero, tags] of Object.entries(taxonomy.hero_tags)) {
@@ -192,6 +196,7 @@ export function indexKB(raw: RawKB): KnowledgeBase {
     edgesByTool,
     resistEdgesBy,
     resistEdgesByTool,
+    resistEdgesByReliance,
     resistPiercedBy,
     knownReliance,
     knownTools,

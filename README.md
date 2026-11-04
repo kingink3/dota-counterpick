@@ -78,6 +78,8 @@ recommend({ enemyHeroes, myRole?, myHero? }) -> { heroes[], items[], uncovered[]
    own debuff immunity vs silences, …) add score; enemy tools that hit the
    candidate's own reliances (edges reversed) and candidate tools blunted by an
    enemy resistance subtract it (scaled, capped per enemy, `pierced_by` exceptions).
+   Blunting also applies to what the candidate's damage rests on (a right-clicker into
+   evasion, lifesteal into Mana Shield - ADR-022); a net-negative pick is not shown.
 6. **Explainability (ADR-012 §4)** - every point of score is backed by a `Reason`
    with its mechanism string; nothing scores silently.
 

@@ -206,6 +206,7 @@ function resolveDefense(
   for (const d of kb.defenseEdges) {
     // per-enemy threat magnitude: a specific tool, or the broad damage school.
     const threatOf = (enemy: string): number => {
+      if (d.except?.includes(enemy)) return 0;
       const tags = census.tagsOf(enemy)!;
       if (d.school) return schoolDamage(tags, d.school);
       return tags.tool?.[d.threat!] ?? 0;
@@ -272,9 +273,9 @@ function rankItems(
     acc.set(ie.item, entry);
   }
 
-  const recs = [...acc.entries()].map(([code, { label, reasons }]) =>
-    finalizeItem(code, label, reasons, fit),
-  );
+  const recs = [...acc.entries()]
+    .map(([code, { label, reasons }]) => finalizeItem(code, label, reasons, fit))
+    .filter((r) => r.score > 0); // blunted into this lineup more than it answers (ADR-022)
   return recs.sort(rankCompare);
 }
 
@@ -347,6 +348,8 @@ function rankSubjects(
     // only re-rank (a hero with nothing but risks is simply not suggested)
     if (!reasons.some((r) => r.contribution > 0)) continue;
     const rec = finalizeRec(subject.kind, subject.code, subject.label, subject.pos, reasons);
+    // net negative = the enemy's kit beats this pick more than it answers them (ADR-022)
+    if (rec.score <= 0) continue;
     if (subject.kind === "hero") attachWinrate(rec, kb, census);
     recs.push(rec);
   }
@@ -531,12 +534,12 @@ function scoreSubject(
 }
 
 // ---------------------------------------------------------------------------
-//  Two-sided scoring (ADR-020): a pick is also judged by what it ENDURES and by
+//  Two-sided scoring (ADR-020; blunted-by-reliance ADR-022): a pick is also judged by what it ENDURES and by
 //  what in the enemy lineup hits ITS weaknesses - not only by what it deals.
 //
 //    resist  (+) candidate resistance x enemy tool / damage source   (resist_edges)
 //    risk    (-) enemy tool x candidate reliance                     (edges, reversed)
-//    blunted (-) candidate tool x enemy resistance                   (resist_edges, reversed)
+//    blunted (-) candidate tool OR reliance x enemy resistance       (resist_edges, reversed)
 //
 //  Offense stays the backbone: penalties are scaled down (a risk is a reason to
 //  play carefully, not a hard veto) and capped per enemy so a long reliance list
@@ -620,6 +623,23 @@ function scoreTwoSided(subject: Subject, kb: KnowledgeBase, census: Census, out:
             mechanism: re.mechanism,
             contribution: -BLUNT_WEIGHT * tw * re.weight * ew,
             factors: { toolWeight: tw, edgeWeight: re.weight, enemyWeight: ew },
+          });
+        }
+      }
+      // ...and the same for what the candidate's damage RESTS ON (heroes): a
+      // right-clicker into evasion / Mana Shield, lifesteal sustain into Mana Shield
+      for (const [relCode, cw] of Object.entries(subject.tags?.reliance ?? {})) {
+        if (cw <= 0) continue;
+        for (const re of kb.resistEdgesByReliance.get(relCode) ?? []) {
+          if (re.resistance !== code) continue;
+          risk.push({
+            enemy,
+            basis: "risk",
+            reliance: relCode,
+            resistance: code,
+            mechanism: re.mechanism,
+            contribution: -BLUNT_WEIGHT * cw * re.weight * ew,
+            factors: { relianceWeight: cw, edgeWeight: re.weight, enemyWeight: ew },
           });
         }
       }

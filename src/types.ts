@@ -226,6 +226,9 @@ export interface DefenseEdge {
   weight: number;
   /** only recommend if at least N enemies carry the threat / deal that school. */
   min_threat?: number;
+  /** enemies this item does NOT answer despite matching the threat (Ghost Scepter
+   *  vs Muerta's Pierce the Veil, which hits ethereal targets) - ADR-022. */
+  except?: string[];
 }
 
 // ---------------------------------------------------------------------------

@@ -492,3 +492,53 @@ test("curated combos load first and replace the wiki line for the same pair", as
   const keys = raw.combos.map((c) => key(c.pair));
   assert.equal(new Set(keys).size, keys.length, "no duplicate pairs");
 });
+
+// ---------------------------------------------------------------------------
+//  ADR-022: "X does not work against Y" (blunted by the candidate's reliance too)
+// ---------------------------------------------------------------------------
+
+test("blunted by reliance: right-clickers into evasion, unless they carry true strike", () => {
+  const r = engine.recommend({ enemyHeroes: ["phantom_assassin"] });
+  const hasEvasionPenalty = (code: string) =>
+    !!rec(r.heroes, code)?.reasons.some((x) => x.basis === "risk" && x.reliance === "attack_reliant" && x.resistance === "evades_attacks");
+  const troll = rec(r.heroes, "troll_warlord");
+  assert.ok(!troll || hasEvasionPenalty("troll_warlord"), "Troll's attacks miss into Immaterial");
+  const drow = rec(r.heroes, "drow_ranger");
+  assert.ok(drow, "Drow listed vs PA");
+  assert.ok(!hasEvasionPenalty("drow_ranger"), "Marksmanship accuracy pierces evasion");
+});
+
+test("Mana Shield: lifesteal and minus armor do not work, mana burn does", () => {
+  const r = engine.recommend({ enemyHeroes: ["medusa"] });
+  assert.equal(rec(r.heroes, "lifestealer"), undefined, "Feast + lifesteal into Mana Shield is not a pick");
+  for (const h of r.heroes) {
+    if ((engine.kb.taxonomy.hero_tags[h.code]?.tool?.armor_reduction ?? 0) > 0) {
+      assert.ok(h.reasons.some((x) => x.tool === "armor_reduction" && x.resistance === "mana_shield" && x.contribution < 0), `${h.code}: minus armor blunted`);
+    }
+  }
+  assert.deepEqual(r.heroes.slice(0, 2).map((h) => h.code).sort(), ["anti_mage", "nyx_assassin"]);
+});
+
+test("no mana pool: mana burn is blunted into Huskar", () => {
+  const r = engine.recommend({ enemyHeroes: ["huskar"] });
+  for (const h of r.heroes) {
+    if ((engine.kb.taxonomy.hero_tags[h.code]?.tool?.mana_burn ?? 0) > 0) {
+      assert.ok(h.reasons.some((x) => x.tool === "mana_burn" && x.resistance === "no_mana_pool"), `${h.code}: nothing to burn`);
+      assert.ok(!h.reasons.some((x) => x.tool === "mana_burn" && x.contribution > 0));
+    }
+  }
+});
+
+test("a pick whose net score is not positive is not suggested", () => {
+  for (const enemies of [["medusa"], ["phantom_assassin"], ["huskar"], ["zeus", "lina", "lion"]]) {
+    const r = engine.recommend({ enemyHeroes: enemies });
+    for (const x of [...r.heroes, ...r.items, ...r.defense]) assert.ok(x.score > 0, `${x.code} vs ${enemies}: ${x.score}`);
+  }
+});
+
+test("defense except: Ghost Scepter is not offered vs Muerta (Pierce the Veil hits ethereal)", () => {
+  const vsMuerta = engine.recommend({ enemyHeroes: ["muerta"] });
+  assert.equal(rec(vsMuerta.defense, "ghost_scepter"), undefined);
+  const vsSniper = engine.recommend({ enemyHeroes: ["sniper"] });
+  assert.ok(rec(vsSniper.defense, "ghost_scepter"), "still offered vs a plain right-clicker");
+});

@@ -756,7 +756,7 @@ const threatLabel = (r: Reason) => (r.tool ? toolLabel(r.tool) : relLabel(r.reli
 /** risk reason head: exposure "their tool → my weakness" or blunted "my tool into their resistance". */
 function riskHead(r: Reason): string {
   return r.resistance
-    ? `${esc(toolLabel(r.tool))} blunted by ${esc(resistLabel(r.resistance))}`
+    ? `${esc(r.tool ? toolLabel(r.tool) : relLabel(r.reliance))} blunted by ${esc(resistLabel(r.resistance))}`
     : `exposed: ${esc(toolLabel(r.tool))} → ${esc(relLabel(r.reliance))}`;
 }
 

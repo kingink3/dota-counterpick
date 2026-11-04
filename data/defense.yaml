@@ -23,6 +23,7 @@
 #    mechanism: why it neutralises the threat (required)
 #    weight:    score multiplier
 #    min_threat (optional): only recommend if >= N enemies carry the threat / deal school
+#    except (optional): enemy hero codes the item does NOT answer (Ghost vs Muerta)
 # =============================================================================
 
 defense:
@@ -47,7 +48,8 @@ defense:
   - { school: physical, item: crellas_crozier, label: "Crella's Crozier",
       mechanism: "Rite of Rumusque: 4s ghost form, immune to physical damage (but takes 30% more magic)", weight: 0.8 }
   - { school: physical, item: ghost_scepter, label: "Ghost Scepter",
-      mechanism: "ethereal form nullifies all physical damage during the carry's window", weight: 1.1 }
+      mechanism: "ethereal form nullifies all physical damage during the carry's window", weight: 1.1,
+      except: [muerta] }   # Pierce the Veil hits ethereal targets with magic damage (ADR-022)
   - { school: physical, item: shivas_guard, label: "Shiva's Guard",
       mechanism: "plus armor and the minus-attack-speed aura cut the physical cores' DPS", weight: 1.0 }
   - { school: physical, item: crimson_guard, label: "Crimson Guard",

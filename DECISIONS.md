@@ -454,6 +454,43 @@ Tips и Counters. Лицензии нет → текст не копируем �
 
 ---
 
+## ADR-022 — «X не работает против Y»: притупление по зависимостям кандидата
+
+**Контекст.** Из 363 пунктов howdoiplay с отрицанием эффективности («isn't effective»,
+«doesn't work», «can't be dispelled», «ignores», «pierces») большинство — механические
+тонкости (курьеры, Рошан, смок, порядок каста). Для драфта значимы около десятка, и все
+ложатся на ось устойчивости ADR-020 — но одного не хватало: «притупление» учитывало
+только *инструменты* кандидата, а не то, на чём держится его урон или выживание.
+
+**Решение.**
+- Blunted теперь считается и по `reliance` кандидата через resist_edges с `reliance`:
+  правый клик в уклонение PA (если нет true strike) или в Mana Shield, лайфстил в
+  Mana Shield, атаки в пассивное снижение урона Bristleback (если нет break).
+- Новые рёбра: Mana Shield ← `armor_reduction` 0.7 (щит считает урон до брони —
+  минус броня и усиление урона почти не помогают), ← `sustain_dependent` 0.5 (лайфстил
+  считается от урона по HP). Новая защита `no_mana_pool` (Huskar, Blood Magic) ←
+  `mana_burn` 1.0.
+- True strike у мгновенных атак, которые не промахиваются (Marksmanship у Drow, Boundless
+  Strike, Lunar Orbit, Astral Step, Starbreaker, Stinger, Anchor Smash, Tree Throw, Kez,
+  Assassinate) — они пробивают `evades_attacks`. Контроль сквозь BKB: Hookshot, Walrus
+  Punch, Berserker's Rage, Solar Guardian, Shodo Sai.
+- Slark `sustain_dependent` 0.5 (Ice Blast режет реген даже в Shadow Dance), Meepo
+  `squishy_to_burst` 0.6 (достаточно убить одного).
+- Защитный слой: поле `except` — Ghost Scepter не предлагается против Muerta (Pierce the
+  Veil бьёт эфирные цели магией).
+- Кандидат с итоговой оценкой ≤ 0 (вражеский состав бьёт его сильнее, чем он отвечает)
+  не выводится — ни герой, ни предмет.
+
+**Проверено.** vs Medusa: AM и Nyx #1–2, Lifestealer и Troll не предлагаются, у Slardar /
+VS / ET виден штраф за минус броню. vs PA: у Troll штраф за уклонение, у Drow нет.
+vs Huskar: mana burn у Nyx/Lion притуплён. 67 тестов.
+
+**Границы.** Не моделируются: обход Linken's/Lotus отдельными способностями, урон варды-
+юнитов мимо блока урона (Serpent Wards, Skeleton Archers), неснимаемые дебаффы как
+ответ на self_dispel (Maledict, Burning Spears, Avalanche) — слишком точечно для тегов.
+
+---
+
 ## Дорожная карта (фазы)
 
 1. **MVP (KB-only):** парсер `taxonomy.yaml` → rule-engine (резолвер edges +
