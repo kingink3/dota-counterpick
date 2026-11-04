@@ -87,7 +87,7 @@ function itemRow(it: PlanItem, phase: string, v: PlanView): HTMLElement {
   }
   if (it.place) li.append(span("pi-place", it.place));
   if (it.timing?.wrFast !== undefined && it.timing.wrSlow !== undefined && phase === "core") {
-    li.title = `by ${mmss(it.timing.p25)}: ${(it.timing.wrFast * 100).toFixed(0)}% wins · after ${mmss(it.timing.p75)}: ${(it.timing.wrSlow * 100).toFixed(0)}% · ${it.timing.games} games`;
+    li.title = `done by ${mmss(it.timing.fastBy ?? it.timing.p25)}: ${(it.timing.wrFast * 100).toFixed(0)}% wins · after ${mmss(it.timing.slowAfter ?? it.timing.p75)}: ${(it.timing.wrSlow * 100).toFixed(0)}% · ${it.timing.games} games`;
   }
   return li;
 }

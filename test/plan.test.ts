@@ -85,7 +85,7 @@ test("plan: start fits the starting gold, lane = standard items, no counter item
   assert.deepEqual(sit.map((i) => i.key), ["monkey_king_bar", "infused_raindrop"], "off-build Butterfly (fit 0.25) dropped");
   assert.match(sit[0]!.place!, /after Battle Fury \(~15:00\)/);
   assert.match(sit[1]!.place!, /in the lane/);
-  assert.ok(plan.spikes.some((s) => s.label.startsWith("Battle Fury") && /wins 58%/.test(s.why)));
+  assert.ok(plan.spikes.some((s) => s.label.startsWith("Battle Fury") && /58% wins/.test(s.why)));
 });
 
 test("plan: a support gets wards and no Quelling Blade", () => {

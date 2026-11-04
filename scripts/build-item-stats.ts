@@ -10,8 +10,8 @@
 //              each item as a share of the phase's most bought item;
 //    timing  - /scenarios/itemTimings: purchase-time quartiles + win rate when the
 //              item came early (<= p25) vs late (>= p75);
-//    curve   - win rate by match length (/scenarios/laneRoles, all lanes summed;
-//              falls back to /heroes/{id}/durations).
+//    curve   - win rate by match length (/heroes/{id}/durations, 5-min bins; falls
+//              back to /scenarios/laneRoles, all lanes summed).
 //  Items: cost / quality / components / display name from dotaconstants items.json.
 // =============================================================================
 
@@ -25,6 +25,8 @@ import { heroValveName } from "../src/web/hero-art.js";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const MIN_TIMING_GAMES = 30;
 const MIN_PHASE_SHARE = 0.05;
+/** OpenDota's last timing bucket (30:00): later purchases are not in the data. */
+const LAST_BUCKET = 1800;
 
 function arg(name: string): string | undefined {
   const i = process.argv.indexOf(`--${name}`);
@@ -138,7 +140,10 @@ function main(): void {
       }
     }
 
-    const curve = laneCurve(readJson<LaneRow[]>(join(raw, "lanes", `${h.id}.json`))) ?? durationCurve(readJson<DurationRow[]>(join(raw, "durations", `${h.id}.json`)));
+    // durations: 5-min bins and ~15x the sample of laneRoles (15-min bins)
+    const curve =
+      durationCurve(readJson<DurationRow[]>(join(raw, "durations", `${h.id}.json`))) ??
+      laneCurve(readJson<LaneRow[]>(join(raw, "lanes", `${h.id}.json`)));
     if (curve) {
       hs.curve = curve;
       withCurve++;
@@ -162,7 +167,7 @@ function main(): void {
     ...(fetchedAt ? { fetchedAt } : {}),
     phasesFrom: "item popularity by game phase, professional matches",
     timingsFrom: "purchase times in parsed public matches",
-    curveFrom: "win rate by match length, parsed public matches",
+    curveFrom: "win rate by match length",
     items,
     heroes,
   };
@@ -172,32 +177,70 @@ function main(): void {
   );
 }
 
-/** quartiles of the purchase time from bucketed rows (linear inside a bucket). */
+/** Quartiles of the purchase time from OpenDota's buckets. A row's `time` is the
+ *  bucket's UPPER edge (bought by then): 7:30, 10, 12, 15, 20, 25, 30 min - uneven,
+ *  and nothing after 30 min. Linear inside a bucket; the first bucket is taken as
+ *  2.5 min wide. Items whose last bucket holds a big share are bought later than the
+ *  data covers ("censored") - their quartiles are not reported. */
 export function quartiles(rows: Array<{ t: number; g: number; w: number }>): ItemTiming | undefined {
-  const rs = rows.filter((r) => r.g > 0 && Number.isFinite(r.t)).sort((a, b) => a.t - b.t);
+  const byT = new Map<number, { g: number; w: number }>();
+  for (const r of rows) {
+    if (!(r.g > 0) || !Number.isFinite(r.t)) continue;
+    const b = byT.get(r.t) ?? { g: 0, w: 0 };
+    b.g += r.g;
+    b.w += r.w;
+    byT.set(r.t, b);
+  }
+  const rs = [...byT.entries()].sort((x, y) => x[0] - y[0]).map(([t, b]) => ({ t, ...b }));
   const games = rs.reduce((s, r) => s + r.g, 0);
   if (games < MIN_TIMING_GAMES || rs.length < 2) return undefined;
-  const step = Math.min(...rs.slice(1).map((r, i) => r.t - rs[i]!.t).filter((d) => d > 0));
-  const width = Number.isFinite(step) ? step : 60;
+  const last = rs.at(-1)!;
+  if (last.t >= LAST_BUCKET && last.g / games > 0.25) return undefined; // mostly after the data's end
+  const lower = (i: number) => (i === 0 ? rs[0]!.t - 150 : rs[i - 1]!.t);
   const q = (p: number) => {
     let acc = 0;
-    for (const r of rs) {
-      if (acc + r.g >= p * games) return Math.round(r.t - width + ((p * games - acc) / r.g) * width);
+    for (let i = 0; i < rs.length; i++) {
+      const r = rs[i]!;
+      if (acc + r.g >= p * games) return Math.round(lower(i) + ((p * games - acc) / r.g) * (r.t - lower(i)));
       acc += r.g;
     }
-    return rs.at(-1)!.t;
+    return last.t;
   };
-  const p25 = q(0.25);
-  const p50 = q(0.5);
-  const p75 = q(0.75);
-  const wr = (sel: typeof rs) => {
-    const g = sel.reduce((s, r) => s + r.g, 0);
-    return g >= 20 ? Math.round((sel.reduce((s, r) => s + r.w, 0) / g) * 1000) / 1000 : undefined;
+  // fast = bought by the earliest bucket edge holding >= 15% of games; slow = after the
+  // latest edge with >= 15% of games still to come
+  let acc = 0;
+  let fastBy: number | undefined;
+  let fastG = 0;
+  let fastW = 0;
+  for (const r of rs) {
+    acc += r.g;
+    fastG += r.g;
+    fastW += r.w;
+    if (acc >= 0.15 * games) {
+      fastBy = r.t;
+      break;
+    }
+  }
+  let slowAfter: number | undefined;
+  let slowG = 0;
+  let slowW = 0;
+  for (let i = rs.length - 1; i > 0; i--) {
+    slowG += rs[i]!.g;
+    slowW += rs[i]!.w;
+    if (slowG >= 0.15 * games) {
+      slowAfter = rs[i - 1]!.t;
+      break;
+    }
+  }
+  const round = (x: number) => Math.round(x * 1000) / 1000;
+  return {
+    p25: q(0.25),
+    p50: q(0.5),
+    p75: q(0.75),
+    games,
+    ...(fastBy !== undefined && fastG >= 20 ? { fastBy, wrFast: round(fastW / fastG) } : {}),
+    ...(slowAfter !== undefined && slowG >= 20 ? { slowAfter, wrSlow: round(slowW / slowG) } : {}),
   };
-  // buckets are labelled by their upper edge (time <= t): early = buckets ending by p25
-  const wrFast = wr(rs.filter((r) => r.t <= p25 + width / 2));
-  const wrSlow = wr(rs.filter((r) => r.t - width >= p75 - width / 2));
-  return { p25, p50, p75, games, ...(wrFast !== undefined ? { wrFast } : {}), ...(wrSlow !== undefined ? { wrSlow } : {}) };
 }
 
 function laneCurve(rows: LaneRow[] | undefined): Array<[number, number, number]> | undefined {

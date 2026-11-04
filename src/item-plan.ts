@@ -23,8 +23,11 @@ export interface ItemTiming {
   p50: number;
   p75: number;
   games: number;
-  /** win rate when bought by p25 / after p75 (the cost of being late). */
+  /** win rate when bought by `fastBy` / after `slowAfter` (the cost of being late);
+   *  bucket edges holding >= 15% of the games on each side. */
+  fastBy?: number;
   wrFast?: number;
+  slowAfter?: number;
   wrSlow?: number;
 }
 
@@ -221,7 +224,7 @@ function itemSpikes(core: PlanItem[]): Spike[] {
       const delta = t.wrFast !== undefined && t.wrSlow !== undefined ? t.wrFast - t.wrSlow : undefined;
       const why =
         delta !== undefined
-          ? `typical ${mmss(t.p50)}; by ${mmss(t.p25)} it wins ${pct(t.wrFast!)}, after ${mmss(t.p75)} ${pct(t.wrSlow!)}`
+          ? `typical ${mmss(t.p50)}; done by ${mmss(t.fastBy ?? t.p25)}: ${pct(t.wrFast!)} wins, after ${mmss(t.slowAfter ?? t.p75)}: ${pct(t.wrSlow!)}`
           : `typical ${mmss(t.p50)}`;
       return { at: t.p50, label: `${c.label} done`, why };
     });
