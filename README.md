@@ -258,6 +258,20 @@ sources live in `data/timings.yaml`.
 - **Match plan** (right) follows the game phase (Lane / Mid / Late; click a phase to pin it):
   a phase focus, damage & defence, threats & answers, and the full item plan.
 
+### Review: plan vs fact (ADR-029)
+
+Run the local companion (`npm run companion`), open **Review**, paste your STRATZ token
+(stratz.com/api; the Steam account id is read from it) and press **Analyse** on a match.
+The report shows:
+- the plan the app would have made for that draft vs what you bought and when;
+- last hits, networth and XP vs Crusader-Ancient averages for your hero and position;
+- every death (in their power window? alone? with BKB / Blink ready? with a heal? with
+  unspent gold?), map and role checks, and the top 3 growth areas;
+- trends across the reviewed matches.
+
+STRATZ does not accept calls from a web page, so the companion forwards them. The token
+and the history stay in your browser.
+
 ### Item plan and power windows (ADR-027)
 
 Mark the hero you play (★) and your position: the Game tab shows the plan next to the

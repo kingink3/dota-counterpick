@@ -89,7 +89,8 @@ async function main(): Promise<void> {
     "style-src 'unsafe-inline'",
     "img-src 'self' blob:",
     "font-src 'self'",
-    "connect-src 'self'",
+    // the local companion (match review proxy, ADR-029) on this PC
+    "connect-src 'self' http://127.0.0.1:5174",
     "base-uri 'none'",
     "form-action 'none'",
   ].join("; ");

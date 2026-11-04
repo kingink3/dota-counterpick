@@ -121,21 +121,12 @@ export class ReviewView {
     acc.placeholder = "Steam account id";
     acc.value = s.account ? String(s.account) : "";
     acc.className = "rv-in";
-    const tr = document.createElement("select");
-    tr.className = "rv-in";
-    for (const [v, t] of [["direct", "This page calls STRATZ"], ["companion", "Via local companion (npm run companion)"]] as const) {
-      const o = document.createElement("option");
-      o.value = v;
-      o.textContent = t;
-      if ((s.transport ?? "direct") === v) o.selected = true;
-      tr.append(o);
-    }
     const save = el("button", "g-btn", "Save & load matches") as HTMLButtonElement;
     save.type = "button";
     save.addEventListener("click", () => {
       const token = tok.value.trim();
       const account = Number(acc.value.trim()) || accountFromToken(token);
-      this.settings = { ...(token ? { token } : {}), ...(account ? { account } : {}), transport: tr.value as "direct" | "companion" };
+      this.settings = { ...(token ? { token } : {}), ...(account ? { account } : {}) };
       saveSettings(this.settings);
       this.recent = [];
       void this.loadRecent();
@@ -146,8 +137,8 @@ export class ReviewView {
         if (a) acc.value = String(a);
       }
     });
-    c.append(tok, acc, tr, save);
-    c.append(el("p", "rv-note", "Token and history stay in this browser. Get a token at stratz.com/api."));
+    c.append(tok, acc, save);
+    c.append(el("p", "rv-note", "Needs the local companion running (npm run companion): STRATZ does not accept calls from a web page. Token and history stay in this browser; get a token at stratz.com/api."));
     return c;
   }
 
@@ -216,7 +207,7 @@ export class ReviewView {
       const fs = r.findings.filter((f) => f.area === a);
       if (!fs.length) continue;
       rest.append(el("div", "plan-ph", AREA_LABEL[a]));
-      for (const f of fs) rest.append(findingRow(f));
+      for (const f of fs) rest.append(findingRow(f, false));
     }
     box.append(rest);
     return box;
@@ -261,7 +252,7 @@ export class ReviewView {
       return c;
     }
     const ul = el("ul", "rv-deaths");
-    for (const d of r.deaths) {
+    for (const d of [...r.deaths].sort((a, b) => a.time - b.time)) {
       const li = el("li", "", "");
       li.append(el("b", "", mmss(d.time)));
       const chips = el("span", "rv-chips", "");
@@ -299,9 +290,10 @@ export class ReviewView {
   }
 }
 
-function findingRow(f: Finding): HTMLElement {
-  const r = el("div", `rv-f${f.good ? " good" : ""}`, "");
-  r.append(el("span", "rv-area", AREA_LABEL[f.area]), el("b", "", f.title));
+function findingRow(f: Finding, area = true): HTMLElement {
+  const r = el("div", `rv-f${f.good ? " good" : ""}${area ? "" : " flat"}`, "");
+  if (area) r.append(el("span", "rv-area", AREA_LABEL[f.area]));
+  r.append(el("b", "", f.title));
   const det = el("span", "rv-det", f.detail);
   if (f.times?.length) det.append(el("span", "muted", ` (${f.times.map(mmss).join(", ")})`));
   r.append(det);
@@ -320,7 +312,7 @@ function pctDelta(v: number, b: number): string {
 }
 function errText(e: unknown): string {
   if (e instanceof StratzError) {
-    if (e.kind === "network") return `${e.message}. Start the local companion (npm run companion) or switch the connection to it.`;
+    if (e.kind === "network") return `${e.message}. Start it in the app folder: npm run companion`;
     return e.message;
   }
   return String(e);

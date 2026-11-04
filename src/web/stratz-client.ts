@@ -1,10 +1,10 @@
 // =============================================================================
 //  STRATZ access from the page for the match review (ADR-029). The token and the
 //  review history stay in this browser (localStorage) - nothing personal goes to the
-//  repository. Two transports:
-//    direct     the page calls STRATZ (only if STRATZ accepts a request without a CORS
-//               preflight - see DIRECT below)
-//    companion  `npm run companion` on this PC forwards the query (always works)
+//  repository. The page cannot call STRATZ itself: a request needs an Authorization
+//  header (or another custom header when the token is in the URL), that makes the
+//  browser send a CORS preflight, and STRATZ's Cloudflare answers the preflight 403
+//  (checked 2026-11-04). So `npm run companion` on this PC forwards the queries.
 // =============================================================================
 
 import {
@@ -24,7 +24,6 @@ export const COMPANION = "http://127.0.0.1:5174";
 export interface StratzSettings {
   token?: string;
   account?: number;
-  transport?: "direct" | "companion";
 }
 
 export function loadSettings(): StratzSettings {
@@ -64,23 +63,15 @@ export class StratzError extends Error {
   }
 }
 
-/** Direct call without a preflight: a GET with the query and the token in the URL
- *  (no custom headers -> a "simple" CORS request). */
-async function direct(query: string, token: string): Promise<unknown> {
-  const url = `https://api.stratz.com/graphql?query=${encodeURIComponent(query)}&jwt=${encodeURIComponent(token)}`;
-  let r: Response;
-  try {
-    r = await fetch(url, { method: "GET", credentials: "omit" });
-  } catch {
-    throw new StratzError("STRATZ did not answer the page (browser / CORS)", "network");
-  }
-  return parse(r);
+/** the companion serves the app too: same origin when the page comes from it. */
+function companionBase(): string {
+  return typeof location !== "undefined" && location.origin === COMPANION ? "" : COMPANION;
 }
 
 async function viaCompanion(query: string, token: string | undefined): Promise<unknown> {
   let r: Response;
   try {
-    r = await fetch(`${COMPANION}/stratz`, {
+    r = await fetch(`${companionBase()}/stratz`, {
       method: "POST",
       headers: { "content-type": "application/json", ...(token ? { "x-stratz-token": token } : {}) },
       body: JSON.stringify({ query }),
@@ -109,16 +100,7 @@ export class StratzClient {
   constructor(private readonly s: StratzSettings) {}
 
   async q<T>(query: string): Promise<T> {
-    const token = this.s.token;
-    if (this.s.transport === "companion") return (await viaCompanion(query, token)) as T;
-    if (!token) throw new StratzError("paste your STRATZ token first", "auth");
-    try {
-      return (await direct(query, token)) as T;
-    } catch (e) {
-      // the page could not reach STRATZ itself: fall back to the companion
-      if (e instanceof StratzError && e.kind === "network") return (await viaCompanion(query, token)) as T;
-      throw e;
-    }
+    return (await viaCompanion(query, this.s.token)) as T;
   }
 
   recent(take = 20): Promise<RecentMatch[]> {
