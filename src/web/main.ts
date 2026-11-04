@@ -184,7 +184,11 @@ function renderGamePlan(result: ReturnType<typeof resolveDraft>): void {
     heroLabel: labelFor,
     reasonText: (rec) => {
       const r = leadReason(rec);
-      return r ? reasonSummaryText(r, rec) : "";
+      if (!r) return "";
+      // reasonSummaryText is markup for the cards; the plan wants plain text
+      const tmp = document.createElement("div");
+      tmp.innerHTML = reasonSummaryText(r, rec);
+      return tmp.textContent ?? "";
     },
     ...(itemStats ? { source: planSource(itemStats) } : {}),
   });

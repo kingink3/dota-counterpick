@@ -75,7 +75,7 @@ test("plan: start fits the starting gold, lane = standard items, no counter item
   const startCost = plan.phases[0]!.items.reduce((s, i) => s + i.cost, 0);
   assert.ok(startCost <= 600, `start ${startCost}`);
   assert.ok(!ph.start!.includes("ward_observer"), "a carry does not start with wards");
-  assert.deepEqual(ph.lane, ["power_treads", "magic_wand", "wraith_band"], "boots once, stick folded into wand, no bare components");
+  assert.deepEqual(ph.lane, ["magic_wand", "power_treads", "wraith_band"], "boots once (the upgrade), stick folded into wand, no bare components");
   assert.equal(ph.core![0], "bfury", "core in purchase order");
   assert.ok(ph.core!.includes("manta"));
   // Manta is standard AND called for -> marked "both" in core, not a first-slot counter
@@ -102,4 +102,49 @@ test("power windows: late heroes vs early heroes", () => {
   assert.ok(w.diff[0]! > 0 && w.diff[3]! < 0, `early ours, late theirs: ${w.diff.map((d) => d.toFixed(1))}`);
   assert.equal(w.drivers[3]![0]!.hero, "medusa");
   assert.equal(teamWindow(stats, ["lion"], ["nobody"]), undefined, "no enemy data");
+});
+
+test("plan on real data: basics first, counters placed, families folded", async () => {
+  const { readFileSync, existsSync } = await import("node:fs");
+  if (!existsSync("data/item-stats.json")) return;
+  const { loadKB } = await import("../src/kb.js");
+  const { archetypeOf, resolve } = await import("../src/resolver.js");
+  const kb = loadKB();
+  const real = JSON.parse(readFileSync("data/item-stats.json", "utf8")) as ItemStats;
+  const enemies = ["phantom_assassin", "zeus", "lion", "axe", "necrophos"];
+  const planFor = (hero: string, role: number) => {
+    const r = resolve(kb, { enemyHeroes: enemies, allyHeroes: [hero], myHero: hero, myRole: role });
+    const arch = archetypeOf(kb, hero, role);
+    return buildPlan({
+      hero,
+      ...(arch ? { archetype: arch } : {}),
+      stats: real,
+      counters: [...r.items, ...r.defense].sort((a, b) => b.score - a.score),
+      dcKey: (id) => kb.itemDcKey?.[id],
+    })!;
+  };
+  const keys = (p: ReturnType<typeof planFor>, id: string) => p.phases.find((x) => x.id === id)!.items.map((i) => i.key);
+  for (const [hero, role] of [["anti_mage", 1], ["sniper", 2], ["axe", 3], ["lion", 5], ["crystal_maiden", 5]] as const) {
+    const p = planFor(hero, role);
+    const lane = keys(p, "lane");
+    const core = keys(p, "core");
+    assert.ok(core.length >= 2, `${hero}: a core`);
+    assert.ok(!lane.includes("boots") || !lane.some((k) => k !== "boots" && k.endsWith("boots")), `${hero}: one pair of boots`);
+    for (const k of [...lane, ...core]) {
+      const it = real.items[k]!;
+      assert.ok(it.cost <= 6500, `${hero}: ${k} is not a luxury item early`);
+    }
+    // a counter item never sits in the start or lane unless it is cheap
+    for (const ph of ["start", "lane"]) {
+      for (const it of p.phases.find((x) => x.id === ph)!.items) assert.ok(it.kind !== "counter" || it.cost <= 1000);
+    }
+    const all = p.phases.flatMap((x) => x.items.map((i) => i.key));
+    assert.ok(!(all.includes("orchid") && all.includes("bloodthorn")), `${hero}: one of Orchid / Bloodthorn`);
+    assert.ok(!(all.includes("yasha") && all.includes("manta")), `${hero}: Yasha folds into Manta`);
+  }
+  // Anti-Mage vs a disable-heavy draft: BKB pulled right after Battle Fury
+  const am = keys(planFor("anti_mage", 1), "core");
+  assert.equal(am[0], "bfury");
+  assert.equal(am[1], "black_king_bar");
+  assert.ok(keys(planFor("lion", 5), "core").includes("blink"), "Lion's core has Blink");
 });

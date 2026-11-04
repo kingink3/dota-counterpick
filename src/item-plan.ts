@@ -73,6 +73,10 @@ export interface PlanItem {
   counter?: Recommendation;
   /** where a counter item goes, in words. */
   place?: string;
+  /** components bought first on the way (Yasha for Manta). */
+  via?: string[];
+  /** typical time of that component, when the item itself has no timing. */
+  viaAt?: number;
 }
 
 export interface PlanPhase {
@@ -98,17 +102,21 @@ export interface ItemPlan {
 export const START_GOLD = 600;
 /** a counter this cheap can be bought during the lane. */
 export const CHEAP_COUNTER = 1000;
-/** core items: built items at least this expensive. */
-const CORE_MIN = 1500;
+/** core items: built (or standalone) items at least this expensive. */
+const CORE_MIN = 1400;
 const LATE_MIN = 2500;
 /** components worth buying on their own in the lane. */
 const STANDALONE = new Set([
   "boots", "magic_stick", "blight_stone", "orb_of_venom", "infused_raindrop", "wind_lace",
   "quelling_blade", "ring_of_basilius", "fluffy_hat", "cloak", "blades_of_attack", "chainmail",
-  "blink", "ghost", "shadow_amulet", "voodoo_mask",
+  "blink", "ghost", "shadow_amulet", "voodoo_mask", "aghanims_shard",
 ]);
 const SUPPORT_ONLY = new Set(["ward_observer", "ward_sentry", "ward_dispenser", "smoke_of_deceit", "dust"]);
 const CORE_ONLY = new Set(["quelling_blade"]);
+/** stat parts with no use of their own. */
+const INTERMEDIATE = new Set(["soul_booster", "point_booster", "mystic_staff", "reaver", "sacred_relic", "hyperstone"]);
+/** boots bought late (not a lane item). */
+const LATE_BOOTS = new Set(["travel_boots", "travel_boots_2", "guardian_greaves", "boots_of_bearing"]);
 const BOOTS = new Set([
   "boots", "phase_boots", "power_treads", "arcane_boots", "tranquil_boots", "travel_boots",
   "travel_boots_2", "guardian_greaves", "boots_of_bearing",
@@ -139,71 +147,152 @@ export function buildPlan(inp: PlanInput): ItemPlan | undefined {
   };
   const used = new Set<string>();
   const take = (k: string) => (used.add(k), mk(k));
-  const built = (k: string) => (items[k]?.components?.length ?? 0) > 0;
-  const partOfUsed = (k: string) => [...used].some((u) => items[u]?.components?.includes(k));
+  const standalone = (k: string) => (items[k]?.components?.length ?? 0) > 0 || STANDALONE.has(k);
+  const share = (ph: Phase, k: string) => hs.phases[ph]?.find(([x]) => x === k)?.[1] ?? 0;
+  /** is `part` (recursively) built into `whole`? */
+  const within = (part: string, whole: string, depth = 0): boolean =>
+    depth < 4 && (items[whole]?.components ?? []).some((c) => c === part || within(part, c, depth + 1));
+  const related = (x: string, y: string) => x === y || within(x, y) || within(y, x);
 
   // --- start: the hero's usual starting items within the starting gold --------
   const start: PlanItem[] = [];
   let gold = START_GOLD;
-  for (const [k, share] of hs.phases.start ?? []) {
-    if (share < 0.12 || !roleOk(k)) continue;
+  const startList = (hs.phases.start ?? []).filter(([k, sh]) => sh >= 0.12 && roleOk(k));
+  const hasDispenser = startList.some(([k]) => k === "ward_dispenser");
+  for (const [k] of startList) {
+    if (hasDispenser && (k === "ward_observer" || k === "ward_sentry")) continue; // the pair covers both
     const c = cost(k);
-    if (c > gold) continue;
+    if (c > gold || start.length >= 7) continue;
     gold -= c;
     start.push(take(k));
   }
 
+  // --- boots: the upgrade the hero actually goes for, else plain boots ------------
+  const upgrades = [...BOOTS]
+    .filter((k) => k !== "boots" && !LATE_BOOTS.has(k) && roleOk(k))
+    .map((k) => [k, Math.max(share("early", k), 0.8 * share("mid", k))] as [string, number])
+    .sort((x, y) => y[1] - x[1]);
+  const bootsKey = upgrades[0] && upgrades[0][1] >= 0.3 ? upgrades[0][0] : share("early", "boots") >= 0.15 ? "boots" : undefined;
+
   // --- lane (to ~10 min): standard early items only ------------------------------
   const lane: PlanItem[] = [];
-  for (const [k, share] of hs.phases.early ?? []) {
-    if (lane.length >= 4 || share < 0.15 || used.has(k) || !roleOk(k)) continue;
-    const q = items[k]?.qual;
-    if (q === "consumable") continue;
-    if (!built(k) && !STANDALONE.has(k)) continue; // a bare component is part of something else
+  for (const [k, sh] of hs.phases.early ?? []) {
+    if (lane.length >= 4 || sh < 0.15 || used.has(k) || !roleOk(k) || BOOTS.has(k)) continue;
+    if (items[k]?.qual?.startsWith("consumable")) continue;
+    if (!standalone(k)) continue; // a bare component is part of something else
     if (cost(k) >= LATE_MIN) continue; // an early big item belongs to core
-    if (BOOTS.has(k) && lane.some((x) => BOOTS.has(x.key))) continue;
     lane.push(take(k));
   }
-  // a bare component that the lane already builds into (stick -> wand) is noise
-  for (let i = lane.length - 1; i >= 0; i--) if (partOfUsed(lane[i]!.key)) lane.splice(i, 1);
+  if (bootsKey && !used.has(bootsKey)) lane.splice(Math.min(1, lane.length), 0, take(bootsKey));
+  // a component the lane already builds into (stick -> wand) is noise
+  for (let i = lane.length - 1; i >= 0; i--) {
+    if (lane.some((o, j) => j !== i && within(lane[i]!.key, o.key))) lane.splice(i, 1);
+  }
 
-  // --- core: standard built items, in purchase order -----------------------------
-  const coreCand = (hs.phases.mid ?? []).filter(
-    ([k, share]) => share >= 0.15 && !used.has(k) && roleOk(k) && built(k) && cost(k) >= CORE_MIN && !BOOTS.has(k),
-  );
-  const core = coreCand.slice(0, 4).map(([k]) => take(k));
-  core.sort((a, b) => (a.at ?? 9e9) - (b.at ?? 9e9));
-  // boots upgrade bought in the mid game (travel boots etc.) stays out of the core list
+  // --- core: standard items of the mid game, in purchase order -------------------
+  // supports buy their core (Force Staff, Glimmer) after 25 min in pro games, so the
+  // late list counts too, at half weight
+  const coreScore = new Map<string, number>();
+  for (const [ph, w] of [["mid", 1], ["late", support ? 0.5 : 0.25]] as const) {
+    for (const [k, sh] of hs.phases[ph] ?? []) coreScore.set(k, (coreScore.get(k) ?? 0) + w * sh);
+  }
+  const coreKeys = [...coreScore.entries()]
+    .filter(([k, sc]) => sc >= 0.2 && !used.has(k) && roleOk(k) && standalone(k) && cost(k) >= CORE_MIN && !BOOTS.has(k) && !INTERMEDIATE.has(k))
+    .sort((x, y) => y[1] - x[1])
+    .map(([k]) => k);
+  // an intermediate item the hero usually finishes into something bigger (Yasha ->
+  // Manta, Crystalys -> Daedalus, Soul Booster -> Octarine) is shown as that item
+  const parentOf = (k: string) =>
+    [...coreScore.entries()]
+      .filter(([p, sc]) => p !== k && sc >= 0.15 && within(k, p) && roleOk(p))
+      .sort((x, y) => y[1] - x[1])[0]?.[0];
+  const core: PlanItem[] = [];
+  const coreCap = support ? 4 : 3;
+  for (const k0 of coreKeys) {
+    if (core.length >= coreCap) break;
+    const parent = parentOf(k0);
+    const k = parent ?? k0;
+    if (used.has(k) || core.some((c) => related(c.key, k))) {
+      const same = core.find((c) => c.key === k);
+      if (same && parent && !same.via?.includes(label(k0))) {
+        same.via = [...(same.via ?? []), label(k0)];
+        const t = hs.timing?.[k0];
+        if (t) same.viaAt = Math.min(same.viaAt ?? 9e9, t.p50);
+      }
+      continue; // one item per upgrade family
+    }
+    const it = take(k);
+    if (parent) {
+      it.via = [label(k0)];
+      // the first visible step of the item: when its component is usually done
+      const t = hs.timing?.[k0];
+      if (t) it.viaAt = t.p50;
+    }
+    core.push(it);
+  }
+  // a core component (Yasha -> Manta, Perseverance -> Battle Fury) folds into the item
+  const fold = (list: PlanItem[], into: PlanItem[]) => {
+    for (let i = list.length - 1; i >= 0; i--) {
+      const parent = into.find((o) => o !== list[i] && within(list[i]!.key, o.key));
+      if (parent) {
+        parent.via = [...(parent.via ?? []), list[i]!.label];
+        list.splice(i, 1);
+      }
+    }
+  };
+  const orderKey = (c: PlanItem) =>
+    Math.min(c.at ?? 9e9, c.viaAt ?? 9e9) < 9e9
+      ? Math.min(c.at ?? 9e9, c.viaAt ?? 9e9)
+      : share("mid", c.key) >= share("late", c.key) ? 1200 : 1800;
+  core.sort((x, y) => orderKey(x) - orderKey(y));
 
   // --- late ------------------------------------------------------------------------
-  const late = (hs.phases.late ?? [])
-    .filter(([k, share]) => share >= 0.15 && !used.has(k) && roleOk(k) && built(k) && cost(k) >= LATE_MIN)
-    .slice(0, 3)
-    .map(([k]) => take(k));
+  const late: PlanItem[] = [];
+  for (const [k, sh] of hs.phases.late ?? []) {
+    if (late.length >= 3) break;
+    if (sh < 0.15 || used.has(k) || !roleOk(k) || !standalone(k) || cost(k) < LATE_MIN || BOOTS.has(k) || INTERMEDIATE.has(k)) continue;
+    if ([...core, ...late].some((c) => related(c.key, k))) continue;
+    const parent = parentOf(k);
+    if (parent && (used.has(parent) || late.some((c) => c.key === parent))) continue;
+    late.push(take(k));
+  }
+  fold(lane, [...core, ...late]);
+  fold(core, [...core, ...late]);
 
   // --- this draft: counter items ---------------------------------------------------
   const situational: PlanItem[] = [];
-  const firstCore = core[0];
-  for (const rec of inp.counters ?? []) {
-    if ((rec.fit?.mult ?? 1) < 0.6 || rec.score <= 0) continue;
+  const counters = (inp.counters ?? []).filter((r) => (r.fit?.mult ?? 1) >= 0.6 && r.score > 0);
+  const topCounters = new Set(counters.slice(0, 3).map((r) => inp.dcKey?.(r.code) ?? r.code));
+  for (const rec of counters) {
     const key = inp.dcKey?.(rec.code) ?? rec.code;
     if (!items[key]) continue;
-    const already = [...start, ...lane, ...core, ...late].find((x) => x.key === key);
+    const planned = [...start, ...lane, ...core, ...late];
+    const already = planned.find((x) => x.key === key);
     if (already) {
       if (already.kind === "standard") {
         already.kind = "both";
         already.counter = rec;
       }
+      // a late item this draft calls for first: buy it right after the first core item
+      const li = late.indexOf(already);
+      if (li >= 0 && topCounters.has(key) && core.length) {
+        late.splice(li, 1);
+        already.place = "earlier than usual for this hero";
+        core.splice(1, 0, already);
+      }
       continue;
     }
-    if (situational.some((x) => x.key === key)) continue;
+    if ([...planned, ...situational].some((x) => related(x.key, key))) continue; // Orchid vs Bloodthorn
     const it = mk(key, "counter");
     it.counter = rec;
+    situational.push(it);
+    if (situational.length >= 3) break;
+  }
+  const firstCore = core[0];
+  for (const it of situational) {
     if (it.cost <= CHEAP_COUNTER) it.place = "in the lane, after your lane items";
     else if (firstCore) it.place = `after ${firstCore.label}${firstCore.at ? ` (~${mmss(firstCore.at)})` : ""}`;
     else it.place = "after your first core item";
-    situational.push(it);
-    if (situational.length >= 4) break;
   }
 
   const phases: PlanPhase[] = [
@@ -223,7 +312,7 @@ function itemSpikes(core: PlanItem[]): Spike[] {
       const t = c.timing!;
       const delta = t.wrFast !== undefined && t.wrSlow !== undefined ? t.wrFast - t.wrSlow : undefined;
       const why =
-        delta !== undefined
+        delta !== undefined && delta > 0.02
           ? `typical ${mmss(t.p50)}; done by ${mmss(t.fastBy ?? t.p25)}: ${pct(t.wrFast!)} wins, after ${mmss(t.slowAfter ?? t.p75)}: ${pct(t.wrSlow!)}`
           : `typical ${mmss(t.p50)}`;
       return { at: t.p50, label: `${c.label} done`, why };

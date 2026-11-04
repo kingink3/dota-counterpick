@@ -85,6 +85,7 @@ function itemRow(it: PlanItem, phase: string, v: PlanView): HTMLElement {
     const why = span("pi-why", `${it.kind === "both" ? "also " : ""}${v.reasonText(it.counter)}`);
     li.append(why);
   }
+  if (it.via?.length) li.append(span("pi-place", `via ${it.via.join(", ")}${it.viaAt !== undefined ? ` (~${mmss(it.viaAt)})` : ""}`));
   if (it.place) li.append(span("pi-place", it.place));
   if (it.timing?.wrFast !== undefined && it.timing.wrSlow !== undefined && phase === "core") {
     li.title = `done by ${mmss(it.timing.fastBy ?? it.timing.p25)}: ${(it.timing.wrFast * 100).toFixed(0)}% wins · after ${mmss(it.timing.slowAfter ?? it.timing.p75)}: ${(it.timing.wrSlow * 100).toFixed(0)}% · ${it.timing.games} games`;
