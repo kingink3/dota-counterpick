@@ -144,6 +144,18 @@ async function main(): Promise<void> {
         recentMatchesQuery(owner, 20),
       );
       const ms = r.player?.matches ?? [];
+      if (!ms.length) {
+        // why no matches: counts and flags only (no ids / names in the public log)
+        const why = await gql<{ player: { matchCount?: number; lastMatchDate?: number; steamAccount?: { isAnonymous?: boolean; isStratzPublic?: boolean; communityVisibleState?: number; lastMatchDateTime?: number; seasonRank?: number } } | null }>(
+          `{ player(steamAccountId: ${owner}) { matchCount lastMatchDate steamAccount { isAnonymous isStratzPublic communityVisibleState lastMatchDateTime seasonRank } } }`,
+        );
+        const pl = why.player;
+        const last = pl?.lastMatchDate ?? pl?.steamAccount?.lastMatchDateTime;
+        console.log(
+          `own: matchCount ${pl?.matchCount ?? "?"}, isAnonymous ${pl?.steamAccount?.isAnonymous}, isStratzPublic ${pl?.steamAccount?.isStratzPublic}, ` +
+            `profile visibility ${pl?.steamAccount?.communityVisibleState}, last match ${last ? `${Math.round((Date.now() / 1000 - last) / 86400)} days ago` : "unknown"}, rank ${pl?.steamAccount?.seasonRank ?? "?"}`,
+        );
+      }
       // diagnostics without ids: how many, how many parsed, which modes
       console.log(`own: player ${r.player ? "found" : "NOT found"}, ${ms.length} matches, ${ms.filter((x) => x.parsedDateTime).length} parsed; modes: ${[...new Set(ms.map((x) => `${x.lobbyType}/${x.gameMode}`))].join(", ")}`);
       const m = ms.find((x) => x.parsedDateTime) ?? ms[0];
