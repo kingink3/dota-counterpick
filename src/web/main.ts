@@ -18,6 +18,7 @@ import { heroImageUrlByValve, heroValveName } from "./hero-art.js";
 import { AutoInputAdapter, defaultBridgeUrl, type AutoStatus, type DraftPatch } from "./auto-input.js";
 import type { GamePhase, GsiSnapshot } from "../gsi.js";
 import { buildItemTemplates, buildTemplates, ScreenReader, type ScreenStatus } from "./screen-reader.js";
+import { GameView } from "./game-view.js";
 import { identifyPlate, type HudRead, type LearnedPlate } from "../item-match.js";
 import type { Frame, ScreenChange, Side } from "../screen-match.js";
 import type { Archetype, AttackType, Combo, DamageRead, DraftState, Reason, Recommendation, TeamRead } from "../types.js";
@@ -114,6 +115,7 @@ async function boot(): Promise<void> {
   buildRoleBar();
   buildCombos();
   buildModeNav();
+  buildGameView();
   buildAutoInput();
   buildScreenInput();
   render();
@@ -122,15 +124,39 @@ async function boot(): Promise<void> {
 /** Top-level split: enemy-driven "Counter picks" vs independent "Combos". */
 function buildModeNav(): void {
   for (const btn of document.querySelectorAll<HTMLElement>(".mode-btn")) {
-    btn.addEventListener("click", () => setMode(btn.dataset.mode as "counter" | "combo"));
+    btn.addEventListener("click", () => setMode(btn.dataset.mode as Mode));
   }
 }
-function setMode(mode: "counter" | "combo"): void {
-  (el("#counter-view") as HTMLElement).hidden = mode !== "counter";
-  (el("#combo-view") as HTMLElement).hidden = mode !== "combo";
+type Mode = "counter" | "combo" | "game";
+let mode: Mode = "counter";
+function setMode(m: Mode): void {
+  mode = m;
+  (el("#counter-view") as HTMLElement).hidden = m !== "counter";
+  (el("#combo-view") as HTMLElement).hidden = m !== "combo";
+  (el("#game-view") as HTMLElement).hidden = m !== "game";
   for (const b of document.querySelectorAll<HTMLElement>(".mode-btn")) {
-    b.classList.toggle("active", b.dataset.mode === mode);
+    b.classList.toggle("active", b.dataset.mode === m);
   }
+  if (m === "game") game?.start();
+}
+
+// ---------------------------------------------------------------------------
+//  Game tab (ADR-026): clock + map-event timers
+// ---------------------------------------------------------------------------
+
+let game: GameView | undefined;
+function buildGameView(): void {
+  game = new GameView({
+    timings: () => kb.timings,
+    role: () => state.role,
+    setRole: (r) => {
+      state.role = r;
+      render();
+    },
+    playing: () => (state.myHero ? `Playing ${labelFor(state.myHero)}` : undefined),
+    show: () => setMode("game"),
+    visible: () => mode === "game",
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -1302,6 +1328,7 @@ function buildScreenInput(): void {
       .then((idx) => buildItemTemplates(Object.keys(idx), (k) => `./items/${k}.webp`)));
   screen = new ScreenReader(getTemplates, {
     onInventory: onHudInventory,
+    onClock: (c) => game?.onClock(c),
     onChange: applyScreen,
     onStatus: (st) => {
       screenStatus = st;

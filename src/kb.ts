@@ -23,6 +23,7 @@ import type {
 } from "./types.js";
 import { heroValveName } from "./web/hero-art.js";
 import { clipSentence } from "./combos.js";
+import type { Timings } from "./game-timers.js";
 
 export type { KnowledgeBase } from "./knowledge.js";
 
@@ -108,7 +109,17 @@ export function readRawKB(root: string = REPO_ROOT): RawKB {
     heroAttack: loadHeroAttack(root, Object.keys(taxonomy.hero_tags)),
     itemTraits: loadItemTraits(root),
     itemDcKey: loadItemDcKey(root),
+    ...loadTimings(root),
   };
+}
+
+/** data/timings.yaml -> map-event schedule (ADR-026); optional. */
+function loadTimings(root: string): { timings?: Timings } {
+  try {
+    return { timings: readYaml<Timings>(join(root, "data", "timings.yaml")) };
+  } catch {
+    return {};
+  }
 }
 
 /** data/constants-map.yaml `items`: our id -> dotaconstants key (only ids that differ). */

@@ -189,6 +189,10 @@ Linken's / Aeon Disk are the honest answers. Output lands in `EngineResult.defen
 | `src/engine.ts` | public API (`CounterPickEngine`) |
 | `src/cli.ts` | demo CLI |
 | `src/web/main.ts` | browser UI (same engine core, DOM rendering) |
+| `src/web/game-view.ts` | Game tab: clock display, map-event timers (ADR-026) |
+| `src/clock-match.ts` | reads the in-game clock from the top bar; pause / pre-horn |
+| `src/game-timers.ts` | map-event schedule (`data/timings.yaml`) → next events |
+| `src/item-match.ts` | bottom-HUD inventory + name plate; `locateHud` finds the panel |
 | `src/web/hero-art.ts` | hero code → local portrait path (presentation only) |
 | `scripts/fetch-portraits.ts` | download portraits to `web/heroes/` (self-host) |
 | `web/index.html` | static shell + styles |
@@ -233,6 +237,17 @@ slots of the selected unit from the bottom HUD and updates that hero's items (an
 recommendations). The first time a hero is selected it asks "Whose items?" - one click
 on the hero, recognised from then on. Item icons live in `web/items/` (refresh after a
 patch: Actions -> "Fetch item icons" -> Run workflow).
+
+### Game tab: clock and map timers (ADR-026)
+
+With Read screen on, the app reads the in-game clock from the top bar (including the
+pre-horn countdown and pauses) and switches to **Game** once the clock is confirmed to
+be running. The tab lists the next map events for your position - bounty / water /
+power runes, Wisdom Shrines, lotuses, stack and pull windows, day/night, neutral tiers,
+Tormentor - with a countdown, gold when it is close, green while it is on. Press
+**Roshan killed** / **Tormentor killed** to start their respawn timers. Without a screen
+share, set the clock by hand (`12:30`, `-0:45`). The schedule and its patch-note
+sources live in `data/timings.yaml`.
 
 ## Auto-input: local companion (ADR-013, optional)
 

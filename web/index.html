@@ -64,6 +64,37 @@
       #auto-status[data-kind="waiting"]::before { background: var(--gold); }
       #auto-status[data-kind="live"]::before { background: var(--good); box-shadow: 0 0 6px var(--good); }
 
+      /* ---------- game tab: a dense second-monitor panel ---------- */
+      .game { max-width: 980px; margin: 0 auto; padding: 18px; }
+      .game-head { display: flex; gap: 28px; align-items: center; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+      .game-clock { font: 700 64px/1 var(--cond); font-variant-numeric: tabular-nums; letter-spacing: .02em; min-width: 3.6ch; }
+      .game-badges { display: flex; gap: 10px; font: 600 14px/1.4 var(--cond); color: var(--muted); }
+      #game-badge:empty { display: none; }
+      #game-badge { padding: 0 6px; border-radius: 3px; background: var(--panel2); color: var(--text2); letter-spacing: .04em; }
+      #game-badge[data-kind="paused"] { background: #4a3a17; color: var(--gold); }
+      #game-badge[data-kind="pregame"] { background: #1d2c45; color: var(--magic); }
+      #game-badge[data-kind="lost"] { background: #45201a; color: var(--bad); }
+      .game-ctl { display: grid; gap: 8px; min-width: 0; }
+      .game-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 13px; }
+      #game-set { width: 6.5ch; background: var(--panel); border: 1px solid var(--line); color: var(--text); border-radius: 3px; padding: 3px 6px; font: inherit; }
+      .g-btn { background: var(--panel); border: 1px solid var(--line); border-radius: 3px; padding: 3px 10px; font: 600 14px/1.2 var(--cond); cursor: pointer; }
+      .g-btn:hover:not(:disabled) { border-color: var(--line2); }
+      .g-btn:disabled { opacity: .45; cursor: default; }
+      .g-btn.mark.on { border-color: var(--gold); color: var(--gold); }
+      #game-roles .role-btn:first-child { width: 40px; }
+      .game-events { list-style: none; margin: 0; padding: 0; }
+      .ev { display: grid; grid-template-columns: 7ch minmax(0, 1fr) auto; gap: 4px 14px; align-items: baseline;
+        padding: 7px 10px; border-bottom: 1px solid var(--line); }
+      .ev-in { font: 700 20px/1.1 var(--cond); font-variant-numeric: tabular-nums; color: var(--muted); }
+      .ev-what { font-size: 15px; color: var(--text2); }
+      .ev-at { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+      .ev-note { grid-column: 2 / 4; font-size: 13px; color: var(--muted); }
+      .ev.soon { background: #2a2617; }
+      .ev.soon .ev-in, .ev.soon .ev-what { color: var(--gold); }
+      .ev.now { background: #1f2c19; }
+      .ev.now .ev-in, .ev.now .ev-what { color: var(--good); }
+      .game-foot { font-size: 12px; margin-top: 10px; }
+
       /* ---------- match band (the memorable thing) ---------- */
       .band { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
         background: linear-gradient(var(--deep), var(--night)); border-bottom: 1px solid var(--line); }
@@ -307,6 +338,7 @@
       <nav class="mode-nav">
         <button class="mode-btn active" data-mode="counter">Draft</button>
         <button class="mode-btn" data-mode="combo">Combos</button>
+        <button class="mode-btn" data-mode="game">Game</button>
       </nav>
       <div class="auto-box">
         <button id="screen-btn" type="button" title="Share the Dota screen: heroes are read from the top bar. Nothing touches the game.">Read screen</button>
@@ -374,6 +406,9 @@
         <div id="combos-panel"></div>
       </section>
     </div>
+
+    <!-- ===================== GAME VIEW (ADR-026) ===================== -->
+    <div id="game-view" hidden></div>
 
     <footer class="credits">
       Hero counters, item notes and synergies: <a href="https://dota2.fandom.com" rel="noopener">Dota 2 Wiki</a> (Fandom), CC BY-SA.

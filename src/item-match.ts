@@ -13,6 +13,8 @@
 //  its portrait, and learn which plate belongs to which hero (one click, kept).
 // =============================================================================
 
+import { HUD_ANCHOR_B64, HUD_ANCHOR_H, HUD_ANCHOR_W } from "./hud-anchor.js";
+
 export const ITEM_W = 22;
 export const ITEM_H = 16;
 
@@ -112,8 +114,9 @@ export function classifyItem(feat: ItemFeature, templates: ItemTemplate[]): Item
 // ---------------------------------------------------------------------------
 //  Bottom HUD geometry, in units of screen height measured from the screen centre
 //  (the HUD scales with height and stays centred). Measured at 2560x1440 with a
-//  4-ability hero selected; heroes with more abilities widen the centre panel -
-//  NOT verified yet, see ADR-025.
+//  4-ability hero selected. The centre panel widens for heroes with more abilities
+//  (Rubick, 6: inventory +58 px right, name plate -58 px left) and the whole HUD can
+//  sit 16 px lower in some states - `locateHud` finds the offset from the frame.
 // ---------------------------------------------------------------------------
 
 export interface Rect {
@@ -127,20 +130,128 @@ const INV = { x0: 243 / 1440, pitchX: 88 / 1440, w: 80 / 1440, y0: 1260 / 1440, 
 /** text area of the selected unit's name plate (portrait edges excluded). */
 const PLATE = { x0: -540 / 1440, w: 140 / 1440, y0: 1226 / 1440, h: 24 / 1440 } as const;
 
-/** the 6 main inventory slots of the selected unit (row-major), `dx` in px. */
-export function hudSlotRects(width: number, height: number, dx = 0): Rect[] {
+/** HUD offset in units of screen height (dx: inventory right / plate left; dy: down). */
+export interface HudOffset {
+  dx: number;
+  dy: number;
+}
+export const NO_OFFSET: HudOffset = { dx: 0, dy: 0 };
+
+/** the 6 main inventory slots of the selected unit (row-major). */
+export function hudSlotRects(width: number, height: number, off: HudOffset = NO_OFFSET): Rect[] {
   const cx = width / 2;
   const out: Rect[] = [];
   for (let r = 0; r < 2; r++) {
     for (let c = 0; c < 3; c++) {
-      out.push({ x: cx + (INV.x0 + c * INV.pitchX) * height + dx, y: (INV.y0 + r * INV.pitchY) * height, w: INV.w * height, h: INV.h * height });
+      out.push({
+        x: cx + (INV.x0 + c * INV.pitchX + off.dx) * height,
+        y: (INV.y0 + r * INV.pitchY + off.dy) * height,
+        w: INV.w * height,
+        h: INV.h * height,
+      });
     }
   }
   return out;
 }
 
-export function plateRect(width: number, height: number): Rect {
-  return { x: width / 2 + PLATE.x0 * height, y: PLATE.y0 * height, w: PLATE.w * height, h: PLATE.h * height };
+/** the name plate moves the other way: the centre panel widens symmetrically. */
+export function plateRect(width: number, height: number, off: HudOffset = NO_OFFSET): Rect {
+  return { x: width / 2 + (PLATE.x0 - off.dx) * height, y: (PLATE.y0 + off.dy) * height, w: PLATE.w * height, h: PLATE.h * height };
+}
+
+// --- locating the inventory grid by its frame ---------------------------------
+//  Search window at HALF the resolution of a 1440p screen (so any resolution maps
+//  to the same pixel grid): dx -20..+240, dy -12..+30 (1440p px) around the base.
+
+const ANCHOR = { ox: 16, oy: 12, slotW: 80, slotH: 58 } as const;
+export const HUD_SEARCH = { dx0: -20, dx1: 240, dy0: -12, dy1: 30 } as const;
+
+/** search window in screen px (draw it into a canvas of hudSearchSize()). */
+export function hudSearchRect(width: number, height: number): Rect {
+  const k = height / 1440;
+  const x = width / 2 + (INV.x0 * 1440 - ANCHOR.ox + HUD_SEARCH.dx0) * k;
+  const y = (INV.y0 * 1440 - ANCHOR.oy + HUD_SEARCH.dy0) * k;
+  return { x, y, w: (HUD_ANCHOR_W * 2 + HUD_SEARCH.dx1 - HUD_SEARCH.dx0) * k, h: (HUD_ANCHOR_H * 2 + HUD_SEARCH.dy1 - HUD_SEARCH.dy0) * k };
+}
+export function hudSearchSize(): { w: number; h: number } {
+  return { w: HUD_ANCHOR_W + (HUD_SEARCH.dx1 - HUD_SEARCH.dx0) / 2, h: HUD_ANCHOR_H + (HUD_SEARCH.dy1 - HUD_SEARCH.dy0) / 2 };
+}
+
+let anchorCache: { vals: Float32Array; idx: Int32Array } | undefined;
+function anchor(): { vals: Float32Array; idx: Int32Array } {
+  if (anchorCache) return anchorCache;
+  const raw = typeof atob === "function" ? Uint8Array.from(atob(HUD_ANCHOR_B64), (c) => c.charCodeAt(0)) : new Uint8Array(Buffer.from(HUD_ANCHOR_B64, "base64"));
+  // frame pixels only: drop the slot interiors (items differ between captures)
+  const keep: number[] = [];
+  for (let y = 0; y < HUD_ANCHOR_H; y++) {
+    for (let x = 0; x < HUD_ANCHOR_W; x++) {
+      const X = x * 2 + 1;
+      const Y = y * 2 + 1;
+      let inside = false;
+      for (let r = 0; r < 2 && !inside; r++) {
+        for (let c = 0; c < 3 && !inside; c++) {
+          const sx = ANCHOR.ox + c * 88;
+          const sy = ANCHOR.oy + r * 63;
+          inside = X >= sx + 2 && X < sx + ANCHOR.slotW - 2 && Y >= sy + 2 && Y < sy + ANCHOR.slotH - 2;
+        }
+      }
+      if (!inside) keep.push(y * HUD_ANCHOR_W + x);
+    }
+  }
+  const idx = Int32Array.from(keep);
+  const vals = new Float32Array(idx.length);
+  let mean = 0;
+  for (let i = 0; i < idx.length; i++) mean += raw[idx[i]!]!;
+  mean /= idx.length;
+  let norm = 0;
+  for (let i = 0; i < idx.length; i++) {
+    vals[i] = raw[idx[i]!]! - mean;
+    norm += vals[i]! * vals[i]!;
+  }
+  norm = Math.sqrt(norm) || 1;
+  for (let i = 0; i < vals.length; i++) vals[i] = vals[i]! / norm;
+  anchorCache = { vals, idx };
+  return anchorCache;
+}
+
+/** Measured on 7 captures: correct peak 0.62-1.0, next-best position <= 0.66 and
+ *  always >= 0.15 lower. */
+export const HUD_LOCATE = { accept: 0.45, margin: 0.08 } as const;
+
+/** Find the inventory frame in a half-res luminance window (hudSearchSize()).
+ *  Returns the offset in units of screen height, or undefined if not confident. */
+export function locateHud(lum: ArrayLike<number>, w: number): (HudOffset & { score: number }) | undefined {
+  const { vals, idx } = anchor();
+  const steps = { x: (HUD_SEARCH.dx1 - HUD_SEARCH.dx0) / 2, y: (HUD_SEARCH.dy1 - HUD_SEARCH.dy0) / 2 };
+  // window index of anchor pixel i at offset (ox, oy)
+  const ax = new Int32Array(idx.length);
+  const ay = new Int32Array(idx.length);
+  for (let i = 0; i < idx.length; i++) {
+    ax[i] = idx[i]! % HUD_ANCHOR_W;
+    ay[i] = Math.floor(idx[i]! / HUD_ANCHOR_W);
+  }
+  const scores: Array<[number, number, number]> = [];
+  for (let oy = 0; oy <= steps.y; oy++) {
+    for (let ox = 0; ox <= steps.x; ox++) {
+      let sum = 0;
+      let sum2 = 0;
+      let dotv = 0;
+      for (let i = 0; i < idx.length; i++) {
+        const v = lum[(oy + ay[i]!) * w + ox + ax[i]!]!;
+        sum += v;
+        sum2 += v * v;
+        dotv += v * vals[i]!;
+      }
+      const n = idx.length;
+      const sd = Math.sqrt(Math.max(1e-6, sum2 - (sum * sum) / n));
+      scores.push([dotv / sd, ox, oy]); // vals has zero mean -> dot with raw v == dot with centred v
+    }
+  }
+  scores.sort((a, b) => b[0] - a[0]);
+  const best = scores[0]!;
+  const second = scores.find((s) => Math.abs(s[1] - best[1]) > 6 || Math.abs(s[2] - best[2]) > 4)!;
+  if (best[0] < HUD_LOCATE.accept || best[0] - second[0] < HUD_LOCATE.margin) return undefined;
+  return { dx: (HUD_SEARCH.dx0 + best[1] * 2) / 1440, dy: (HUD_SEARCH.dy0 + best[2] * 2) / 1440, score: best[0] };
 }
 
 export const PLATE_W = 56;

@@ -60,3 +60,14 @@ test("real HUD: a learned name plate identifies its hero and not the other one",
   assert.equal(identifyPlate(mu, [{ hero: "sand_king", vec: sk }]), undefined);
   assert.equal(identifyPlate(mu, [{ hero: "sand_king", vec: sk }, { hero: "muerta", vec: mu }]), "muerta");
 });
+
+test("real HUD: the inventory frame is located for 4- and 6-ability heroes and a lowered HUD", async () => {
+  const { locateHud } = await import("../src/item-match.js");
+  const wins = (fx as unknown as { windows: { items: Array<{ shot: string; dx: number; dy: number; w: number; h: number; lum: string }> } }).windows.items;
+  for (const wdw of wins) {
+    const lum = new Uint8Array(Buffer.from(wdw.lum, "base64"));
+    const r = locateHud(lum, wdw.w);
+    assert.ok(r, `${wdw.shot}: located`);
+    assert.ok(Math.abs(r!.dx * 1440 - wdw.dx) <= 2 && Math.abs(r!.dy * 1440 - wdw.dy) <= 2, `${wdw.shot}: ${r!.dx * 1440},${r!.dy * 1440} vs ${wdw.dx},${wdw.dy}`);
+  }
+});

@@ -1,0 +1,134 @@
+# =============================================================================
+#  Timed map events for the Game tab (ADR-026). One line per event, each with its
+#  source. Primary source: Valve patch notes (dotaconstants patchnotes.json);
+#  `confidence: rule` = a long-standing game rule not restated in recent notes;
+#  `confidence: approx` = a practical window (pull timing depends on the camp).
+#  Review every patch (PATCH_RUNBOOK B: "timings").
+#
+#  Times are game seconds (0 = horn). Schedule kinds:
+#    every:   first + n * every  (until `until`, if set)
+#    at:      fixed list
+#    after:   N seconds after a manually reported moment (Roshan / Tormentor killed)
+#  roles: positions that see the reminder (1..5). lead: seconds of warning.
+# =============================================================================
+
+patch: "7.41"
+reviewed: 2026-11-04
+
+events:
+  - id: bounty_rune
+    label: "Bounty runes"
+    first: 0
+    every: 240
+    roles: [1, 2, 3, 4, 5]
+    lead: 20
+    source: "7.29: 4 runes at 0:00; 7.38: interval increased from 3 to 4 minutes"
+
+  - id: water_rune
+    label: "Water runes (both power spots)"
+    at: [120, 240]
+    roles: [2, 4]
+    lead: 15
+    source: "7.29: spawn only at minute 2 and 4 at both power rune spots"
+
+  - id: power_rune
+    label: "Power rune"
+    first: 360
+    every: 120
+    roles: [2, 4]
+    lead: 15
+    source: "7.29: starting at 6 minutes power runes spawn as usual (every 2 minutes)"
+
+  - id: wisdom_shrine
+    label: "Wisdom Shrines (offlane jungle)"
+    first: 420
+    every: 420
+    roles: [3, 4, 5]
+    lead: 30
+    note: "first 200 XP, then +300 each (200/500/800...); the countdown runs back while an enemy hero stands in it"
+    source: "7.38: Wisdom Runes replaced by Shrines, active every 7 minutes; 7.41: XP 200 base +300 per shrine, contested countdown reverses"
+
+  - id: lotus
+    label: "Healing Lotus (+1 per pool)"
+    first: 180
+    every: 180
+    roles: [3, 4, 5]
+    lead: 15
+    note: "pools hold up to 6; Great Lotuses after Tier 4 neutrals, Greater after Tier 5"
+    source: "7.33: every 3 minutes each pool spawns 1 Healing Lotus, up to 6; 7.38: Great/Greater Lotus after T4/T5"
+
+  - id: stack
+    label: "Stack window"
+    first: 53
+    every: 60
+    window: 3
+    roles: [4, 5]
+    lead: 8
+    confidence: rule
+    note: "pull the camp at about :53-:55 so it is out of the spawn box at :00"
+    source: "neutral camps respawn every minute on the minute (game rule)"
+
+  - id: pull
+    label: "Lane pull"
+    first: 15
+    every: 30
+    until: 600
+    roles: [4, 5]
+    lead: 5
+    confidence: approx
+    note: "about :15 / :45 for the small camp - adjust per camp (7.39 shortened flooded-camp pulls)"
+    source: "lane creep waves every 30 s (game rule); pull timing practice"
+
+  - id: night
+    label: "Night falls"
+    first: 300
+    every: 600
+    roles: [1, 2, 3, 4, 5]
+    lead: 20
+    confidence: rule
+    note: "5 min day / 5 min night; Roshan crosses the river at each change after 15:00, Tormentor follows the cycle"
+    source: "day/night 5+5 min (game rule; observed: 36:15 shows night); 7.38 Roshan/Tormentor follow the cycle"
+
+  - id: day
+    label: "Day breaks"
+    first: 600
+    every: 600
+    roles: [1, 2, 3, 4, 5]
+    lead: 20
+    confidence: rule
+    source: "day/night 5+5 min (game rule)"
+
+  - id: tormentor
+    label: "Tormentor"
+    at: [1200]
+    roles: [1, 2, 3, 4, 5]
+    lead: 60
+    note: "one Tormentor at a time; Radiant side at night, Dire side at day"
+    source: "7.39: first spawn increased from 15:00 to 20:00; 7.38: single Tormentor, follows day/night"
+
+  - id: tormentor_respawn
+    label: "Tormentor back"
+    after: tormentor_killed
+    delay: 600
+    roles: [1, 2, 3, 4, 5]
+    lead: 60
+    source: "7.33: Tormentors respawn 10 minutes after their defeat"
+
+  - id: roshan_window
+    label: "Roshan may be up"
+    after: roshan_killed
+    delay: 480
+    window: 180
+    roles: [1, 2, 3, 4, 5]
+    lead: 60
+    note: "respawns 8-11 minutes after death"
+    source: "7.38: Roshan's respawn takes between 8 to 11 minutes"
+
+  - id: neutral_tier
+    label: "Neutral tier"
+    at: [900, 1500, 2100, 3600]
+    names: ["Tier 2 neutrals", "Tier 3 neutrals", "Tier 4 neutrals", "Tier 5 neutrals"]
+    roles: [1, 2, 3, 4, 5]
+    lead: 30
+    note: "Tier 1 from 0:00 (7.41); each tier needs 10 Madstone"
+    source: "7.38: Madstone cap 15/25/35/45 at 15:00/25:00/35:00/60:00 (enough for T2..T5); 7.41: T1 from 0:00"

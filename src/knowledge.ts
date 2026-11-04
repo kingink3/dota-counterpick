@@ -6,6 +6,7 @@
 //  JSON, no runtime DB) and calls indexKB() directly. Same engine core both sides.
 // =============================================================================
 
+import type { Timings } from "./game-timers.js";
 import type {
   AttackType,
   Combo,
@@ -61,6 +62,8 @@ export interface KnowledgeBase {
   itemTraits?: Record<string, ItemTrait>;
   /** our item id -> dotaconstants key where they differ (icons, Tab reader). */
   itemDcKey?: Record<string, string>;
+  /** timed map events (data/timings.yaml, ADR-026). */
+  timings?: Timings;
 
   // indices -----------------------------------------------------------------
   relianceByCode: Map<string, Reliance>;
@@ -96,6 +99,7 @@ export interface RawKB {
   heroAttack?: Record<string, AttackType>;
   itemTraits?: Record<string, ItemTrait>;
   itemDcKey?: Record<string, string>;
+  timings?: Timings;
 }
 
 export function indexKB(raw: RawKB): KnowledgeBase {
@@ -213,6 +217,7 @@ export function indexKB(raw: RawKB): KnowledgeBase {
     ...(raw.heroAttack ? { heroAttack: raw.heroAttack } : {}),
     ...(raw.itemTraits ? { itemTraits: raw.itemTraits } : {}),
     ...(raw.itemDcKey ? { itemDcKey: raw.itemDcKey } : {}),
+    ...(raw.timings ? { timings: raw.timings } : {}),
     relianceByCode,
     toolByCode,
     edgesByTool,

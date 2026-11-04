@@ -28,6 +28,8 @@ import {
 import {
   classifyItem,
   HudTracker,
+  hudSearchRect,
+  hudSearchSize,
   hudSlotRects,
   ITEM_H,
   ITEM_W,
@@ -35,10 +37,24 @@ import {
   PLATE_W,
   plateRect,
   toItemFeature,
+  locateHud,
+  NO_OFFSET,
   toPlateFeature,
+  type HudOffset,
   type HudRead,
   type ItemTemplate,
 } from "../item-match.js";
+import { clockRect, GameClock, readClock, type ClockRead } from "../clock-match.js";
+
+/** one game-clock reading (ADR-026): game seconds are negative before the horn. */
+export interface ClockTick {
+  gameSeconds: number;
+  paused: boolean;
+  pregame: boolean;
+  night: boolean;
+  /** performance.now() of the read (for smooth display between reads). */
+  at: number;
+}
 
 export type ScreenStatus =
   | { kind: "off" }
@@ -55,10 +71,41 @@ export interface ScreenHandlers {
   onFrame?(f: Frame): void;
   /** the selected unit's inventory changed (bottom HUD, ADR-025). */
   onInventory?(r: HudRead): void;
+  /** the in-game clock was read (top bar, ADR-026). */
+  onClock?(c: ClockTick): void;
 }
 
 /** read the bottom HUD every Nth tick (items change rarely; ~3 reads/s). */
 const HUD_EVERY = 3;
+/** look for the inventory frame every Nth tick (~1/s): it moves only when the
+ *  selected unit or the HUD state changes. */
+const LOCATE_EVERY = 10;
+/** read the clock every Nth tick (~3/s is plenty for a seconds display). */
+const CLOCK_EVERY = 3;
+
+/** Where the inventory grid is right now (undefined = frame not found confidently). */
+export function findHud(source: CanvasImageSource, width: number, height: number, ctx?: CanvasRenderingContext2D): HudOffset | undefined {
+  const size = hudSearchSize();
+  const c = ctx ?? canvas(size.w, size.h);
+  const r = hudSearchRect(width, height);
+  c.clearRect(0, 0, size.w, size.h);
+  c.drawImage(source, r.x, r.y, r.w, r.h, 0, 0, size.w, size.h);
+  const px = c.getImageData(0, 0, size.w, size.h).data;
+  const lum = new Float32Array(size.w * size.h);
+  for (let i = 0; i < lum.length; i++) lum[i] = 0.299 * px[i * 4]! + 0.587 * px[i * 4 + 1]! + 0.114 * px[i * 4 + 2]!;
+  return locateHud(lum, size.w);
+}
+
+/** Read the top-bar clock at native resolution (glyph matching resamples itself). */
+export function readClockFrom(source: CanvasImageSource, width: number, height: number, ctx?: CanvasRenderingContext2D): ClockRead | undefined {
+  const r = clockRect(width, height);
+  const w = Math.max(16, Math.round(r.w));
+  const h = Math.max(8, Math.round(r.h));
+  const c = ctx && ctx.canvas.width === w && ctx.canvas.height === h ? ctx : canvas(w, h);
+  c.clearRect(0, 0, w, h);
+  c.drawImage(source, Math.round(r.x), Math.round(r.y), w, h, 0, 0, w, h);
+  return readClock(c.getImageData(0, 0, w, h).data, w, h);
+}
 
 /** Item icon templates from the self-hosted icons (web/items, ADR-025). */
 export async function buildItemTemplates(keys: string[], urlOf: (k: string) => string): Promise<ItemTemplate[]> {
@@ -87,8 +134,9 @@ export function readHud(
   templates: ItemTemplate[],
   ctx: CanvasRenderingContext2D = canvas(ITEM_W * 6, ITEM_H),
   plateCtx: CanvasRenderingContext2D = canvas(PLATE_W, PLATE_H),
+  off: HudOffset = NO_OFFSET,
 ): HudRead {
-  const rects = hudSlotRects(width, height);
+  const rects = hudSlotRects(width, height, off);
   ctx.clearRect(0, 0, ITEM_W * 6, ITEM_H);
   rects.forEach((r, k) => ctx.drawImage(source, r.x, r.y, r.w, r.h, k * ITEM_W, 0, ITEM_W, ITEM_H));
   const strip = ctx.getImageData(0, 0, ITEM_W * 6, ITEM_H).data;
@@ -103,7 +151,7 @@ export function readHud(
     if (r.kind === "item") items.push(r.key);
     else if (r.kind === "unknown") unknown++;
   }
-  const p = plateRect(width, height);
+  const p = plateRect(width, height, off);
   plateCtx.clearRect(0, 0, PLATE_W, PLATE_H);
   plateCtx.drawImage(source, p.x, p.y, p.w, p.h, 0, 0, PLATE_W, PLATE_H);
   return { items, unknown, plate: toPlateFeature(plateCtx.getImageData(0, 0, PLATE_W, PLATE_H).data) };
@@ -290,6 +338,10 @@ export class ScreenReader {
   private hudCtx?: CanvasRenderingContext2D;
   private plateCtx?: CanvasRenderingContext2D;
   private ticks = 0;
+  private hudOff: HudOffset = NO_OFFSET;
+  private locateCtx?: CanvasRenderingContext2D;
+  private clockCtx?: CanvasRenderingContext2D;
+  private clock = new GameClock();
 
   constructor(
     private readonly templates: () => Promise<Template[]>,
@@ -363,6 +415,9 @@ export class ScreenReader {
     this.video = video;
     this.ctx = canvas(GRID_W * 10, GRID_H);
     this.tracker = new ScreenTracker(2);
+    this.clock.reset();
+    this.hudOff = NO_OFFSET;
+    this.clockCtx = undefined;
     // the user can end the share from the browser's own "Stop sharing" bar
     this.nameCtx = undefined; // sized from the first frame
     for (const t of this.stream.getVideoTracks()) t.addEventListener("ended", () => this.stop());
@@ -386,12 +441,33 @@ export class ScreenReader {
     this.h.onStatus({ kind: "live", seen, width: v.videoWidth, height: v.videoHeight, ms: this.avgMs });
     const c = this.tracker.push(f);
     if (c) this.h.onChange(c);
-    if (this.itemTpl?.length && this.h.onInventory && ++this.ticks % HUD_EVERY === 0) {
-      this.hudCtx ??= canvas(ITEM_W * 6, ITEM_H);
-      this.plateCtx ??= canvas(PLATE_W, PLATE_H);
-      const hud = this.hudTracker.push(readHud(v, v.videoWidth, v.videoHeight, this.itemTpl, this.hudCtx, this.plateCtx));
-      if (hud) this.h.onInventory(hud);
+    this.ticks++;
+    if (this.h.onClock && this.ticks % CLOCK_EVERY === 0) {
+      if (!this.clockCtx) {
+        const cr = clockRect(v.videoWidth, v.videoHeight);
+        this.clockCtx = canvas(Math.max(16, Math.round(cr.w)), Math.max(8, Math.round(cr.h)));
+      }
+      const r = readClockFrom(v, v.videoWidth, v.videoHeight, this.clockCtx);
+      if (r) this.emitClock(r, performance.now());
     }
+    if (this.itemTpl?.length && this.h.onInventory) {
+      if (this.ticks % LOCATE_EVERY === 1) {
+        const s = hudSearchSize();
+        this.locateCtx ??= canvas(s.w, s.h);
+        this.hudOff = findHud(v, v.videoWidth, v.videoHeight, this.locateCtx) ?? this.hudOff;
+      }
+      if (this.ticks % HUD_EVERY === 0) {
+        this.hudCtx ??= canvas(ITEM_W * 6, ITEM_H);
+        this.plateCtx ??= canvas(PLATE_W, PLATE_H);
+        const hud = this.hudTracker.push(readHud(v, v.videoWidth, v.videoHeight, this.itemTpl, this.hudCtx, this.plateCtx, this.hudOff));
+        if (hud) this.h.onInventory(hud);
+      }
+    }
+  }
+
+  private emitClock(r: ClockRead, now: number): void {
+    const g = this.clock.push(r, now);
+    this.h.onClock?.({ ...g, night: r.night, at: now });
   }
 
   /** Calibration check without a game: run a still screenshot through the same path. */
@@ -405,8 +481,17 @@ export class ScreenReader {
       if (this.itemTemplates && this.h.onInventory) {
         this.itemTpl ??= await this.itemTemplates().catch(() => []);
         if (this.itemTpl.length) {
-          const hud = readHud(img, img.naturalWidth, img.naturalHeight, this.itemTpl);
+          const off = findHud(img, img.naturalWidth, img.naturalHeight) ?? NO_OFFSET;
+          const hud = readHud(img, img.naturalWidth, img.naturalHeight, this.itemTpl, undefined, undefined, off);
           if (hud.items.length) this.h.onInventory(hud);
+        }
+      }
+      if (this.h.onClock) {
+        const r = readClockFrom(img, img.naturalWidth, img.naturalHeight);
+        // a still has no direction: a fresh clock decides pre-horn from the moon icon
+        if (r) {
+          const c = new GameClock();
+          this.h.onClock({ ...c.push(r, performance.now()), night: r.night, at: performance.now() });
         }
       }
       // a still is confirmed immediately (tracker with confirm = 1)
