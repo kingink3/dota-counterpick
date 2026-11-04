@@ -64,6 +64,7 @@ export function renderPlan(root: HTMLElement, v: PlanView): void {
     s.append(ul);
     root.append(s);
   }
+  if (v.plan?.basis) root.append(p("muted plan-src", `Standard items: ${v.plan.basis}.`));
   if (v.source) root.append(p("muted plan-src", v.source));
 }
 
@@ -78,7 +79,7 @@ function itemRow(it: PlanItem, phase: string, v: PlanView): HTMLElement {
   img.height = 24;
   img.loading = "lazy";
   img.onerror = () => img.remove();
-  const name = span("pi-name", it.label);
+  const name = span("pi-name", it.qty ? `${it.label} ×${it.qty}` : it.label);
   const meta = span("pi-meta", [it.cost ? `${it.cost}` : "", it.at !== undefined && phase !== "start" ? `~${mmss(it.at)}` : ""].filter(Boolean).join(" · "));
   li.append(img, name, meta);
   if (it.kind !== "standard" && it.counter) {

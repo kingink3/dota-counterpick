@@ -164,6 +164,7 @@ function renderGamePlan(result: ReturnType<typeof resolveDraft>): void {
       ? buildPlan({
           hero,
           ...(archetype ? { archetype } : {}),
+          ...(state.role ? { role: state.role } : {}),
           stats: itemStats,
           counters,
           dcKey: (id) => kb.itemDcKey?.[id],
@@ -195,9 +196,10 @@ function renderGamePlan(result: ReturnType<typeof resolveDraft>): void {
 }
 function planSource(s: ItemStats): string {
   return [
-    s.phasesFrom && `Builds: ${s.phasesFrom}.`,
-    s.timingsFrom && `Timings: ${s.timingsFrom}.`,
+    !s.posFrom && s.phasesFrom && `Builds: ${s.phasesFrom}.`,
+    !s.posFrom && s.timingsFrom && `Timings: ${s.timingsFrom}.`,
     s.curveFrom && `Windows: ${s.curveFrom}; correlation with game length, not a cause.`,
+    s.posFetchedAt && `STRATZ, ${s.posFetchedAt.slice(0, 10)}.`,
     s.fetchedAt && `OpenDota, ${s.fetchedAt.slice(0, 10)}.`,
   ]
     .filter(Boolean)

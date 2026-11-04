@@ -15,7 +15,7 @@
 //  Items: cost / quality / components / display name from dotaconstants items.json.
 // =============================================================================
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readRawKB } from "../src/kb.js";
@@ -151,6 +151,46 @@ function main(): void {
     if (Object.keys(hs.phases).length || hs.timing || hs.curve) heroes[code] = hs;
   }
 
+  // --- STRATZ: per position, Crusader-Archon + Legend-Ancient (preferred by the plan)
+  const stratzDir = arg("stratz");
+  let stratzPairs = 0;
+  let stratzAt: string | undefined;
+  if (stratzDir) {
+    const idToCode = new Map(odHeroes.map((h) => [h.id, valveToCode.get(h.name.replace(/^npc_dota_hero_/, "")) ?? h.name.replace(/^npc_dota_hero_/, "")]));
+    const posRows = readJson<{ heroStats: { stats: Array<{ heroId: number; position: string; matchCount: number }> } }>(join(stratzDir, "positions.json"));
+    const games = new Map<string, number>();
+    for (const r of posRows?.heroStats.stats ?? []) games.set(`${r.heroId}_${r.position.slice(-1)}`, r.matchCount);
+    const fields: Record<string, unknown[]> = {};
+    for (const f of readdirSync(stratzDir).filter((x) => /^items_\d+\.json$/.test(x)).sort()) {
+      Object.assign(fields, readJson<{ heroStats: Record<string, unknown[]> }>(join(stratzDir, f))?.heroStats ?? {});
+    }
+    const pairs = new Set(Object.keys(fields).map((k) => k.replace(/_(full|start|boots)$/, "")));
+    for (const pair of pairs) {
+      const m = /^h(\d+)_(\d)$/.exec(pair);
+      if (!m) continue;
+      const code = idToCode.get(Number(m[1]));
+      const total = games.get(`${m[1]}_${m[2]}`) ?? 0;
+      if (!code || total < 500) continue;
+      const ps = stratzPosition(
+        (fields[`${pair}_full`] ?? []) as StratzTimed[],
+        (fields[`${pair}_start`] ?? []) as StratzStart[],
+        (fields[`${pair}_boots`] ?? []) as StratzTimed[],
+        total,
+        idToKey,
+        dcItems,
+      );
+      for (const k of ps.keys) used.add(k);
+      const hs = (heroes[code] ??= { phases: {} });
+      (hs.byPos ??= {})[m[2]!] = ps.stats;
+      stratzPairs++;
+    }
+    for (const hs of Object.values(heroes)) {
+      if (!hs.byPos) continue;
+      hs.mainPos = Object.entries(hs.byPos).sort((a, b) => (b[1].games ?? 0) - (a[1].games ?? 0))[0]![0];
+    }
+    stratzAt = existsSync(join(stratzDir, "fetched-at.txt")) ? readFileSync(join(stratzDir, "fetched-at.txt"), "utf8").trim() : undefined;
+  }
+
   const items: Record<string, ItemInfo> = {};
   for (const k of [...used].sort()) {
     const v = dcItems[k]!;
@@ -163,7 +203,8 @@ function main(): void {
   }
   const fetchedAt = existsSync(join(raw, "fetched-at.txt")) ? readFileSync(join(raw, "fetched-at.txt"), "utf8").trim() : undefined;
   const out: ItemStats = {
-    source: "OpenDota API",
+    source: stratzPairs ? "STRATZ API + OpenDota API" : "OpenDota API",
+    ...(stratzPairs ? { posFrom: "STRATZ, Crusader-Archon + Legend-Ancient, by position", ...(stratzAt ? { posFetchedAt: stratzAt } : {}) } : {}),
     ...(fetchedAt ? { fetchedAt } : {}),
     phasesFrom: "item popularity by game phase, professional matches",
     timingsFrom: "purchase times in parsed public matches",
@@ -173,7 +214,7 @@ function main(): void {
   };
   writeFileSync(join(ROOT, "data", "item-stats.json"), JSON.stringify(out), "utf8");
   console.log(
-    `item-stats.json: ${Object.keys(heroes).length} heroes (${withTiming} with timings, ${withCurve} with a game-length curve), ${Object.keys(items).length} items`,
+    `item-stats.json: ${Object.keys(heroes).length} heroes (${withTiming} with timings, ${withCurve} with a game-length curve, ${stratzPairs} STRATZ hero-positions), ${Object.keys(items).length} items`,
   );
 }
 
@@ -182,7 +223,7 @@ function main(): void {
  *  and nothing after 30 min. Linear inside a bucket; the first bucket is taken as
  *  2.5 min wide. Items whose last bucket holds a big share are bought later than the
  *  data covers ("censored") - their quartiles are not reported. */
-export function quartiles(rows: Array<{ t: number; g: number; w: number }>): ItemTiming | undefined {
+export function quartiles(rows: Array<{ t: number; g: number; w: number }>, firstWidth = 150): ItemTiming | undefined {
   const byT = new Map<number, { g: number; w: number }>();
   for (const r of rows) {
     if (!(r.g > 0) || !Number.isFinite(r.t)) continue;
@@ -196,7 +237,7 @@ export function quartiles(rows: Array<{ t: number; g: number; w: number }>): Ite
   if (games < MIN_TIMING_GAMES || rs.length < 2) return undefined;
   const last = rs.at(-1)!;
   if (last.t >= LAST_BUCKET && last.g / games > 0.25) return undefined; // mostly after the data's end
-  const lower = (i: number) => (i === 0 ? rs[0]!.t - 150 : rs[i - 1]!.t);
+  const lower = (i: number) => (i === 0 ? rs[0]!.t - firstWidth : rs[i - 1]!.t);
   const q = (p: number) => {
     let acc = 0;
     for (let i = 0; i < rs.length; i++) {
@@ -241,6 +282,86 @@ export function quartiles(rows: Array<{ t: number; g: number; w: number }>): Ite
     ...(fastBy !== undefined && fastG >= 20 ? { fastBy, wrFast: round(fastW / fastG) } : {}),
     ...(slowAfter !== undefined && slowG >= 20 ? { slowAfter, wrSlow: round(slowW / slowG) } : {}),
   };
+}
+
+interface StratzTimed {
+  itemId: number;
+  instance: number;
+  time: number;
+  matchCount: number;
+  winCount: number;
+}
+interface StratzStart {
+  itemId: number;
+  instance: number;
+  wasGiven: boolean;
+  matchCount: number;
+  winCount: number;
+}
+
+/** one hero x position from STRATZ: phases by the item's median completion minute
+ *  (< 10 early, 10-25 mid, > 25 late), shares as a fraction of ALL games on that
+ *  position, timings from the per-minute distribution (first purchase only). */
+function stratzPosition(
+  full: StratzTimed[],
+  start: StratzStart[],
+  boots: StratzTimed[],
+  total: number,
+  idToKey: Map<string, string>,
+  dcItems: Record<string, DcItem>,
+): { stats: HeroStats; keys: string[] } {
+  const keyOf = (id: number) => idToKey.get(String(id));
+  const keys = new Set<string>();
+  const round = (x: number) => Math.round(x * 1000) / 1000;
+  const phases: HeroStats["phases"] = { start: [], early: [], mid: [], late: [] };
+  const timing: Record<string, ItemTiming> = {};
+
+  const startBy = new Map<string, { share: number; qty: number }>();
+  for (const r of start) {
+    const k = keyOf(r.itemId);
+    if (!k || r.wasGiven || !dcItems[k]) continue;
+    const sh = r.matchCount / total;
+    const cur = startBy.get(k) ?? { share: 0, qty: 0 };
+    if (r.instance === 0) cur.share = sh;
+    if (sh >= 0.3) cur.qty = Math.max(cur.qty, r.instance + 1);
+    startBy.set(k, cur);
+  }
+  for (const [k, v] of startBy) {
+    if (v.share < 0.05) continue;
+    phases.start!.push(v.qty > 1 ? [k, round(v.share), v.qty] : [k, round(v.share)]);
+    keys.add(k);
+  }
+
+  const byItem = new Map<string, Array<{ t: number; g: number; w: number }>>();
+  for (const r of full) {
+    const k = keyOf(r.itemId);
+    if (!k || r.instance !== 0 || !dcItems[k]) continue;
+    const list = byItem.get(k) ?? [];
+    list.push({ t: (Number(r.time) + 1) * 60, g: r.matchCount, w: r.winCount });
+    byItem.set(k, list);
+  }
+  for (const [k, rows] of byItem) {
+    const g = rows.reduce((s, r) => s + r.g, 0);
+    const sh = g / total;
+    if (sh < 0.03) continue;
+    const t = quartiles(rows, 60);
+    if (t) timing[k] = t;
+    const med = t?.p50 ?? 0;
+    phases[med < 600 ? "early" : med < 1500 ? "mid" : "late"]!.push([k, round(sh)]);
+    keys.add(k);
+  }
+  for (const r of boots) {
+    const k = keyOf(r.itemId);
+    if (!k || r.instance !== 0 || !dcItems[k] || !r.matchCount) continue;
+    const sh = r.matchCount / total;
+    if (sh < 0.03) continue;
+    const avg = Math.round(Number(r.time) / r.matchCount);
+    timing[k] = { p25: avg, p50: avg, p75: avg, games: r.matchCount };
+    phases[avg < 600 ? "early" : avg < 1500 ? "mid" : "late"]!.push([k, round(sh)]);
+    keys.add(k);
+  }
+  for (const ph of Object.values(phases)) ph!.sort((a, b) => b[1] - a[1]);
+  return { stats: { phases, timing, games: total }, keys: [...keys] };
 }
 
 function laneCurve(rows: LaneRow[] | undefined): Array<[number, number, number]> | undefined {

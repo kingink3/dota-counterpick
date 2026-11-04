@@ -86,8 +86,12 @@
    `npx tsx scripts/build-item-stats.ts --raw /tmp/od --constants <dotaconstants/build>` →
    коммит `data/item-stats.json`.
 3. Проверка: `npm test` (`test/plan.test.ts` гоняет правила порядка на реальных данных для 5 героев).
-4. STRATZ (ранги и позиции) — Actions → «Fetch STRATZ stats», секрет `STRATZ_TOKEN`. API
-   требует 100 публичных игр на аккаунте владельца токена.
+4. STRATZ (ранги Crusader–Archon + Legend–Ancient, по позициям; план предпочитает эти данные):
+   - Actions → «Fetch STRATZ stats», mode=fetch. Секрет `STRATZ_TOKEN`; ~66 вызовов за запуск.
+   - **Не больше 2 запусков за 15 минут:** STRATZ пускает не больше 2 IP за 15 минут, а у каждого запуска Actions свой IP.
+   - Требуется 100 публичных игр на аккаунте владельца токена.
+   - Новые герои / сдвиг позиций → `git show origin/stratz-raw:positions.json > /tmp/p.json && npx tsx scripts/build-stratz-queries.ts /tmp/p.json`, коммит `scripts/stratz-queries.json`.
+   - Сборка: `git worktree add /tmp/stz origin/stratz-raw` → `build-item-stats.ts ... --stratz /tmp/stz`.
 
 ## C. Чтение экрана (регрессия)
 

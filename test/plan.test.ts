@@ -142,9 +142,15 @@ test("plan on real data: basics first, counters placed, families folded", async 
     assert.ok(!(all.includes("orchid") && all.includes("bloodthorn")), `${hero}: one of Orchid / Bloodthorn`);
     assert.ok(!(all.includes("yasha") && all.includes("manta")), `${hero}: Yasha folds into Manta`);
   }
-  // Anti-Mage vs a disable-heavy draft: BKB pulled right after Battle Fury
-  const am = keys(planFor("anti_mage", 1), "core");
+  // Anti-Mage vs a disable-heavy draft: BKB right after Battle Fury (pulled into the
+  // core, or the first "for this draft" item placed after it)
+  const amPlan = planFor("anti_mage", 1);
+  const am = keys(amPlan, "core");
   assert.equal(am[0], "bfury");
-  assert.equal(am[1], "black_king_bar");
+  const sit = amPlan.phases.find((x) => x.id === "situational")!.items;
+  assert.ok(
+    am[1] === "black_king_bar" || (sit[0]?.key === "black_king_bar" && /^after Battle Fury/.test(sit[0].place ?? "")),
+    `BKB after Battle Fury: core ${am.join(",")}, situational ${sit.map((i) => i.key).join(",")}`,
+  );
   assert.ok(keys(planFor("lion", 5), "core").includes("blink"), "Lion's core has Blink");
 });

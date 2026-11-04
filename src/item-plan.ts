@@ -32,11 +32,18 @@ export interface ItemTiming {
 }
 
 export interface HeroStats {
-  /** item -> share of the most bought item of that phase (0..1). */
-  phases: Partial<Record<Phase, Array<[string, number]>>>;
+  /** item -> share (OpenDota: of the phase's most bought item; STRATZ: of all games
+   *  on the position), optional quantity for starting items (Iron Branch x2). */
+  phases: Partial<Record<Phase, Array<[string, number] | [string, number, number]>>>;
   timing?: Record<string, ItemTiming>;
   /** win rate by match length: [minute bin start, win rate, games]. */
   curve?: Array<[number, number, number]>;
+  /** STRATZ, per position "1".."5" (rank-filtered; preferred when present). */
+  byPos?: Record<string, HeroStats>;
+  /** the position with the most games in byPos. */
+  mainPos?: string;
+  /** games behind a byPos entry. */
+  games?: number;
 }
 
 export interface ItemInfo {
@@ -54,6 +61,9 @@ export interface ItemStats {
   phasesFrom?: string;
   timingsFrom?: string;
   curveFrom?: string;
+  /** what byPos comes from. */
+  posFrom?: string;
+  posFetchedAt?: string;
   items: Record<string, ItemInfo>;
   heroes: Record<string, HeroStats>;
 }
@@ -77,6 +87,10 @@ export interface PlanItem {
   via?: string[];
   /** typical time of that component, when the item itself has no timing. */
   viaAt?: number;
+  /** starting items bought more than once (Iron Branch x2); cost is the total. */
+  qty?: number;
+  /** moved up into the core because this draft calls for it. */
+  promoted?: boolean;
 }
 
 export interface PlanPhase {
@@ -94,6 +108,8 @@ export interface Spike {
 export interface ItemPlan {
   hero: string;
   archetype?: Archetype;
+  /** where the standard items come from, e.g. "STRATZ, position 1, 212k games". */
+  basis?: string;
   phases: PlanPhase[];
   spikes: Spike[];
 }
@@ -125,6 +141,8 @@ const BOOTS = new Set([
 export interface PlanInput {
   hero: string;
   archetype?: Archetype;
+  /** your position (picks the STRATZ per-position build). */
+  role?: number;
   stats: ItemStats;
   /** engine counter items for this draft (EngineResult.items + defense, fit applied). */
   counters?: Recommendation[];
@@ -134,8 +152,14 @@ export interface PlanInput {
 }
 
 export function buildPlan(inp: PlanInput): ItemPlan | undefined {
-  const hs = inp.stats.heroes[inp.hero];
-  if (!hs) return undefined;
+  const base = inp.stats.heroes[inp.hero];
+  if (!base) return undefined;
+  const posKey = inp.role !== undefined && base.byPos?.[String(inp.role)] ? String(inp.role) : base.mainPos;
+  const pos = posKey ? base.byPos?.[posKey] : undefined;
+  const hs: HeroStats = pos ? { ...pos, ...(base.curve ? { curve: base.curve } : {}) } : base;
+  const basis = pos
+    ? `${inp.stats.posFrom ?? "by position"}: position ${posKey}${inp.role !== undefined && String(inp.role) !== posKey ? ` (no data for position ${inp.role})` : ""}, ${Math.round((pos.games ?? 0) / 1000)}k games`
+    : inp.stats.phasesFrom;
   const items = inp.stats.items;
   const support = inp.archetype === "support";
   const label = (k: string) => inp.label?.(k) ?? items[k]?.label ?? k;
@@ -159,12 +183,19 @@ export function buildPlan(inp: PlanInput): ItemPlan | undefined {
   let gold = START_GOLD;
   const startList = (hs.phases.start ?? []).filter(([k, sh]) => sh >= 0.12 && roleOk(k));
   const hasDispenser = startList.some(([k]) => k === "ward_dispenser");
-  for (const [k] of startList) {
+  for (const [k, , q] of startList) {
     if (hasDispenser && (k === "ward_observer" || k === "ward_sentry")) continue; // the pair covers both
-    const c = cost(k);
+    let qty = q ?? 1;
+    while (qty > 1 && cost(k) * qty > gold) qty--;
+    const c = cost(k) * qty;
     if (c > gold || start.length >= 7) continue;
     gold -= c;
-    start.push(take(k));
+    const it = take(k);
+    if (qty > 1) {
+      it.qty = qty;
+      it.cost = c;
+    }
+    start.push(it);
   }
 
   // --- boots: the upgrade the hero actually goes for, else plain boots ------------
@@ -184,6 +215,7 @@ export function buildPlan(inp: PlanInput): ItemPlan | undefined {
     lane.push(take(k));
   }
   if (bootsKey && !used.has(bootsKey)) lane.splice(Math.min(1, lane.length), 0, take(bootsKey));
+  if (lane.every((x) => x.at !== undefined)) lane.sort((x, y) => x.at! - y.at!);
   // a component the lane already builds into (stick -> wand) is noise
   for (let i = lane.length - 1; i >= 0; i--) {
     if (lane.some((o, j) => j !== i && within(lane[i]!.key, o.key))) lane.splice(i, 1);
@@ -193,7 +225,9 @@ export function buildPlan(inp: PlanInput): ItemPlan | undefined {
   // supports buy their core (Force Staff, Glimmer) after 25 min in pro games, so the
   // late list counts too, at half weight
   const coreScore = new Map<string, number>();
-  for (const [ph, w] of [["mid", 1], ["late", support ? 0.5 : 0.25]] as const) {
+  // STRATZ phases come from real completion times, so its late items are late;
+  // OpenDota's pro phases put a support's Force Staff after 25 min
+  for (const [ph, w] of [["mid", 1], ["late", pos ? 0 : support ? 0.5 : 0.25]] as const) {
     for (const [k, sh] of hs.phases[ph] ?? []) coreScore.set(k, (coreScore.get(k) ?? 0) + w * sh);
   }
   const coreKeys = [...coreScore.entries()]
@@ -277,7 +311,9 @@ export function buildPlan(inp: PlanInput): ItemPlan | undefined {
       const li = late.indexOf(already);
       if (li >= 0 && topCounters.has(key) && core.length) {
         late.splice(li, 1);
-        already.place = "earlier than usual for this hero";
+        already.place = `earlier than usual for this hero${already.at !== undefined ? ` (usually ~${mmss(already.at)})` : ""}`;
+        already.promoted = true;
+        delete already.at;
         core.splice(1, 0, already);
       }
       continue;
@@ -293,6 +329,11 @@ export function buildPlan(inp: PlanInput): ItemPlan | undefined {
     if (it.cost <= CHEAP_COUNTER) it.place = "in the lane, after your lane items";
     else if (firstCore) it.place = `after ${firstCore.label}${firstCore.at ? ` (~${mmss(firstCore.at)})` : ""}`;
     else it.place = "after your first core item";
+    // the hero's usual time for it is context, not the target here
+    if (it.at !== undefined) {
+      if (firstCore?.at === undefined || it.at > firstCore.at + 300) it.place += `; usually ~${mmss(it.at)} on this hero`;
+      delete it.at;
+    }
   }
 
   const phases: PlanPhase[] = [
@@ -302,12 +343,19 @@ export function buildPlan(inp: PlanInput): ItemPlan | undefined {
     { id: "situational", label: "For this draft", items: situational },
     { id: "late", label: "Late game", items: late },
   ];
-  return { hero: inp.hero, ...(inp.archetype ? { archetype: inp.archetype } : {}), phases, spikes: itemSpikes(core) };
+  return {
+    hero: inp.hero,
+    ...(inp.archetype ? { archetype: inp.archetype } : {}),
+    ...(basis ? { basis } : {}),
+    phases,
+    spikes: itemSpikes(core),
+  };
 }
 
 function itemSpikes(core: PlanItem[]): Spike[] {
   return core
-    .filter((c) => c.timing && c.timing.games >= 50)
+    .filter((c) => c.timing && c.timing.games >= 50 && !c.promoted)
+    .sort((x, y) => x.timing!.p50 - y.timing!.p50)
     .map((c) => {
       const t = c.timing!;
       const delta = t.wrFast !== undefined && t.wrSlow !== undefined ? t.wrFast - t.wrSlow : undefined;
