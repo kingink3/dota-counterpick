@@ -22,7 +22,13 @@ jobs:
       - name: dotaconstants
         run: |
           mkdir -p /tmp/dc && cd /tmp/dc && npm pack dotaconstants --silent && tar xzf dotaconstants-*.tgz
-      - run: npm run fetch:items -- --constants /tmp/dc/package/build
+      - run: npm run fetch:items -- --constants /tmp/dc/package/build --out /tmp/icons
+      - name: Convert to 66x48 WebP
+        run: |
+          shopt -s nullglob
+          for f in /tmp/icons/*.png; do
+            convert "$f" -resize 66x48! -quality 82 "web/items/$(basename "${f%.png}").webp"
+          done
       - name: Commit icons
         run: |
           git config user.name "github-actions[bot]"

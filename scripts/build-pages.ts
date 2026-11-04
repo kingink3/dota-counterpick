@@ -104,6 +104,7 @@ async function main(): Promise<void> {
   writeFileSync(join(DIST, "app.bin"), bin);
   writeFileSync(join(DIST, ".nojekyll"), "");
   cpSync(join(WEB, "heroes"), join(DIST, "heroes"), { recursive: true });
+  if (existsSync(join(WEB, "items"))) cpSync(join(WEB, "items"), join(DIST, "items"), { recursive: true });
   cpSync(join(WEB, "fonts"), join(DIST, "fonts"), { recursive: true });
   cpSync(join(WEB, "favicon.svg"), join(DIST, "favicon.svg"));
 
