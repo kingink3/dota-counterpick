@@ -1,0 +1,44 @@
+# STRATZ statistics by rank bracket and position (ADR-027). Needs the repository
+# secret STRATZ_TOKEN (Settings -> Secrets and variables -> Actions). Raw responses go
+# to the `stratz-raw` branch (force-pushed); data/ is built from them locally.
+#   mode=schema : 1 call, the GraphQL schema (to write the queries)
+#   mode=fetch  : the batches in scripts/stratz-queries.json (built by build-stratz-queries)
+name: Fetch STRATZ stats
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "schema or fetch"
+        required: true
+        default: schema
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Query STRATZ
+        env:
+          STRATZ_TOKEN: ${{ secrets.STRATZ_TOKEN }}
+        run: npx tsx scripts/stratz-fetch.ts --mode "${{ inputs.mode }}" --out /tmp/stratz
+      - name: Push to the stratz-raw branch
+        run: |
+          cd /tmp/stratz
+          date -u +%Y-%m-%dT%H:%MZ > fetched-at.txt
+          echo "${{ inputs.mode }}" > mode.txt
+          git init -q -b stratz-raw
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "STRATZ raw (${{ inputs.mode }}) $(cat fetched-at.txt)"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" stratz-raw
