@@ -80,6 +80,9 @@ recommend({ enemyHeroes, myRole?, myHero? }) -> { heroes[], items[], uncovered[]
    enemy resistance subtract it (scaled, capped per enemy, `pierced_by` exceptions).
    Blunting also applies to what the candidate's damage rests on (a right-clicker into
    evasion, lifesteal into Mana Shield - ADR-022); a net-negative pick is not shown.
+   Composition (ADR-023): `team_needs` (disable, control through BKB, wave clear,
+   saves, purge) and the damage mix of your allies add a bonus to picks that fill a
+   gap; with a role set, reasons vs your lane opponents count x1.25.
 6. **Explainability (ADR-012 §4)** - every point of score is backed by a `Reason`
    with its mechanism string; nothing scores silently.
 

@@ -542,3 +542,37 @@ test("defense except: Ghost Scepter is not offered vs Muerta (Pierce the Veil hi
   const vsSniper = engine.recommend({ enemyHeroes: ["sniper"] });
   assert.ok(rec(vsSniper.defense, "ghost_scepter"), "still offered vs a plain right-clicker");
 });
+
+// ---------------------------------------------------------------------------
+//  ADR-023: composition - team gaps, damage mix, lane opponents
+// ---------------------------------------------------------------------------
+
+test("team gaps: a lineup without disables rewards a candidate that brings them", () => {
+  const draft = { enemyHeroes: ["phantom_assassin", "axe"], allyHeroes: ["sniper", "drow_ranger", "luna"] };
+  const r = engine.recommend(draft);
+  const disable = r.team?.needs.find((n) => n.code === "disable");
+  assert.ok(disable && disable.have < disable.want, "no disables yet");
+  const doom = rec(r.heroes, "doom");
+  assert.ok(doom?.reasons.some((x) => x.basis === "team" && x.need === "disable" && x.contribution > 0));
+  assert.ok(!doom!.coverage.includes("disable"), "team reasons never count as enemy coverage");
+  assert.ok(doom!.reasons.some((x) => x.basis === "team" && x.need === "damage_mix") === false, "Doom deals physical - no damage-mix bonus");
+  const sd = rec(r.heroes, "shadow_demon");
+  assert.ok(sd?.reasons.some((x) => x.need === "damage_mix"), "all-physical team -> magic damage is a plus");
+});
+
+test("team gaps fade once the need is covered, and need known allies", () => {
+  const solo = engine.recommend({ enemyHeroes: ["phantom_assassin"] });
+  assert.equal(solo.team, undefined, "no allies, no role -> no team read");
+  assert.ok(!solo.heroes.some((h) => h.reasons.some((x) => x.basis === "team")));
+  const stacked = engine.recommend({ enemyHeroes: ["phantom_assassin"], allyHeroes: ["lion", "shadow_shaman", "bane"] });
+  assert.ok(!stacked.heroes.some((h) => h.reasons.some((x) => x.need === "disable")), "three disablers already");
+});
+
+test("lane: with a role, reasons vs the enemies you lane against weigh more", () => {
+  const draft = { enemyHeroes: ["phantom_assassin", "axe", "lion", "crystal_maiden", "zeus"], myRole: 3 };
+  const r = engine.recommend(draft);
+  assert.deepEqual([...(r.team?.laneOpponents ?? [])].sort(), ["crystal_maiden", "phantom_assassin"]);
+  const h = r.heroes.find((x) => x.reasons.some((y) => y.notes?.includes("lane opponent")));
+  assert.ok(h, "some reason is tagged as a lane matchup");
+  for (const x of h!.reasons) if (x.notes?.includes("lane opponent")) assert.ok(["crystal_maiden", "phantom_assassin"].includes(x.enemy));
+});

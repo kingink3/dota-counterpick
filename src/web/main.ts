@@ -19,7 +19,7 @@ import { AutoInputAdapter, defaultBridgeUrl, type AutoStatus, type DraftPatch } 
 import type { GamePhase, GsiSnapshot } from "../gsi.js";
 import { buildTemplates, ScreenReader, type ScreenStatus } from "./screen-reader.js";
 import type { Frame, ScreenChange, Side } from "../screen-match.js";
-import type { Archetype, AttackType, Combo, DamageRead, DraftState, Reason, Recommendation } from "../types.js";
+import type { Archetype, AttackType, Combo, DamageRead, DraftState, Reason, Recommendation, TeamRead } from "../types.js";
 
 type Attr = "str" | "agi" | "int" | "all";
 interface RosterHero {
@@ -372,6 +372,7 @@ function renderInner(): void {
   }
   out.appendChild(bar);
   if (state.enemies.size) out.appendChild(damageRead(result.damage));
+  if (result.team) out.appendChild(teamRead(result.team));
 
   const panel = document.createElement("div");
   panel.className = "tab-panel";
@@ -491,6 +492,29 @@ function damageRead(d: DamageRead): HTMLElement {
       : `They are softer to ${school(d.offenseLean)} damage.`);
   return p;
 }
+/** Your lineup (ADR-023): which team needs are covered, damage mix, lane opponents. */
+function teamRead(t: TeamRead): HTMLElement {
+  const p = document.createElement("p");
+  p.className = "damage-read team-read";
+  const parts: string[] = [];
+  for (const n of t.needs) {
+    const state = n.have >= n.want ? "ok" : n.have > 0 ? "part" : "miss";
+    const mark = state === "ok" ? "✓" : state === "part" ? "½" : "✗";
+    parts.push(`<span class="need ${state}" title="${esc(`${n.label}: ${n.have} of ${n.want}`)}">${esc(n.label)} ${mark}</span>`);
+  }
+  const total = t.physical + t.magic;
+  if (t.needs.length && total > 0) {
+    const phys = Math.round((100 * t.physical) / total);
+    const lean = phys >= 70 ? "physical" : phys <= 30 ? "magic" : "";
+    parts.push(`damage <b class="${lean || "muted"}">${phys}% physical</b>`);
+  }
+  if (t.laneOpponents?.length) parts.push(`lane vs ${t.laneOpponents.map((c) => esc(labelFor(c))).join(", ")}`);
+  p.innerHTML = `Your team: ${parts.join(" · ")}`;
+  return p;
+}
+const needLabel = (code?: string) =>
+  code === "damage_mix" ? "Damage mix" : kb.taxonomy.team_needs?.find((n) => n.code === code)?.label ?? code ?? "";
+
 function leanClass(l: string): string {
   return l === "physical" ? "physical" : l === "magic" ? "magic" : "muted";
 }
@@ -696,6 +720,8 @@ function recCard(rec: Recommendation): HTMLElement {
   if (isHero && rec.pos) meta.push(`Pos ${rec.pos.join("/")}`);
   if (rec.school && rec.school !== "neutral") meta.push(`<span class="${rec.school}">${rec.school}</span>`);
   if (rec.synergyWith?.length) meta.push(`works with ${rec.synergyWith.map((c) => esc(labelFor(c))).join(", ")}`);
+  const fills = [...new Set(rec.reasons.filter((r) => r.basis === "team").map((r) => needLabel(r.need).toLowerCase()))];
+  if (fills.length) meta.push(`<span class="fills" title="Covers what your lineup lacks">fills ${esc(fills.join(", "))}</span>`);
   if (rec.risks?.length) {
     const tip = "Their kit hits a weakness of this pick (or blunts its damage) - score already lowered";
     meta.push(`<span class="off" title="${tip}">risky vs ${rec.risks.map((c) => esc(labelFor(c))).join(", ")}</span>`);
@@ -765,6 +791,7 @@ function reasonSummary(reason: Reason, rec: Recommendation): string {
   const who = esc(labelFor(reason.enemy));
   const mech = esc(mechanismText(reason, rec));
   if (reason.basis === "synergy") return `<span class="lead">Combo with ${who}:</span> ${mech}`;
+  if (reason.basis === "team") return `<span class="lead">Fills a gap: ${esc(needLabel(reason.need))}</span> - ${mech}`;
   if (reason.basis === "edge") {
     const tool = reason.tool ? kb.toolByCode.get(reason.tool)?.label ?? reason.tool : "";
     const rel = reason.reliance ? kb.relianceByCode.get(reason.reliance)?.label ?? reason.reliance : "";
@@ -786,6 +813,10 @@ function reasonItem(reason: Reason, rec: Recommendation): HTMLElement {
     li.innerHTML =
       `<span class="syn">+ combos with ${esc(labelFor(reason.enemy))}</span> ` +
       esc(mechanismText(reason, rec));
+    return li;
+  }
+  if (reason.basis === "team") {
+    li.innerHTML = `<span class="syn">+ team: ${esc(needLabel(reason.need))}</span> ` + esc(mechanismText(reason, rec));
     return li;
   }
   const enemy = `<span class="vs">vs ${esc(labelFor(reason.enemy))}</span> `;

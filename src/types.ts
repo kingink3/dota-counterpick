@@ -112,6 +112,30 @@ export interface Taxonomy {
   hero_tags: Record<string, HeroTags>;
   resistance?: Resistance[];
   resist_edges?: ResistEdge[];
+  team_needs?: TeamNeed[];
+}
+
+/** A capability a team should have (ADR-023): which tools provide it and how much
+ *  of it a five-hero lineup wants before more stops mattering. */
+export interface TeamNeed {
+  code: string;
+  label: string;
+  /** tool code -> how much one point of that tool counts toward the need. */
+  tools: Record<string, number>;
+  /** coverage at which the need is met (sum over allies of tool weight x factor). */
+  want: number;
+  /** max score bonus for a candidate that fills the gap completely. */
+  weight: number;
+}
+
+/** What the allied lineup already covers (ADR-023), echoed for the UI. */
+export interface TeamRead {
+  needs: Array<{ code: string; label: string; have: number; want: number }>;
+  /** damage the allies deal by school (same scale as DamageRead threats). */
+  physical: number;
+  magic: number;
+  /** enemies assumed to face you in lane (needs myRole); by main position. */
+  laneOpponents?: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -257,7 +281,9 @@ export interface Reason {
   /** how it applies: counter (edge/enrichment/defense) or synergy with an ally. */
   /** resist = the candidate endures this enemy's tool; risk = the enemy's tool hits a
    *  reliance of the candidate (negative contribution). ADR-020. */
-  basis: "edge" | "hero_edge" | "item_edge" | "defense" | "synergy" | "resist" | "risk";
+  basis: "edge" | "hero_edge" | "item_edge" | "defense" | "synergy" | "resist" | "risk" | "team";
+  /** team basis: the team need this candidate fills (enemy holds the need code). */
+  need?: string;
   /** resist basis: the candidate's resistance code. */
   resistance?: string;
   /** tool tag used: subject's tool (edge) or the enemy's threat tool (defense). */
@@ -328,6 +354,8 @@ export interface EngineResult {
   combos: Combo[];
   /** magic vs physical read of the enemy team. */
   damage: DamageRead;
+  /** what your own lineup covers (ADR-023); present when allies are known. */
+  team?: TeamRead;
   /** honest gaps: enemies for which no known counter was found (ADR-004 mitigation). */
   uncovered: string[];
   /** echo of the resolved input for traceability. */

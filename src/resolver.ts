@@ -25,6 +25,7 @@ import type {
   HeroTags,
   Reason,
   Recommendation,
+  TeamRead,
 } from "./types.js";
 
 interface Subject {
@@ -44,10 +45,11 @@ export function resolve(kb: KnowledgeBase, draft: DraftState): EngineResult {
   const allies = new Set(draft.allyHeroes ?? []);
   const synergy = buildSynergyIndex(kb, allies);
 
+  const team = readTeam(kb, draft);
   const heroLocked = Boolean(draft.myHero);
   const heroes = heroLocked
     ? []
-    : rankSubjects(heroCandidates(kb, draft, census, allies), kb, census, synergy);
+    : rankSubjects(heroCandidates(kb, draft, census, allies), kb, census, synergy, team);
   // item builds tailored to the hero you play: a counter item that does not belong in
   // that hero's build (Eul's on a carry Sniper) sinks instead of topping the list.
   const fit = itemFitFor(kb, draft);
@@ -65,7 +67,160 @@ export function resolve(kb: KnowledgeBase, draft: DraftState): EngineResult {
   // layer - answered it.
   const uncovered = census.allSelected.filter((e) => !answered.has(e));
 
-  return { heroes, items, defense, combos: kb.combos, damage, uncovered, input: draft };
+  return {
+    heroes,
+    items,
+    defense,
+    combos: kb.combos,
+    damage,
+    ...(team.read ? { team: team.read } : {}),
+    uncovered,
+    input: draft,
+  };
+}
+
+// ---------------------------------------------------------------------------
+//  Composition (ADR-023): what YOUR lineup still lacks, and who you face in lane
+// ---------------------------------------------------------------------------
+
+/** gap bonuses are scaled by how much of the allied draft is known. */
+const TEAM_FULL_AT = 3;
+/** damage-mix bonus: max bonus when your team deals (almost) only one school. */
+const DAMAGE_MIX_WEIGHT = 0.3;
+const DAMAGE_MIX_MIN_SHARE = 0.3;
+/** reasons against the enemies you lane against count a little more. */
+const LANE_WEIGHT = 1.25;
+
+interface TeamContext {
+  read?: TeamRead;
+  /** need code -> { have, want, weight, tools } for gap bonuses. */
+  gaps: Array<{ code: string; label: string; have: number; want: number; weight: number; tools: Record<string, number> }>;
+  scale: number;
+  physical: number;
+  magic: number;
+  allies: number;
+  lane: Set<string>;
+}
+
+function readTeam(kb: KnowledgeBase, draft: DraftState): TeamContext {
+  const tagsOf = (c: string) => kb.taxonomy.hero_tags[c];
+  const allyCodes = [...new Set([...(draft.allyHeroes ?? []), ...(draft.myHero ? [draft.myHero] : [])])].filter((c) => tagsOf(c));
+  const gaps: TeamContext["gaps"] = [];
+  const needsRead: TeamRead["needs"] = [];
+  for (const n of kb.taxonomy.team_needs ?? []) {
+    let have = 0;
+    for (const a of allyCodes) have += capability(tagsOf(a)!.tool ?? {}, n.tools);
+    have = round(have);
+    needsRead.push({ code: n.code, label: n.label, have, want: n.want });
+    gaps.push({ code: n.code, label: n.label, have, want: n.want, weight: n.weight, tools: n.tools });
+  }
+  let physical = 0;
+  let magic = 0;
+  for (const a of allyCodes) {
+    physical += schoolDamage(tagsOf(a)!, "physical");
+    magic += schoolDamage(tagsOf(a)!, "magic");
+  }
+  const lane = laneOpponents(kb, draft);
+  const read: TeamRead | undefined =
+    allyCodes.length || lane.size
+      ? {
+          needs: allyCodes.length ? needsRead : [],
+          physical: round(physical),
+          magic: round(magic),
+          ...(lane.size ? { laneOpponents: [...lane] } : {}),
+        }
+      : undefined;
+  return {
+    ...(read ? { read } : {}),
+    gaps,
+    scale: Math.min(1, allyCodes.length / TEAM_FULL_AT),
+    physical,
+    magic,
+    allies: allyCodes.length,
+    lane,
+  };
+}
+
+function capability(tools: Record<string, number>, factors: Record<string, number>): number {
+  let c = 0;
+  for (const [t, f] of Object.entries(factors)) c += (tools[t] ?? 0) * f;
+  return c;
+}
+
+/** Enemies you face in lane: each enemy gets a distinct position (cheapest by its
+ *  position list, index 0 = main role), then your role picks the opposing lane. */
+const LANE_OPPOSITION: Record<number, number[]> = { 1: [3, 4], 5: [3, 4], 2: [2], 3: [1, 5], 4: [1, 5] };
+function laneOpponents(kb: KnowledgeBase, draft: DraftState): Set<string> {
+  const out = new Set<string>();
+  if (draft.myRole === undefined) return out;
+  const enemies = draft.enemyHeroes.filter((e) => kb.taxonomy.hero_tags[e]);
+  if (!enemies.length) return out;
+  const cost = (e: string, p: number) => {
+    const i = kb.taxonomy.hero_tags[e]!.pos.indexOf(p);
+    return i < 0 ? 4 : i;
+  };
+  let best: { cost: number; pos: number[] } | undefined;
+  const walk = (i: number, used: number[], acc: number) => {
+    if (best && acc >= best.cost) return;
+    if (i === enemies.length) {
+      best = { cost: acc, pos: [...used] };
+      return;
+    }
+    for (let p = 1; p <= 5; p++) {
+      if (used.includes(p)) continue;
+      used.push(p);
+      walk(i + 1, used, acc + cost(enemies[i]!, p));
+      used.pop();
+    }
+  };
+  walk(0, [], 0);
+  const opp = LANE_OPPOSITION[draft.myRole] ?? [];
+  enemies.forEach((e, i) => {
+    if (opp.includes(best!.pos[i]!)) out.add(e);
+  });
+  return out;
+}
+
+/** gap + damage-mix bonuses for one hero candidate (basis "team"). */
+function teamReasons(team: TeamContext, tags: HeroTags | undefined): Reason[] {
+  if (!tags || team.allies === 0) return [];
+  const out: Reason[] = [];
+  for (const g of team.gaps) {
+    const missing = g.want - g.have;
+    if (missing <= 0) continue;
+    const c = capability(tags.tool ?? {}, g.tools);
+    if (c <= 0) continue;
+    const deficit = missing / g.want;
+    const fill = Math.min(1, c / missing);
+    out.push({
+      enemy: g.code,
+      basis: "team",
+      need: g.code,
+      mechanism: `your team has ${round(g.have)}/${g.want} ${g.label.toLowerCase()} - this pick adds ${round(c)}`,
+      contribution: g.weight * team.scale * deficit * fill,
+      factors: { edgeWeight: g.weight, toolWeight: round(c) },
+    });
+  }
+  // damage mix: a lineup dealing (almost) one school is easy to itemise against
+  const total = team.physical + team.magic;
+  if (team.allies >= 2 && total > 0) {
+    for (const school of ["magic", "physical"] as const) {
+      const share = (school === "magic" ? team.magic : team.physical) / total;
+      if (share >= DAMAGE_MIX_MIN_SHARE) continue;
+      const c = schoolDamage(tags, school);
+      if (c <= 0) continue;
+      const other = school === "magic" ? "physical" : "magic";
+      out.push({
+        enemy: "damage_mix",
+        basis: "team",
+        need: "damage_mix",
+        mechanism: `your team deals ${Math.round((1 - share) * 100)}% ${other} damage - one armor or magic-resistance item answers all of it; this pick adds ${school}`,
+        contribution: DAMAGE_MIX_WEIGHT * team.scale * ((DAMAGE_MIX_MIN_SHARE - share) / DAMAGE_MIX_MIN_SHARE) * Math.min(1, c),
+        factors: { edgeWeight: DAMAGE_MIX_WEIGHT, toolWeight: round(c) },
+      });
+    }
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------------------
@@ -330,10 +485,16 @@ function rankSubjects(
   kb: KnowledgeBase,
   census: Census,
   synergy: SynergyIndex,
+  team: TeamContext,
 ): Recommendation[] {
   const recs: Recommendation[] = [];
   for (const subject of subjects) {
-    const reasons = scoreSubject(subject, kb, census);
+    const reasons = scoreSubject(subject, kb, census).map((r) =>
+      team.lane.has(r.enemy)
+        ? { ...r, contribution: r.contribution * LANE_WEIGHT, notes: [...(r.notes ?? []), "lane opponent"] }
+        : r,
+    );
+    if (subject.kind === "hero") reasons.push(...teamReasons(team, subject.tags));
     // synergy with allied team (only when picking a hero)
     for (const s of synergy.get(subject.code) ?? []) {
       reasons.push({
@@ -367,7 +528,9 @@ function finalizeRec(
   const score = reasons.reduce((s, r) => s + r.contribution, 0);
   const school = dominantSchool(reasons);
   const coverage = [
-    ...new Set(reasons.filter((r) => r.basis !== "synergy" && r.contribution > 0).map((r) => r.enemy)),
+    ...new Set(
+      reasons.filter((r) => r.basis !== "synergy" && r.basis !== "team" && r.contribution > 0).map((r) => r.enemy),
+    ),
   ];
   const synergyWith = [...new Set(reasons.filter((r) => r.basis === "synergy").map((r) => r.enemy))];
   const risks = [...new Set(reasons.filter((r) => r.contribution < 0).map((r) => r.enemy))];
@@ -385,7 +548,7 @@ function finalizeRec(
     reasons: reasons
       .slice()
       .sort((a, b) => {
-        const rank = (r: Reason) => (r.contribution < 0 ? 2 : r.basis === "synergy" ? 1 : 0);
+        const rank = (r: Reason) => (r.contribution < 0 ? 2 : r.basis === "synergy" || r.basis === "team" ? 1 : 0);
         const as = rank(a);
         const bs = rank(b);
         if (as !== bs) return as - bs;

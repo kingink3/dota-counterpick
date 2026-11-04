@@ -175,6 +175,12 @@ export function indexKB(raw: RawKB): KnowledgeBase {
     if (re.reliance) resistEdgesByReliance.set(re.reliance, [...(resistEdgesByReliance.get(re.reliance) ?? []), re]);
   }
 
+  for (const n of taxonomy.team_needs ?? []) {
+    for (const t of Object.keys(n.tools)) {
+      if (!knownTools.has(t)) warnings.push(`team need "${n.code}" references unknown tool "${t}"`);
+    }
+  }
+
   for (const [hero, tags] of Object.entries(taxonomy.hero_tags)) {
     validateHeroTags(hero, tags, knownReliance, knownTools, warnings);
     for (const code of Object.keys(tags.resist ?? {})) {
