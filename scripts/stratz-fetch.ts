@@ -3,7 +3,7 @@
 //  secret (never in the repo - it is public). Writes raw responses to --out.
 //
 //    --mode schema   one call: the schema (introspection), to write the queries
-//    --mode fetch    per hero x position, Crusader-Archon + Legend-Ancient brackets
+//    --mode fetch    the batches of --spec (scripts/stratz/<dataset>.json)
 //
 //  Rate limits of a free token (shown on stratz.com/api): about 20/s, 250/min,
 //  2000/h, 15000/day. We stay far below: <= 1 call / 0.8 s, and a hard cap per run.
@@ -80,13 +80,23 @@ async function main(): Promise<void> {
     writeFileSync(join(out, "schema.json"), JSON.stringify(s));
     console.log(`schema: ${s.__schema.types.length} types`);
   } else if (mode === "fetch") {
-    const spec = JSON.parse(readFileSync(arg("spec") ?? "scripts/stratz-queries.json", "utf8")) as {
+    const spec = JSON.parse(readFileSync(arg("spec") ?? "scripts/stratz/items.json", "utf8")) as {
       batches: Array<{ name: string; query: string; variables?: Record<string, unknown> }>;
     };
+    // one failing batch must not lose the rest of the run (calls are budgeted)
+    let failed = 0;
     for (const b of spec.batches) {
-      const d = await gql<unknown>(b.query, b.variables ?? {});
-      writeFileSync(join(out, `${b.name}.json`), JSON.stringify(d));
+      try {
+        const d = await gql<unknown>(b.query, b.variables ?? {});
+        writeFileSync(join(out, `${b.name}.json`), JSON.stringify(d));
+      } catch (e) {
+        failed++;
+        console.log(`batch ${b.name} failed: ${String(e).slice(0, 300)}`);
+        writeFileSync(join(out, `${b.name}.error.txt`), String(e));
+        if (/HTTP 403|HTTP 401|call cap/.test(String(e))) throw e; // auth / IP / budget: stop
+      }
     }
+    console.log(`${spec.batches.length - failed}/${spec.batches.length} batches ok`);
   } else {
     throw new Error(`unknown mode ${mode}`);
   }

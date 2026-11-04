@@ -157,12 +157,14 @@ function main(): void {
   let stratzAt: string | undefined;
   if (stratzDir) {
     const idToCode = new Map(odHeroes.map((h) => [h.id, valveToCode.get(h.name.replace(/^npc_dota_hero_/, "")) ?? h.name.replace(/^npc_dota_hero_/, "")]));
-    const posRows = readJson<{ heroStats: { stats: Array<{ heroId: number; position: string; matchCount: number }> } }>(join(stratzDir, "positions.json"));
+    // items: in items/ (accumulating branch layout) or at the root (first runs)
+    const itemsDir = existsSync(join(stratzDir, "items", "positions.json")) ? join(stratzDir, "items") : stratzDir;
+    const posRows = readJson<{ heroStats: { stats: Array<{ heroId: number; position: string; matchCount: number }> } }>(join(itemsDir, "positions.json"));
     const games = new Map<string, number>();
     for (const r of posRows?.heroStats.stats ?? []) games.set(`${r.heroId}_${r.position.slice(-1)}`, r.matchCount);
     const fields: Record<string, unknown[]> = {};
-    for (const f of readdirSync(stratzDir).filter((x) => /^items_\d+\.json$/.test(x)).sort()) {
-      Object.assign(fields, readJson<{ heroStats: Record<string, unknown[]> }>(join(stratzDir, f))?.heroStats ?? {});
+    for (const f of readdirSync(itemsDir).filter((x) => /^items_\d+\.json$/.test(x)).sort()) {
+      Object.assign(fields, readJson<{ heroStats: Record<string, unknown[]> }>(join(itemsDir, f))?.heroStats ?? {});
     }
     const pairs = new Set(Object.keys(fields).map((k) => k.replace(/_(full|start|boots)$/, "")));
     for (const pair of pairs) {
@@ -188,7 +190,7 @@ function main(): void {
       if (!hs.byPos) continue;
       hs.mainPos = Object.entries(hs.byPos).sort((a, b) => (b[1].games ?? 0) - (a[1].games ?? 0))[0]![0];
     }
-    stratzAt = existsSync(join(stratzDir, "fetched-at.txt")) ? readFileSync(join(stratzDir, "fetched-at.txt"), "utf8").trim() : undefined;
+    stratzAt = existsSync(join(itemsDir, "fetched-at.txt")) ? readFileSync(join(itemsDir, "fetched-at.txt"), "utf8").trim() : undefined;
   }
 
   const items: Record<string, ItemInfo> = {};

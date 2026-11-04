@@ -1,0 +1,1299 @@
+{
+ "brackets": "bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT]",
+ "pairs": [
+  [
+   1,
+   "POSITION_1"
+  ],
+  [
+   2,
+   "POSITION_3"
+  ],
+  [
+   3,
+   "POSITION_5"
+  ],
+  [
+   3,
+   "POSITION_4"
+  ],
+  [
+   4,
+   "POSITION_1"
+  ],
+  [
+   4,
+   "POSITION_2"
+  ],
+  [
+   4,
+   "POSITION_3"
+  ],
+  [
+   5,
+   "POSITION_5"
+  ],
+  [
+   5,
+   "POSITION_4"
+  ],
+  [
+   6,
+   "POSITION_1"
+  ],
+  [
+   7,
+   "POSITION_3"
+  ],
+  [
+   7,
+   "POSITION_2"
+  ],
+  [
+   7,
+   "POSITION_4"
+  ],
+  [
+   7,
+   "POSITION_5"
+  ],
+  [
+   8,
+   "POSITION_1"
+  ],
+  [
+   9,
+   "POSITION_4"
+  ],
+  [
+   9,
+   "POSITION_5"
+  ],
+  [
+   10,
+   "POSITION_1"
+  ],
+  [
+   11,
+   "POSITION_2"
+  ],
+  [
+   11,
+   "POSITION_1"
+  ],
+  [
+   12,
+   "POSITION_1"
+  ],
+  [
+   13,
+   "POSITION_2"
+  ],
+  [
+   14,
+   "POSITION_4"
+  ],
+  [
+   14,
+   "POSITION_5"
+  ],
+  [
+   14,
+   "POSITION_3"
+  ],
+  [
+   14,
+   "POSITION_2"
+  ],
+  [
+   15,
+   "POSITION_3"
+  ],
+  [
+   15,
+   "POSITION_2"
+  ],
+  [
+   15,
+   "POSITION_1"
+  ],
+  [
+   16,
+   "POSITION_3"
+  ],
+  [
+   16,
+   "POSITION_2"
+  ],
+  [
+   17,
+   "POSITION_2"
+  ],
+  [
+   18,
+   "POSITION_1"
+  ],
+  [
+   19,
+   "POSITION_3"
+  ],
+  [
+   19,
+   "POSITION_1"
+  ],
+  [
+   19,
+   "POSITION_4"
+  ],
+  [
+   19,
+   "POSITION_2"
+  ],
+  [
+   20,
+   "POSITION_5"
+  ],
+  [
+   20,
+   "POSITION_4"
+  ],
+  [
+   20,
+   "POSITION_1"
+  ],
+  [
+   21,
+   "POSITION_4"
+  ],
+  [
+   21,
+   "POSITION_2"
+  ],
+  [
+   21,
+   "POSITION_1"
+  ],
+  [
+   21,
+   "POSITION_5"
+  ],
+  [
+   22,
+   "POSITION_4"
+  ],
+  [
+   22,
+   "POSITION_2"
+  ],
+  [
+   22,
+   "POSITION_5"
+  ],
+  [
+   23,
+   "POSITION_3"
+  ],
+  [
+   23,
+   "POSITION_2"
+  ],
+  [
+   25,
+   "POSITION_2"
+  ],
+  [
+   25,
+   "POSITION_4"
+  ],
+  [
+   26,
+   "POSITION_5"
+  ],
+  [
+   26,
+   "POSITION_4"
+  ],
+  [
+   26,
+   "POSITION_2"
+  ],
+  [
+   27,
+   "POSITION_5"
+  ],
+  [
+   27,
+   "POSITION_4"
+  ],
+  [
+   28,
+   "POSITION_3"
+  ],
+  [
+   29,
+   "POSITION_3"
+  ],
+  [
+   30,
+   "POSITION_5"
+  ],
+  [
+   30,
+   "POSITION_4"
+  ],
+  [
+   31,
+   "POSITION_5"
+  ],
+  [
+   31,
+   "POSITION_4"
+  ],
+  [
+   32,
+   "POSITION_1"
+  ],
+  [
+   32,
+   "POSITION_2"
+  ],
+  [
+   33,
+   "POSITION_3"
+  ],
+  [
+   33,
+   "POSITION_4"
+  ],
+  [
+   33,
+   "POSITION_5"
+  ],
+  [
+   34,
+   "POSITION_2"
+  ],
+  [
+   35,
+   "POSITION_2"
+  ],
+  [
+   35,
+   "POSITION_4"
+  ],
+  [
+   35,
+   "POSITION_1"
+  ],
+  [
+   36,
+   "POSITION_2"
+  ],
+  [
+   36,
+   "POSITION_3"
+  ],
+  [
+   37,
+   "POSITION_5"
+  ],
+  [
+   37,
+   "POSITION_4"
+  ],
+  [
+   38,
+   "POSITION_3"
+  ],
+  [
+   38,
+   "POSITION_2"
+  ],
+  [
+   39,
+   "POSITION_2"
+  ],
+  [
+   39,
+   "POSITION_4"
+  ],
+  [
+   40,
+   "POSITION_4"
+  ],
+  [
+   40,
+   "POSITION_5"
+  ],
+  [
+   41,
+   "POSITION_1"
+  ],
+  [
+   42,
+   "POSITION_3"
+  ],
+  [
+   42,
+   "POSITION_1"
+  ],
+  [
+   43,
+   "POSITION_2"
+  ],
+  [
+   43,
+   "POSITION_3"
+  ],
+  [
+   44,
+   "POSITION_1"
+  ],
+  [
+   45,
+   "POSITION_4"
+  ],
+  [
+   45,
+   "POSITION_5"
+  ],
+  [
+   45,
+   "POSITION_2"
+  ],
+  [
+   46,
+   "POSITION_1"
+  ],
+  [
+   46,
+   "POSITION_2"
+  ],
+  [
+   47,
+   "POSITION_2"
+  ],
+  [
+   47,
+   "POSITION_3"
+  ],
+  [
+   48,
+   "POSITION_1"
+  ],
+  [
+   49,
+   "POSITION_3"
+  ],
+  [
+   49,
+   "POSITION_2"
+  ],
+  [
+   50,
+   "POSITION_5"
+  ],
+  [
+   50,
+   "POSITION_4"
+  ],
+  [
+   51,
+   "POSITION_4"
+  ],
+  [
+   51,
+   "POSITION_5"
+  ],
+  [
+   51,
+   "POSITION_3"
+  ],
+  [
+   52,
+   "POSITION_2"
+  ],
+  [
+   53,
+   "POSITION_4"
+  ],
+  [
+   53,
+   "POSITION_1"
+  ],
+  [
+   53,
+   "POSITION_2"
+  ],
+  [
+   53,
+   "POSITION_5"
+  ],
+  [
+   54,
+   "POSITION_1"
+  ],
+  [
+   55,
+   "POSITION_3"
+  ],
+  [
+   56,
+   "POSITION_1"
+  ],
+  [
+   56,
+   "POSITION_2"
+  ],
+  [
+   57,
+   "POSITION_3"
+  ],
+  [
+   57,
+   "POSITION_5"
+  ],
+  [
+   57,
+   "POSITION_4"
+  ],
+  [
+   58,
+   "POSITION_4"
+  ],
+  [
+   58,
+   "POSITION_5"
+  ],
+  [
+   59,
+   "POSITION_2"
+  ],
+  [
+   59,
+   "POSITION_3"
+  ],
+  [
+   60,
+   "POSITION_3"
+  ],
+  [
+   61,
+   "POSITION_2"
+  ],
+  [
+   62,
+   "POSITION_4"
+  ],
+  [
+   62,
+   "POSITION_5"
+  ],
+  [
+   63,
+   "POSITION_1"
+  ],
+  [
+   63,
+   "POSITION_4"
+  ],
+  [
+   63,
+   "POSITION_2"
+  ],
+  [
+   63,
+   "POSITION_5"
+  ],
+  [
+   64,
+   "POSITION_5"
+  ],
+  [
+   64,
+   "POSITION_4"
+  ],
+  [
+   65,
+   "POSITION_4"
+  ],
+  [
+   66,
+   "POSITION_5"
+  ],
+  [
+   67,
+   "POSITION_1"
+  ],
+  [
+   68,
+   "POSITION_5"
+  ],
+  [
+   68,
+   "POSITION_4"
+  ],
+  [
+   69,
+   "POSITION_3"
+  ],
+  [
+   70,
+   "POSITION_1"
+  ],
+  [
+   71,
+   "POSITION_4"
+  ],
+  [
+   71,
+   "POSITION_3"
+  ],
+  [
+   71,
+   "POSITION_5"
+  ],
+  [
+   72,
+   "POSITION_4"
+  ],
+  [
+   72,
+   "POSITION_5"
+  ],
+  [
+   72,
+   "POSITION_1"
+  ],
+  [
+   73,
+   "POSITION_1"
+  ],
+  [
+   73,
+   "POSITION_3"
+  ],
+  [
+   73,
+   "POSITION_2"
+  ],
+  [
+   73,
+   "POSITION_4"
+  ],
+  [
+   74,
+   "POSITION_2"
+  ],
+  [
+   74,
+   "POSITION_4"
+  ],
+  [
+   75,
+   "POSITION_4"
+  ],
+  [
+   75,
+   "POSITION_5"
+  ],
+  [
+   75,
+   "POSITION_2"
+  ],
+  [
+   76,
+   "POSITION_2"
+  ],
+  [
+   77,
+   "POSITION_3"
+  ],
+  [
+   78,
+   "POSITION_3"
+  ],
+  [
+   79,
+   "POSITION_5"
+  ],
+  [
+   79,
+   "POSITION_4"
+  ],
+  [
+   80,
+   "POSITION_1"
+  ],
+  [
+   80,
+   "POSITION_2"
+  ],
+  [
+   81,
+   "POSITION_3"
+  ],
+  [
+   81,
+   "POSITION_1"
+  ],
+  [
+   82,
+   "POSITION_2"
+  ],
+  [
+   83,
+   "POSITION_5"
+  ],
+  [
+   83,
+   "POSITION_4"
+  ],
+  [
+   84,
+   "POSITION_5"
+  ],
+  [
+   84,
+   "POSITION_4"
+  ],
+  [
+   84,
+   "POSITION_3"
+  ],
+  [
+   84,
+   "POSITION_2"
+  ],
+  [
+   85,
+   "POSITION_4"
+  ],
+  [
+   85,
+   "POSITION_5"
+  ],
+  [
+   85,
+   "POSITION_3"
+  ],
+  [
+   86,
+   "POSITION_4"
+  ],
+  [
+   86,
+   "POSITION_5"
+  ],
+  [
+   86,
+   "POSITION_2"
+  ],
+  [
+   87,
+   "POSITION_5"
+  ],
+  [
+   87,
+   "POSITION_4"
+  ],
+  [
+   88,
+   "POSITION_4"
+  ],
+  [
+   88,
+   "POSITION_2"
+  ],
+  [
+   88,
+   "POSITION_5"
+  ],
+  [
+   89,
+   "POSITION_1"
+  ],
+  [
+   90,
+   "POSITION_2"
+  ],
+  [
+   90,
+   "POSITION_4"
+  ],
+  [
+   90,
+   "POSITION_5"
+  ],
+  [
+   91,
+   "POSITION_5"
+  ],
+  [
+   91,
+   "POSITION_2"
+  ],
+  [
+   91,
+   "POSITION_4"
+  ],
+  [
+   92,
+   "POSITION_3"
+  ],
+  [
+   92,
+   "POSITION_2"
+  ],
+  [
+   93,
+   "POSITION_1"
+  ],
+  [
+   93,
+   "POSITION_2"
+  ],
+  [
+   94,
+   "POSITION_1"
+  ],
+  [
+   94,
+   "POSITION_2"
+  ],
+  [
+   95,
+   "POSITION_1"
+  ],
+  [
+   96,
+   "POSITION_3"
+  ],
+  [
+   97,
+   "POSITION_3"
+  ],
+  [
+   97,
+   "POSITION_2"
+  ],
+  [
+   97,
+   "POSITION_4"
+  ],
+  [
+   97,
+   "POSITION_5"
+  ],
+  [
+   98,
+   "POSITION_3"
+  ],
+  [
+   99,
+   "POSITION_3"
+  ],
+  [
+   100,
+   "POSITION_4"
+  ],
+  [
+   100,
+   "POSITION_5"
+  ],
+  [
+   100,
+   "POSITION_3"
+  ],
+  [
+   101,
+   "POSITION_4"
+  ],
+  [
+   101,
+   "POSITION_5"
+  ],
+  [
+   101,
+   "POSITION_2"
+  ],
+  [
+   102,
+   "POSITION_5"
+  ],
+  [
+   102,
+   "POSITION_3"
+  ],
+  [
+   102,
+   "POSITION_4"
+  ],
+  [
+   103,
+   "POSITION_3"
+  ],
+  [
+   104,
+   "POSITION_3"
+  ],
+  [
+   105,
+   "POSITION_4"
+  ],
+  [
+   105,
+   "POSITION_5"
+  ],
+  [
+   106,
+   "POSITION_2"
+  ],
+  [
+   107,
+   "POSITION_2"
+  ],
+  [
+   107,
+   "POSITION_4"
+  ],
+  [
+   107,
+   "POSITION_3"
+  ],
+  [
+   107,
+   "POSITION_5"
+  ],
+  [
+   108,
+   "POSITION_3"
+  ],
+  [
+   109,
+   "POSITION_1"
+  ],
+  [
+   110,
+   "POSITION_4"
+  ],
+  [
+   110,
+   "POSITION_2"
+  ],
+  [
+   110,
+   "POSITION_3"
+  ],
+  [
+   110,
+   "POSITION_5"
+  ],
+  [
+   111,
+   "POSITION_5"
+  ],
+  [
+   111,
+   "POSITION_4"
+  ],
+  [
+   112,
+   "POSITION_5"
+  ],
+  [
+   112,
+   "POSITION_4"
+  ],
+  [
+   113,
+   "POSITION_2"
+  ],
+  [
+   114,
+   "POSITION_1"
+  ],
+  [
+   114,
+   "POSITION_2"
+  ],
+  [
+   119,
+   "POSITION_4"
+  ],
+  [
+   119,
+   "POSITION_5"
+  ],
+  [
+   120,
+   "POSITION_2"
+  ],
+  [
+   120,
+   "POSITION_3"
+  ],
+  [
+   121,
+   "POSITION_5"
+  ],
+  [
+   121,
+   "POSITION_4"
+  ],
+  [
+   123,
+   "POSITION_4"
+  ],
+  [
+   123,
+   "POSITION_5"
+  ],
+  [
+   126,
+   "POSITION_2"
+  ],
+  [
+   128,
+   "POSITION_4"
+  ],
+  [
+   128,
+   "POSITION_5"
+  ],
+  [
+   128,
+   "POSITION_2"
+  ],
+  [
+   129,
+   "POSITION_3"
+  ],
+  [
+   131,
+   "POSITION_5"
+  ],
+  [
+   131,
+   "POSITION_4"
+  ],
+  [
+   135,
+   "POSITION_3"
+  ],
+  [
+   136,
+   "POSITION_2"
+  ],
+  [
+   136,
+   "POSITION_4"
+  ],
+  [
+   136,
+   "POSITION_3"
+  ],
+  [
+   136,
+   "POSITION_5"
+  ],
+  [
+   137,
+   "POSITION_3"
+  ],
+  [
+   137,
+   "POSITION_2"
+  ],
+  [
+   138,
+   "POSITION_1"
+  ],
+  [
+   138,
+   "POSITION_2"
+  ],
+  [
+   145,
+   "POSITION_1"
+  ],
+  [
+   145,
+   "POSITION_2"
+  ],
+  [
+   155,
+   "POSITION_3"
+  ],
+  [
+   155,
+   "POSITION_5"
+  ],
+  [
+   155,
+   "POSITION_4"
+  ]
+ ],
+ "batches": [
+  {
+   "name": "lanes_000",
+   "query": "{ heroStats { h1_1: laneOutcome(heroId: 1, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h2_3: laneOutcome(heroId: 2, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h3_5: laneOutcome(heroId: 3, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h3_4: laneOutcome(heroId: 3, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_001",
+   "query": "{ heroStats { h4_1: laneOutcome(heroId: 4, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h4_2: laneOutcome(heroId: 4, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h4_3: laneOutcome(heroId: 4, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h5_5: laneOutcome(heroId: 5, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_002",
+   "query": "{ heroStats { h5_4: laneOutcome(heroId: 5, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h6_1: laneOutcome(heroId: 6, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h7_3: laneOutcome(heroId: 7, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h7_2: laneOutcome(heroId: 7, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_003",
+   "query": "{ heroStats { h7_4: laneOutcome(heroId: 7, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h7_5: laneOutcome(heroId: 7, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h8_1: laneOutcome(heroId: 8, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h9_4: laneOutcome(heroId: 9, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_004",
+   "query": "{ heroStats { h9_5: laneOutcome(heroId: 9, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h10_1: laneOutcome(heroId: 10, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h11_2: laneOutcome(heroId: 11, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h11_1: laneOutcome(heroId: 11, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_005",
+   "query": "{ heroStats { h12_1: laneOutcome(heroId: 12, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h13_2: laneOutcome(heroId: 13, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h14_4: laneOutcome(heroId: 14, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h14_5: laneOutcome(heroId: 14, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_006",
+   "query": "{ heroStats { h14_3: laneOutcome(heroId: 14, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h14_2: laneOutcome(heroId: 14, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h15_3: laneOutcome(heroId: 15, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h15_2: laneOutcome(heroId: 15, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_007",
+   "query": "{ heroStats { h15_1: laneOutcome(heroId: 15, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h16_3: laneOutcome(heroId: 16, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h16_2: laneOutcome(heroId: 16, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h17_2: laneOutcome(heroId: 17, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_008",
+   "query": "{ heroStats { h18_1: laneOutcome(heroId: 18, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h19_3: laneOutcome(heroId: 19, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h19_1: laneOutcome(heroId: 19, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h19_4: laneOutcome(heroId: 19, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_009",
+   "query": "{ heroStats { h19_2: laneOutcome(heroId: 19, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h20_5: laneOutcome(heroId: 20, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h20_4: laneOutcome(heroId: 20, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h20_1: laneOutcome(heroId: 20, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_010",
+   "query": "{ heroStats { h21_4: laneOutcome(heroId: 21, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h21_2: laneOutcome(heroId: 21, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h21_1: laneOutcome(heroId: 21, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h21_5: laneOutcome(heroId: 21, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_011",
+   "query": "{ heroStats { h22_4: laneOutcome(heroId: 22, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h22_2: laneOutcome(heroId: 22, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h22_5: laneOutcome(heroId: 22, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h23_3: laneOutcome(heroId: 23, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_012",
+   "query": "{ heroStats { h23_2: laneOutcome(heroId: 23, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h25_2: laneOutcome(heroId: 25, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h25_4: laneOutcome(heroId: 25, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h26_5: laneOutcome(heroId: 26, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_013",
+   "query": "{ heroStats { h26_4: laneOutcome(heroId: 26, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h26_2: laneOutcome(heroId: 26, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h27_5: laneOutcome(heroId: 27, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h27_4: laneOutcome(heroId: 27, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_014",
+   "query": "{ heroStats { h28_3: laneOutcome(heroId: 28, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h29_3: laneOutcome(heroId: 29, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h30_5: laneOutcome(heroId: 30, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h30_4: laneOutcome(heroId: 30, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_015",
+   "query": "{ heroStats { h31_5: laneOutcome(heroId: 31, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h31_4: laneOutcome(heroId: 31, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h32_1: laneOutcome(heroId: 32, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h32_2: laneOutcome(heroId: 32, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_016",
+   "query": "{ heroStats { h33_3: laneOutcome(heroId: 33, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h33_4: laneOutcome(heroId: 33, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h33_5: laneOutcome(heroId: 33, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h34_2: laneOutcome(heroId: 34, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_017",
+   "query": "{ heroStats { h35_2: laneOutcome(heroId: 35, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h35_4: laneOutcome(heroId: 35, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h35_1: laneOutcome(heroId: 35, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h36_2: laneOutcome(heroId: 36, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_018",
+   "query": "{ heroStats { h36_3: laneOutcome(heroId: 36, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h37_5: laneOutcome(heroId: 37, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h37_4: laneOutcome(heroId: 37, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h38_3: laneOutcome(heroId: 38, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_019",
+   "query": "{ heroStats { h38_2: laneOutcome(heroId: 38, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h39_2: laneOutcome(heroId: 39, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h39_4: laneOutcome(heroId: 39, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h40_4: laneOutcome(heroId: 40, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_020",
+   "query": "{ heroStats { h40_5: laneOutcome(heroId: 40, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h41_1: laneOutcome(heroId: 41, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h42_3: laneOutcome(heroId: 42, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h42_1: laneOutcome(heroId: 42, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_021",
+   "query": "{ heroStats { h43_2: laneOutcome(heroId: 43, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h43_3: laneOutcome(heroId: 43, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h44_1: laneOutcome(heroId: 44, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h45_4: laneOutcome(heroId: 45, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_022",
+   "query": "{ heroStats { h45_5: laneOutcome(heroId: 45, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h45_2: laneOutcome(heroId: 45, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h46_1: laneOutcome(heroId: 46, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h46_2: laneOutcome(heroId: 46, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_023",
+   "query": "{ heroStats { h47_2: laneOutcome(heroId: 47, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h47_3: laneOutcome(heroId: 47, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h48_1: laneOutcome(heroId: 48, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h49_3: laneOutcome(heroId: 49, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_024",
+   "query": "{ heroStats { h49_2: laneOutcome(heroId: 49, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h50_5: laneOutcome(heroId: 50, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h50_4: laneOutcome(heroId: 50, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h51_4: laneOutcome(heroId: 51, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_025",
+   "query": "{ heroStats { h51_5: laneOutcome(heroId: 51, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h51_3: laneOutcome(heroId: 51, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h52_2: laneOutcome(heroId: 52, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h53_4: laneOutcome(heroId: 53, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_026",
+   "query": "{ heroStats { h53_1: laneOutcome(heroId: 53, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h53_2: laneOutcome(heroId: 53, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h53_5: laneOutcome(heroId: 53, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h54_1: laneOutcome(heroId: 54, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_027",
+   "query": "{ heroStats { h55_3: laneOutcome(heroId: 55, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h56_1: laneOutcome(heroId: 56, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h56_2: laneOutcome(heroId: 56, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h57_3: laneOutcome(heroId: 57, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_028",
+   "query": "{ heroStats { h57_5: laneOutcome(heroId: 57, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h57_4: laneOutcome(heroId: 57, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h58_4: laneOutcome(heroId: 58, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h58_5: laneOutcome(heroId: 58, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_029",
+   "query": "{ heroStats { h59_2: laneOutcome(heroId: 59, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h59_3: laneOutcome(heroId: 59, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h60_3: laneOutcome(heroId: 60, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h61_2: laneOutcome(heroId: 61, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_030",
+   "query": "{ heroStats { h62_4: laneOutcome(heroId: 62, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h62_5: laneOutcome(heroId: 62, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h63_1: laneOutcome(heroId: 63, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h63_4: laneOutcome(heroId: 63, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_031",
+   "query": "{ heroStats { h63_2: laneOutcome(heroId: 63, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h63_5: laneOutcome(heroId: 63, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h64_5: laneOutcome(heroId: 64, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h64_4: laneOutcome(heroId: 64, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_032",
+   "query": "{ heroStats { h65_4: laneOutcome(heroId: 65, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h66_5: laneOutcome(heroId: 66, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h67_1: laneOutcome(heroId: 67, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h68_5: laneOutcome(heroId: 68, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_033",
+   "query": "{ heroStats { h68_4: laneOutcome(heroId: 68, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h69_3: laneOutcome(heroId: 69, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h70_1: laneOutcome(heroId: 70, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h71_4: laneOutcome(heroId: 71, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_034",
+   "query": "{ heroStats { h71_3: laneOutcome(heroId: 71, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h71_5: laneOutcome(heroId: 71, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h72_4: laneOutcome(heroId: 72, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h72_5: laneOutcome(heroId: 72, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_035",
+   "query": "{ heroStats { h72_1: laneOutcome(heroId: 72, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h73_1: laneOutcome(heroId: 73, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h73_3: laneOutcome(heroId: 73, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h73_2: laneOutcome(heroId: 73, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_036",
+   "query": "{ heroStats { h73_4: laneOutcome(heroId: 73, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h74_2: laneOutcome(heroId: 74, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h74_4: laneOutcome(heroId: 74, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h75_4: laneOutcome(heroId: 75, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_037",
+   "query": "{ heroStats { h75_5: laneOutcome(heroId: 75, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h75_2: laneOutcome(heroId: 75, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h76_2: laneOutcome(heroId: 76, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h77_3: laneOutcome(heroId: 77, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_038",
+   "query": "{ heroStats { h78_3: laneOutcome(heroId: 78, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h79_5: laneOutcome(heroId: 79, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h79_4: laneOutcome(heroId: 79, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h80_1: laneOutcome(heroId: 80, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_039",
+   "query": "{ heroStats { h80_2: laneOutcome(heroId: 80, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h81_3: laneOutcome(heroId: 81, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h81_1: laneOutcome(heroId: 81, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h82_2: laneOutcome(heroId: 82, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_040",
+   "query": "{ heroStats { h83_5: laneOutcome(heroId: 83, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h83_4: laneOutcome(heroId: 83, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h84_5: laneOutcome(heroId: 84, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h84_4: laneOutcome(heroId: 84, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_041",
+   "query": "{ heroStats { h84_3: laneOutcome(heroId: 84, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h84_2: laneOutcome(heroId: 84, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h85_4: laneOutcome(heroId: 85, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h85_5: laneOutcome(heroId: 85, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_042",
+   "query": "{ heroStats { h85_3: laneOutcome(heroId: 85, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h86_4: laneOutcome(heroId: 86, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h86_5: laneOutcome(heroId: 86, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h86_2: laneOutcome(heroId: 86, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_043",
+   "query": "{ heroStats { h87_5: laneOutcome(heroId: 87, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h87_4: laneOutcome(heroId: 87, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h88_4: laneOutcome(heroId: 88, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h88_2: laneOutcome(heroId: 88, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_044",
+   "query": "{ heroStats { h88_5: laneOutcome(heroId: 88, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h89_1: laneOutcome(heroId: 89, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h90_2: laneOutcome(heroId: 90, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h90_4: laneOutcome(heroId: 90, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_045",
+   "query": "{ heroStats { h90_5: laneOutcome(heroId: 90, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h91_5: laneOutcome(heroId: 91, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h91_2: laneOutcome(heroId: 91, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h91_4: laneOutcome(heroId: 91, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_046",
+   "query": "{ heroStats { h92_3: laneOutcome(heroId: 92, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h92_2: laneOutcome(heroId: 92, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h93_1: laneOutcome(heroId: 93, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h93_2: laneOutcome(heroId: 93, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_047",
+   "query": "{ heroStats { h94_1: laneOutcome(heroId: 94, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h94_2: laneOutcome(heroId: 94, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h95_1: laneOutcome(heroId: 95, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h96_3: laneOutcome(heroId: 96, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_048",
+   "query": "{ heroStats { h97_3: laneOutcome(heroId: 97, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h97_2: laneOutcome(heroId: 97, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h97_4: laneOutcome(heroId: 97, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h97_5: laneOutcome(heroId: 97, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_049",
+   "query": "{ heroStats { h98_3: laneOutcome(heroId: 98, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h99_3: laneOutcome(heroId: 99, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h100_4: laneOutcome(heroId: 100, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h100_5: laneOutcome(heroId: 100, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_050",
+   "query": "{ heroStats { h100_3: laneOutcome(heroId: 100, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h101_4: laneOutcome(heroId: 101, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h101_5: laneOutcome(heroId: 101, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h101_2: laneOutcome(heroId: 101, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_051",
+   "query": "{ heroStats { h102_5: laneOutcome(heroId: 102, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h102_3: laneOutcome(heroId: 102, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h102_4: laneOutcome(heroId: 102, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h103_3: laneOutcome(heroId: 103, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_052",
+   "query": "{ heroStats { h104_3: laneOutcome(heroId: 104, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h105_4: laneOutcome(heroId: 105, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h105_5: laneOutcome(heroId: 105, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h106_2: laneOutcome(heroId: 106, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_053",
+   "query": "{ heroStats { h107_2: laneOutcome(heroId: 107, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h107_4: laneOutcome(heroId: 107, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h107_3: laneOutcome(heroId: 107, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h107_5: laneOutcome(heroId: 107, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_054",
+   "query": "{ heroStats { h108_3: laneOutcome(heroId: 108, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h109_1: laneOutcome(heroId: 109, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h110_4: laneOutcome(heroId: 110, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h110_2: laneOutcome(heroId: 110, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_055",
+   "query": "{ heroStats { h110_3: laneOutcome(heroId: 110, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h110_5: laneOutcome(heroId: 110, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h111_5: laneOutcome(heroId: 111, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h111_4: laneOutcome(heroId: 111, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_056",
+   "query": "{ heroStats { h112_5: laneOutcome(heroId: 112, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h112_4: laneOutcome(heroId: 112, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h113_2: laneOutcome(heroId: 113, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h114_1: laneOutcome(heroId: 114, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_057",
+   "query": "{ heroStats { h114_2: laneOutcome(heroId: 114, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h119_4: laneOutcome(heroId: 119, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h119_5: laneOutcome(heroId: 119, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h120_2: laneOutcome(heroId: 120, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_058",
+   "query": "{ heroStats { h120_3: laneOutcome(heroId: 120, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h121_5: laneOutcome(heroId: 121, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h121_4: laneOutcome(heroId: 121, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h123_4: laneOutcome(heroId: 123, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_059",
+   "query": "{ heroStats { h123_5: laneOutcome(heroId: 123, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h126_2: laneOutcome(heroId: 126, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h128_4: laneOutcome(heroId: 128, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h128_5: laneOutcome(heroId: 128, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_060",
+   "query": "{ heroStats { h128_2: laneOutcome(heroId: 128, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h129_3: laneOutcome(heroId: 129, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h131_5: laneOutcome(heroId: 131, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h131_4: laneOutcome(heroId: 131, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_061",
+   "query": "{ heroStats { h135_3: laneOutcome(heroId: 135, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h136_2: laneOutcome(heroId: 136, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h136_4: laneOutcome(heroId: 136, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h136_3: laneOutcome(heroId: 136, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_062",
+   "query": "{ heroStats { h136_5: laneOutcome(heroId: 136, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h137_3: laneOutcome(heroId: 137, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h137_2: laneOutcome(heroId: 137, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h138_1: laneOutcome(heroId: 138, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_063",
+   "query": "{ heroStats { h138_2: laneOutcome(heroId: 138, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h145_1: laneOutcome(heroId: 145, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h145_2: laneOutcome(heroId: 145, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_2]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h155_3: laneOutcome(heroId: 155, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_3]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  },
+  {
+   "name": "lanes_064",
+   "query": "{ heroStats { h155_5: laneOutcome(heroId: 155, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_5]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } h155_4: laneOutcome(heroId: 155, isWith: false, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_4]) { heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount } } }"
+  }
+ ]
+}

@@ -1,8 +1,9 @@
 # STRATZ statistics by rank bracket and position (ADR-027). Needs the repository
-# secret STRATZ_TOKEN (Settings -> Secrets and variables -> Actions). Raw responses go
-# to the `stratz-raw` branch (force-pushed); data/ is built from them locally.
-#   mode=schema : 1 call, the GraphQL schema (to write the queries)
-#   mode=fetch  : the batches in scripts/stratz-queries.json (built by build-stratz-queries)
+# secret STRATZ_TOKEN (Settings -> Secrets and variables -> Actions).
+# Raw responses accumulate on the `stratz-raw` branch, one folder per dataset
+# (scripts/stratz/<dataset>.json, made by scripts/build-stratz-queries.ts).
+# STRATZ allows 2 IP addresses per 15 minutes and every run has a new IP:
+# at most 2 runs per 15 minutes.
 name: Fetch STRATZ stats
 
 on:
@@ -11,7 +12,11 @@ on:
       mode:
         description: "schema or fetch"
         required: true
-        default: schema
+        default: fetch
+      dataset:
+        description: "scripts/stratz/<dataset>.json (fetch mode)"
+        required: false
+        default: items
 
 permissions:
   contents: write
@@ -30,15 +35,26 @@ jobs:
       - name: Query STRATZ
         env:
           STRATZ_TOKEN: ${{ secrets.STRATZ_TOKEN }}
-        run: npx tsx scripts/stratz-fetch.ts --mode "${{ inputs.mode }}" --out /tmp/stratz
-      - name: Push to the stratz-raw branch
         run: |
-          cd /tmp/stratz
-          date -u +%Y-%m-%dT%H:%MZ > fetched-at.txt
-          echo "${{ inputs.mode }}" > mode.txt
-          git init -q -b stratz-raw
+          if [ "${{ inputs.mode }}" = "schema" ]; then
+            npx tsx scripts/stratz-fetch.ts --mode schema --out /tmp/stratz/schema
+          else
+            npx tsx scripts/stratz-fetch.ts --mode fetch --spec "scripts/stratz/${{ inputs.dataset }}.json" --out "/tmp/stratz/${{ inputs.dataset }}"
+          fi
+      - name: Add to the stratz-raw branch
+        if: always()
+        run: |
+          set -e
+          name="${{ inputs.mode == 'schema' && 'schema' || inputs.dataset }}"
+          [ -d "/tmp/stratz/$name" ] || exit 0
+          url="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          git clone -q --depth 1 --branch stratz-raw --single-branch "$url" /tmp/raw || {
+            mkdir -p /tmp/raw && cd /tmp/raw && git init -q -b stratz-raw && git remote add origin "$url"; }
+          cd /tmp/raw
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -rf "$name" && cp -r "/tmp/stratz/$name" "$name"
+          date -u +%Y-%m-%dT%H:%MZ > "$name/fetched-at.txt"
           git add -A
-          git commit -q -m "STRATZ raw (${{ inputs.mode }}) $(cat fetched-at.txt)"
-          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" stratz-raw
+          git commit -q -m "STRATZ raw: $name $(cat "$name/fetched-at.txt")"
+          git push -q origin stratz-raw

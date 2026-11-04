@@ -90,7 +90,7 @@
    - Actions → «Fetch STRATZ stats», mode=fetch. Секрет `STRATZ_TOKEN`; ~66 вызовов за запуск.
    - **Не больше 2 запусков за 15 минут:** STRATZ пускает не больше 2 IP за 15 минут, а у каждого запуска Actions свой IP.
    - Требуется 100 публичных игр на аккаунте владельца токена.
-   - Новые герои / сдвиг позиций → `git show origin/stratz-raw:positions.json > /tmp/p.json && npx tsx scripts/build-stratz-queries.ts /tmp/p.json`, коммит `scripts/stratz-queries.json`.
+   - Новые герои / сдвиг позиций → `git show origin/stratz-raw:positions.json > /tmp/p.json && npx tsx scripts/build-stratz-queries.ts /tmp/p.json`, коммит `scripts/stratz/<dataset>.json`.
    - Сборка: `git worktree add /tmp/stz origin/stratz-raw` → `build-item-stats.ts ... --stratz /tmp/stz`.
 
 ## C. Чтение экрана (регрессия)
