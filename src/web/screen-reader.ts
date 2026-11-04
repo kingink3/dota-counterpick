@@ -25,6 +25,20 @@ import {
   type SlotRead,
   type Template,
 } from "../screen-match.js";
+import {
+  classifyItem,
+  HudTracker,
+  hudSlotRects,
+  ITEM_H,
+  ITEM_W,
+  PLATE_H,
+  PLATE_W,
+  plateRect,
+  toItemFeature,
+  toPlateFeature,
+  type HudRead,
+  type ItemTemplate,
+} from "../item-match.js";
 
 export type ScreenStatus =
   | { kind: "off" }
@@ -39,6 +53,60 @@ export interface ScreenHandlers {
   onStatus(s: ScreenStatus): void;
   /** raw per-frame reads (for the debug readout). */
   onFrame?(f: Frame): void;
+  /** the selected unit's inventory changed (bottom HUD, ADR-025). */
+  onInventory?(r: HudRead): void;
+}
+
+/** read the bottom HUD every Nth tick (items change rarely; ~3 reads/s). */
+const HUD_EVERY = 3;
+
+/** Item icon templates from the self-hosted icons (web/items, ADR-025). */
+export async function buildItemTemplates(keys: string[], urlOf: (k: string) => string): Promise<ItemTemplate[]> {
+  const ctx = canvas(ITEM_W, ITEM_H);
+  const out: ItemTemplate[] = [];
+  await Promise.all(
+    keys.map(async (key) => {
+      try {
+        const img = await loadImage(urlOf(key));
+        ctx.clearRect(0, 0, ITEM_W, ITEM_H);
+        ctx.drawImage(img, 0, 0, ITEM_W, ITEM_H);
+        out.push({ key, vec: toItemFeature(ctx.getImageData(0, 0, ITEM_W, ITEM_H).data).vec });
+      } catch {
+        /* missing icon: that item simply can't be recognised */
+      }
+    }),
+  );
+  return out;
+}
+
+/** Read the selected unit's 6 inventory slots + name plate (one GPU readback each). */
+export function readHud(
+  source: CanvasImageSource,
+  width: number,
+  height: number,
+  templates: ItemTemplate[],
+  ctx: CanvasRenderingContext2D = canvas(ITEM_W * 6, ITEM_H),
+  plateCtx: CanvasRenderingContext2D = canvas(PLATE_W, PLATE_H),
+): HudRead {
+  const rects = hudSlotRects(width, height);
+  ctx.clearRect(0, 0, ITEM_W * 6, ITEM_H);
+  rects.forEach((r, k) => ctx.drawImage(source, r.x, r.y, r.w, r.h, k * ITEM_W, 0, ITEM_W, ITEM_H));
+  const strip = ctx.getImageData(0, 0, ITEM_W * 6, ITEM_H).data;
+  const one = new Uint8ClampedArray(ITEM_W * ITEM_H * 4);
+  const row = ITEM_W * 4;
+  const stripRow = ITEM_W * 6 * 4;
+  const items: string[] = [];
+  let unknown = 0;
+  for (let k = 0; k < 6; k++) {
+    for (let y = 0; y < ITEM_H; y++) one.set(strip.subarray(y * stripRow + k * row, y * stripRow + (k + 1) * row), y * row);
+    const r = classifyItem(toItemFeature(one), templates);
+    if (r.kind === "item") items.push(r.key);
+    else if (r.kind === "unknown") unknown++;
+  }
+  const p = plateRect(width, height);
+  plateCtx.clearRect(0, 0, PLATE_W, PLATE_H);
+  plateCtx.drawImage(source, p.x, p.y, p.w, p.h, 0, 0, PLATE_W, PLATE_H);
+  return { items, unknown, plate: toPlateFeature(plateCtx.getImageData(0, 0, PLATE_W, PLATE_H).data) };
 }
 
 /** Read 10x per second; a hero needs 2 identical reads -> it shows up 100-200 ms
@@ -217,11 +285,24 @@ export class ScreenReader {
   private learnedRows: LearnedRow[] = loadLearned();
   /** last frame read (live or still) - the source of a learned look. */
   private last?: Frame;
+  private itemTpl?: ItemTemplate[];
+  private hudTracker = new HudTracker(2);
+  private hudCtx?: CanvasRenderingContext2D;
+  private plateCtx?: CanvasRenderingContext2D;
+  private ticks = 0;
 
   constructor(
     private readonly templates: () => Promise<Template[]>,
     private readonly h: ScreenHandlers,
+    private readonly itemTemplates?: () => Promise<ItemTemplate[]>,
   ) {}
+
+  private loadItems(): void {
+    if (this.itemTpl || !this.itemTemplates) return;
+    this.itemTemplates()
+      .then((t) => (this.itemTpl = t))
+      .catch(() => undefined);
+  }
 
   get running(): boolean {
     return this.stream !== undefined;
@@ -261,6 +342,7 @@ export class ScreenReader {
       return;
     }
     this.h.onStatus({ kind: "starting" });
+    this.loadItems();
     let tpl: Template[];
     try {
       [tpl, this.stream] = await Promise.all([
@@ -304,6 +386,12 @@ export class ScreenReader {
     this.h.onStatus({ kind: "live", seen, width: v.videoWidth, height: v.videoHeight, ms: this.avgMs });
     const c = this.tracker.push(f);
     if (c) this.h.onChange(c);
+    if (this.itemTpl?.length && this.h.onInventory && ++this.ticks % HUD_EVERY === 0) {
+      this.hudCtx ??= canvas(ITEM_W * 6, ITEM_H);
+      this.plateCtx ??= canvas(PLATE_W, PLATE_H);
+      const hud = this.hudTracker.push(readHud(v, v.videoWidth, v.videoHeight, this.itemTpl, this.hudCtx, this.plateCtx));
+      if (hud) this.h.onInventory(hud);
+    }
   }
 
   /** Calibration check without a game: run a still screenshot through the same path. */
@@ -314,6 +402,13 @@ export class ScreenReader {
       const img = await loadImage(url);
       const f = readFrame(img, img.naturalWidth, img.naturalHeight, tpl);
       this.last = f;
+      if (this.itemTemplates && this.h.onInventory) {
+        this.itemTpl ??= await this.itemTemplates().catch(() => []);
+        if (this.itemTpl.length) {
+          const hud = readHud(img, img.naturalWidth, img.naturalHeight, this.itemTpl);
+          if (hud.items.length) this.h.onInventory(hud);
+        }
+      }
       // a still is confirmed immediately (tracker with confirm = 1)
       const t = new ScreenTracker(1);
       // a still: the 1st push confirms the heroes, the 2nd the preview ghost

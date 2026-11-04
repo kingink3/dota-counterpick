@@ -98,6 +98,15 @@
       .item-chip { font: 500 11px/1.4 var(--sans, inherit); background: var(--panel); border: 1px solid var(--line); border-radius: 3px;
         padding: 0 4px; color: var(--text2, var(--text)); cursor: pointer; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
       .item-chip:hover { border-color: var(--bad); }
+      .hud-prompt { border: 1px solid var(--gold); border-radius: 4px; padding: 8px 10px; margin: 0 0 10px; background: #d2ae6210; }
+      .hud-prompt .hp-head { font-weight: 600; display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+      .hud-prompt .hp-head img { width: 33px; height: 24px; border-radius: 2px; }
+      .hud-prompt .hp-sub { color: var(--muted); font-size: 12.5px; margin: 2px 0 6px; }
+      .hud-prompt .hp-heroes { display: flex; flex-wrap: wrap; gap: 4px; }
+      .hp-hero { display: flex; align-items: center; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 3px; padding: 2px 6px 2px 2px; color: var(--text); cursor: pointer; font-size: 12.5px; }
+      .hp-hero img { width: 40px; height: 22px; object-fit: cover; border-radius: 2px; }
+      .hp-hero.enemy { border-color: var(--enemy); } .hp-hero.ally { border-color: var(--ally); }
+      .hp-skip { background: none; border: 1px dashed var(--line2); color: var(--muted); border-radius: 3px; padding: 2px 8px; cursor: pointer; font-size: 12.5px; }
       .item-chip img { width: 22px; height: 16px; vertical-align: -3px; margin-right: 4px; border-radius: 2px; }
       .item-add { font: 600 11px/1.4 inherit; background: none; border: 1px dashed var(--line2); border-radius: 3px; color: var(--muted); padding: 0 5px; cursor: pointer; }
       .item-add:hover { color: var(--text); }

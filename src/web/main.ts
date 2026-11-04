@@ -17,7 +17,8 @@ import { heroLabel } from "../explain.js";
 import { heroImageUrlByValve, heroValveName } from "./hero-art.js";
 import { AutoInputAdapter, defaultBridgeUrl, type AutoStatus, type DraftPatch } from "./auto-input.js";
 import type { GamePhase, GsiSnapshot } from "../gsi.js";
-import { buildTemplates, ScreenReader, type ScreenStatus } from "./screen-reader.js";
+import { buildItemTemplates, buildTemplates, ScreenReader, type ScreenStatus } from "./screen-reader.js";
+import { identifyPlate, type HudRead, type LearnedPlate } from "../item-match.js";
 import type { Frame, ScreenChange, Side } from "../screen-match.js";
 import type { Archetype, AttackType, Combo, DamageRead, DraftState, Reason, Recommendation, TeamRead } from "../types.js";
 
@@ -331,6 +332,8 @@ function renderInner(): void {
 
   const out = el("#results");
   out.innerHTML = "";
+  const prompt = hudPrompt();
+  if (prompt) out.appendChild(prompt);
   if (state.enemies.size === 0 && state.allies.size === 0) {
     out.appendChild(note("Add the enemy heroes as they are picked. Recommendations appear here and update with every pick."));
     return;
@@ -571,6 +574,104 @@ function renderEnemyItems(): void {
     }
     row.appendChild(col);
   }
+}
+
+// ---------------------------------------------------------------------------
+//  Bottom-HUD inventory (ADR-025): click an enemy in the game -> its items land here.
+//  Which hero? The name plate above the portrait, learned once per hero (kept).
+// ---------------------------------------------------------------------------
+
+const PLATES_KEY = "dotaapp.hudPlates.v1";
+const PLATES_PER_HERO = 3;
+interface PlateRow { hero: string; vec: number[] }
+let plateRows: PlateRow[] = (() => {
+  try {
+    return JSON.parse(localStorage.getItem(PLATES_KEY) ?? "[]") as PlateRow[];
+  } catch {
+    return [];
+  }
+})();
+const learnedPlates = (): LearnedPlate[] => plateRows.map((r) => ({ hero: r.hero, vec: Float32Array.from(r.vec) }));
+/** a HUD read whose hero is not known yet - the UI asks "whose items?". */
+let pendingHud: HudRead | undefined;
+
+function learnPlate(hero: string, vec: Float32Array): void {
+  const same = plateRows.filter((r) => r.hero === hero);
+  let rows = plateRows;
+  if (same.length >= PLATES_PER_HERO) rows = rows.filter((r) => r !== same[0]);
+  plateRows = [...rows, { hero, vec: Array.from(vec, (x) => Math.round(x * 1e4) / 1e4) }].slice(-200);
+  try {
+    localStorage.setItem(PLATES_KEY, JSON.stringify(plateRows));
+  } catch {
+    /* storage unavailable: learned for this session only */
+  }
+}
+
+/** dotaconstants item key -> our item id (only items the engine knows). */
+function ourItemId(dcKey: string): string | undefined {
+  const inv = Object.entries(kb.itemDcKey ?? {}).find(([, dc]) => dc === dcKey)?.[0];
+  const id = inv ?? dcKey;
+  return itemLabels.has(id) ? id : undefined;
+}
+
+function onHudInventory(r: HudRead): void {
+  const hero = identifyPlate(r.plate, learnedPlates());
+  if (!hero) {
+    // only bother the user when there is something to attribute
+    if (r.items.length && (state.enemies.size || state.allies.size)) {
+      pendingHud = r;
+      render();
+    }
+    return;
+  }
+  applyHud(hero, r);
+}
+
+function applyHud(hero: string, r: HudRead): void {
+  if (pendingHud === r) pendingHud = undefined;
+  if (state.enemies.has(hero)) {
+    // a fresh look replaces what we knew (items get sold, upgraded, consumed)
+    const ids = [...new Set(r.items.map(ourItemId).filter((x): x is string => !!x))];
+    if (ids.length) state.enemyItems.set(hero, ids);
+    else state.enemyItems.delete(hero);
+  }
+  render();
+}
+
+function hudPrompt(): HTMLElement | undefined {
+  const r = pendingHud;
+  if (!r) return undefined;
+  const box = document.createElement("div");
+  box.className = "hud-prompt";
+  const icons = r.items.map((k) => `<img alt="" title="${esc(k)}" src="./items/${esc(k)}.webp">`).join("");
+  box.innerHTML = `<div class="hp-head">Whose items? ${icons}</div><div class="hp-sub">Seen on the selected hero in the game. Click the hero once - I'll recognise it from then on.</div>`;
+  const row = document.createElement("div");
+  row.className = "hp-heroes";
+  for (const [list, cls] of [[state.enemies, "enemy"], [state.allies, "ally"]] as const) {
+    for (const id of list) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = `hp-hero ${cls}`;
+      b.title = labelFor(id);
+      b.innerHTML = `<img alt="" src="${heroImageUrlByValve(byEngineId.get(id)?.valve ?? heroValveName(id))}"><span>${esc(labelFor(id))}</span>`;
+      b.addEventListener("click", () => {
+        learnPlate(id, r.plate);
+        applyHud(id, r);
+      });
+      row.appendChild(b);
+    }
+  }
+  const skip = document.createElement("button");
+  skip.type = "button";
+  skip.className = "hp-skip";
+  skip.textContent = "Not a hero";
+  skip.addEventListener("click", () => {
+    pendingHud = undefined;
+    render();
+  });
+  row.appendChild(skip);
+  box.appendChild(row);
+  return box;
 }
 
 function setEnemyItems(hero: string, items: string[]): void {
@@ -1194,7 +1295,13 @@ function buildScreenInput(): void {
       grid.map((g) => g.valve),
       (v) => heroImageUrlByValve(v),
     ));
+  let itemTpl: Promise<import("../item-match.js").ItemTemplate[]> | undefined;
+  const getItemTemplates = () =>
+    (itemTpl ??= fetch("./items/index.json")
+      .then((r) => r.json() as Promise<Record<string, unknown>>)
+      .then((idx) => buildItemTemplates(Object.keys(idx), (k) => `./items/${k}.webp`)));
   screen = new ScreenReader(getTemplates, {
+    onInventory: onHudInventory,
     onChange: applyScreen,
     onStatus: (st) => {
       screenStatus = st;
@@ -1208,7 +1315,7 @@ function buildScreenInput(): void {
         render();
       }
     },
-  });
+  }, getItemTemplates);
   btn.addEventListener("click", () => {
     if (screen!.running) screen!.stop();
     else {

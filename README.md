@@ -226,6 +226,14 @@ options, no files - the browser only sees pixels, like a Discord share.
 - Calibrated on 16:9 (2560×1440, verified at 1920×1080). Other aspect ratios are
   untested.
 
+### Enemy items from the screen (ADR-025)
+
+With Read screen on, click an enemy hero in the game: the app reads the 6 inventory
+slots of the selected unit from the bottom HUD and updates that hero's items (and the
+recommendations). The first time a hero is selected it asks "Whose items?" - one click
+on the hero, recognised from then on. Item icons live in `web/items/` (refresh after a
+patch: Actions -> "Fetch item icons" -> Run workflow).
+
 ## Auto-input: local companion (ADR-013, optional)
 
 Reads **your** hero, game phase, team and match id from Dota 2 Game State
