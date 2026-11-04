@@ -140,9 +140,15 @@ async function main(): Promise<void> {
     const owner = mode === "own" ? ownerOf(process.env.STRATZ_TOKEN ?? "") : undefined;
     if (mode === "own") {
       if (!owner) throw new Error("no SteamId in the token");
-      const r = await gql<{ player: { matches: Array<{ id: number; parsedDateTime?: number | null }> } }>(recentMatchesQuery(owner, 5));
-      const m = (r.player?.matches ?? []).find((x) => x.parsedDateTime);
+      const r = await gql<{ player: { matches: Array<{ id: number; parsedDateTime?: number | null; gameMode?: string; lobbyType?: string }> } | null }>(
+        recentMatchesQuery(owner, 20),
+      );
+      const ms = r.player?.matches ?? [];
+      // diagnostics without ids: how many, how many parsed, which modes
+      console.log(`own: player ${r.player ? "found" : "NOT found"}, ${ms.length} matches, ${ms.filter((x) => x.parsedDateTime).length} parsed; modes: ${[...new Set(ms.map((x) => `${x.lobbyType}/${x.gameMode}`))].join(", ")}`);
+      const m = ms.find((x) => x.parsedDateTime) ?? ms[0];
       if (m) found = { acc: owner, id: m.id };
+      if (!found) throw new Error("own: no matches returned for the token owner");
     }
     const lb = mode === "sample" ? await gql<{ leaderboard: { season: { players: Array<{ steamAccountId: number }> } } }>(leaderboardQuery(10)) : undefined;
     for (const p of lb?.leaderboard?.season?.players ?? []) {
