@@ -108,28 +108,38 @@ export function formatClock(sec: number): string {
  *  enough to switch to the Game tab on its own. */
 export const CONFIRM_SPAN_MS = 3000;
 
-/** Is this a running game clock? The shown value must move +1 s per second (game
- *  time) or -1 s per second under the moon (pre-horn countdown) for 3 s in a row.
- *  A draft pick timer counts down without the moon icon; a paused clock stalls. */
+/** Is this a running game clock? Over the last few seconds most reads must sit on
+ *  one line of slope +1 (game time) or -1 under the moon (pre-horn countdown), and
+ *  the value must actually move. A draft pick timer counts down without the moon;
+ *  a paused clock or a still frame does not move. Occasional misreads are outvoted. */
 export class ClockConfirm {
-  private first?: { shown: number; at: number };
+  private reads: Array<{ shown: number; night: boolean; at: number }> = [];
 
-  /** `shown` = the displayed m:ss in seconds; returns true once confirmed. */
+  /** `shown` = the displayed m:ss in seconds, `at` in ms; true once confirmed. */
   push(shown: number, night: boolean, paused: boolean, at: number): boolean {
-    if (!this.first) {
-      this.first = { shown, at };
+    if (paused) {
+      this.reads = [];
       return false;
     }
-    const dt = (at - this.first.at) / 1000;
-    const moved = shown - this.first.shown;
-    const ok = Math.abs(moved - dt) <= 1.5 || (night && Math.abs(-moved - dt) <= 1.5);
-    if (!ok || paused) {
-      this.first = { shown, at };
-      return false;
+    this.reads.push({ shown, night, at });
+    this.reads = this.reads.filter((r) => at - r.at <= CONFIRM_WINDOW_MS);
+    const span = at - this.reads[0]!.at;
+    if (span < CONFIRM_SPAN_MS || this.reads.length < 6) return false;
+    for (const dir of [1, -1] as const) {
+      const off = this.reads.map((r) => r.shown - (dir * r.at) / 1000);
+      const m = [...off].sort((x, y) => x - y)[Math.floor(off.length / 2)]!;
+      const inl = this.reads.filter((_, i) => Math.abs(off[i]! - m) <= 1.2);
+      if (inl.length < 0.75 * this.reads.length) continue;
+      const vals = inl.map((r) => r.shown);
+      if (Math.max(...vals) - Math.min(...vals) < 2) continue;
+      if (dir === -1 && inl.filter((r) => r.night).length < 0.75 * inl.length) continue;
+      return true;
     }
-    return at - this.first.at >= CONFIRM_SPAN_MS;
+    return false;
   }
 }
+/** reads older than this are forgotten. */
+export const CONFIRM_WINDOW_MS = 6000;
 
 /** day 0:00-5:00, night 5:00-10:00, ...; the pre-horn countdown shows the moon. */
 export function isNight(t: number): boolean {

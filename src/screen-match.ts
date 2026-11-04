@@ -68,6 +68,48 @@ export function slotRects(width: number, height: number): SlotRect[] {
   return out;
 }
 
+/** Player-colour bar under each draft slot (units of screen height, relative to the
+ *  slot's left edge). Measured at 2560x1440 on empty drafts: rows 88-95, the colours
+ *  of the 10 players. The in-game top bar, the loading screen, a black frame, Tab and
+ *  this app's own page match at most 2 of them - so the bars tell "this IS the draft
+ *  screen" apart from "nothing recognisable", which matters before clearing a draft. */
+const BAR = { y0: 89 / 1440, y1: 95 / 1440, x0: 34 / 1440, x1: 108 / 1440 } as const;
+/** hue (deg) of each player colour: radiant 0-4, dire 0-4. */
+export const PLAYER_HUES = [220, 155, 300, 59, 25, 330, 70, 192, 135, 39] as const;
+export const BAR_THRESHOLDS = { hueTol: 20, minSat: 0.4, minVal: 0.45, minBars: 8 } as const;
+
+export function barRects(width: number, height: number): SlotRect[] {
+  const cx = width / 2;
+  const out: SlotRect[] = [];
+  for (const side of ["left", "right"] as const) {
+    const start = side === "left" ? SLOT.leftStart : SLOT.rightStart;
+    for (let i = 0; i < 5; i++) {
+      const x = cx + (start + SLOT.pitch * i + BAR.x0) * height;
+      out.push({ side, index: i, x, y: BAR.y0 * height, w: (BAR.x1 - BAR.x0) * height, h: (BAR.y1 - BAR.y0) * height });
+    }
+  }
+  return out;
+}
+
+/** how many of the 10 bars show their player's colour (mean RGB per bar, 0..255). */
+export function countPlayerBars(means: ReadonlyArray<readonly [number, number, number]>): number {
+  let n = 0;
+  means.forEach(([r, g, b], k) => {
+    const mx = Math.max(r, g, b);
+    const mn = Math.min(r, g, b);
+    if (mx <= 0) return;
+    const sat = (mx - mn) / mx;
+    const val = mx / 255;
+    if (sat < BAR_THRESHOLDS.minSat || val < BAR_THRESHOLDS.minVal) return;
+    const d = mx - mn;
+    let hue = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    hue = (hue * 60 + 360) % 360;
+    const diff = Math.abs(hue - PLAYER_HUES[k]!);
+    if (Math.min(diff, 360 - diff) <= BAR_THRESHOLDS.hueTol) n++;
+  });
+  return n;
+}
+
 export interface Feature {
   /** zero-mean unit-norm RGB (colour match - picked heroes). */
   vec: Float32Array;
@@ -273,6 +315,8 @@ export interface Frame {
   feats?: { left: Feature[]; right: Feature[] };
   /** 99th-percentile luminance of the 10 name labels (left 0-4, right 0-4). */
   names?: number[];
+  /** player-colour bars visible under the slots (0..10); undefined = not measured. */
+  bars?: number;
 }
 
 export function dedupeFrame(f: Frame): Frame {
@@ -307,7 +351,9 @@ export interface ScreenChange {
  * reads. Only confident hero reads change a slot; "unknown" never clears one (the
  * in-game HUD looks nothing like the draft bar - we must not wipe the draft when
  * the game starts). Clearing happens only through a full reset: all 10 slots
- * read "empty" for `confirm` frames after at least one hero was seen.
+ * read "empty" for `confirm` frames after at least one hero was seen, AND the
+ * frame is the draft screen (player-colour bars visible): a black loading frame,
+ * a menu or another window also reads as 10 "empty" slots.
  */
 export class ScreenTracker {
   private stable: Record<Side, Array<string | undefined>> = { left: [], right: [] };
@@ -322,7 +368,8 @@ export class ScreenTracker {
   push(frame: Frame): ScreenChange | undefined {
     const f = dedupeFrame(frame);
     const mineFound = this.trackPreview(f);
-    const allEmpty = [...f.left, ...f.right].every((r) => r.kind === "empty" || r.kind === "preview");
+    const draftScreen = frame.bars === undefined || frame.bars >= BAR_THRESHOLDS.minBars;
+    const allEmpty = draftScreen && [...f.left, ...f.right].every((r) => r.kind === "empty" || r.kind === "preview");
     if (allEmpty) {
       this.emptyRun++;
       if (this.emptyRun === this.confirm && this.sawHero) {

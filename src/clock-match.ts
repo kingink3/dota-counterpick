@@ -176,29 +176,46 @@ function isNight(rgba: ArrayLike<number>, width: number, height: number): boolea
 }
 
 /** Turns successive reads into game time: a clock counting DOWN is the pre-horn
- *  countdown (negative game time); a stalled clock is a pause. */
+ *  countdown (negative game time); a stalled clock is a pause. A single misread
+ *  (video compression, a frame caught mid-redraw) is ignored: a value that is not
+ *  the same / the next second(s) is accepted only when it repeats. */
 export class GameClock {
   private last?: { shown: number; at: number };
   private dir = 0; // +1 counting up, -1 counting down
   private lastChangeAt = 0;
+  private candidate?: number;
 
-  /** returns game seconds (negative before the horn) or undefined if unknown. */
+  /** returns game seconds (negative before the horn). */
   push(r: ClockRead, now: number): { gameSeconds: number; paused: boolean; pregame: boolean } {
-    if (this.last && r.seconds !== this.last.shown) {
-      this.dir = r.seconds > this.last.shown ? 1 : -1;
-      this.lastChangeAt = now;
-    } else if (!this.last) {
+    if (!this.last) {
       // first read: the moon before 5:00 is the pre-horn countdown (day starts at 0:00)
       this.dir = r.night && r.seconds < 300 ? -1 : 1;
       this.lastChangeAt = now;
+      this.last = { shown: r.seconds, at: now };
+    } else if (r.seconds !== this.last.shown) {
+      const step = r.seconds - this.last.shown;
+      const elapsed = (now - this.lastChangeAt) / 1000;
+      // plausible: 1..(elapsed + 2) seconds in either direction (reads can be skipped)
+      const plausible = Math.abs(step) <= Math.max(2, elapsed + 2);
+      if (plausible || this.candidate === r.seconds) {
+        this.dir = step > 0 ? 1 : -1;
+        this.lastChangeAt = now;
+        this.last = { shown: r.seconds, at: now };
+        this.candidate = undefined;
+      } else {
+        this.candidate = r.seconds; // wait for a second identical read
+      }
+    } else {
+      this.candidate = undefined;
     }
-    this.last = { shown: r.seconds, at: now };
+    const shown = this.last.shown;
     const pregame = this.dir < 0;
-    return { gameSeconds: pregame ? -r.seconds : r.seconds, paused: now - this.lastChangeAt > 2500, pregame };
+    return { gameSeconds: pregame ? -shown : shown, paused: now - this.lastChangeAt > 2500, pregame };
   }
 
   reset(): void {
     this.last = undefined;
     this.dir = 0;
+    this.candidate = undefined;
   }
 }

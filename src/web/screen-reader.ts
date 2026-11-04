@@ -10,6 +10,8 @@
 // =============================================================================
 
 import {
+  barRects,
+  countPlayerBars,
   FEATURE_LEN,
   classifySlot,
   lumPercentile,
@@ -211,6 +213,31 @@ export async function buildTemplates(valves: string[], urlOf: (v: string) => str
 
 /** Read the 10 slots of one frame. All crops go into ONE strip canvas so the GPU
  *  is read back once per frame (getImageData stalls are the dominant cost). */
+const BAR_CELL = { w: 8, h: 2 } as const;
+let barCtx: CanvasRenderingContext2D | undefined;
+/** player-colour bars under the 10 slots -> how many show their colour. */
+function readBars(source: CanvasImageSource, width: number, height: number): number {
+  const rects = barRects(width, height);
+  barCtx ??= canvas(BAR_CELL.w * 10, BAR_CELL.h);
+  barCtx.clearRect(0, 0, BAR_CELL.w * 10, BAR_CELL.h);
+  rects.forEach((r, k) => barCtx!.drawImage(source, r.x, r.y, r.w, r.h, k * BAR_CELL.w, 0, BAR_CELL.w, BAR_CELL.h));
+  const px = barCtx.getImageData(0, 0, BAR_CELL.w * 10, BAR_CELL.h).data;
+  const means = rects.map((_, k) => {
+    const m: [number, number, number] = [0, 0, 0];
+    for (let y = 0; y < BAR_CELL.h; y++) {
+      for (let x = 0; x < BAR_CELL.w; x++) {
+        const i = (y * BAR_CELL.w * 10 + k * BAR_CELL.w + x) * 4;
+        m[0] += px[i]!;
+        m[1] += px[i + 1]!;
+        m[2] += px[i + 2]!;
+      }
+    }
+    const n = BAR_CELL.w * BAR_CELL.h;
+    return [m[0] / n, m[1] / n, m[2] / n] as [number, number, number];
+  });
+  return countPlayerBars(means);
+}
+
 export function readFrame(
   source: CanvasImageSource,
   width: number,
@@ -237,6 +264,7 @@ export function readFrame(
     frame.feats![r.side][r.index] = feat;
   });
   frame.names = readNames(source, width, height, nameCtx);
+  frame.bars = readBars(source, width, height);
   return frame;
 }
 

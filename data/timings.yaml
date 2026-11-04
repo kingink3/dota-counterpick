@@ -59,25 +59,25 @@ events:
 
   - id: stack
     label: "Stack window"
-    first: 53
+    first: 113
     every: 60
     window: 3
     roles: [4, 5]
     lead: 8
     confidence: rule
-    note: "pull the camp at about :53-:55 so it is out of the spawn box at :00"
-    source: "neutral camps respawn every minute on the minute (game rule)"
+    note: "pull the camp at about :53-:55 so it is out of the spawn box at :00; first stack at 1:53 (camps appear at 1:00)"
+    source: "neutral camps first spawn at 1:00, then every minute on the minute (game rule; Liquipedia Neutral Creeps)"
 
   - id: pull
     label: "Lane pull"
-    first: 15
+    first: 75
     every: 30
     until: 600
     roles: [4, 5]
     lead: 5
     confidence: approx
-    note: "about :15 / :45 for the small camp - adjust per camp (7.39 shortened flooded-camp pulls)"
-    source: "lane creep waves every 30 s (game rule); pull timing practice"
+    note: "about :15 / :45 for the small camp - adjust per camp; no camp to pull before 1:00"
+    source: "lane creep waves every 30 s, neutral camps from 1:00 (game rules); pull timing practice"
 
   - id: night
     label: "Night falls"

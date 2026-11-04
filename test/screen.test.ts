@@ -123,3 +123,37 @@ test("classify: a dark, flat portrait is NOT an empty slot when it is colourful 
   assert.ok(dark.sat > 92, `dark sat ${dark.sat}`);
   assert.equal(classifySlot(dark, "left", []).kind, "unknown");
 });
+
+// mean RGB of the 10 player-colour bars, measured on real 2560x1440 captures
+const BARS = {
+  empty_draft: [[51, 116, 251], [101, 251, 189], [189, 0, 189], [239, 236, 12], [251, 106, 0], [250, 133, 192], [159, 178, 71], [100, 214, 243], [0, 130, 33], [162, 104, 0]],
+  demo_game: [[42, 69, 74], [69, 106, 104], [77, 96, 89], [167, 45, 4], [147, 147, 93], [90, 102, 96], [73, 91, 91], [54, 77, 83], [58, 81, 86], [89, 126, 133]],
+  live_game: [[62, 67, 78], [65, 72, 83], [80, 90, 101], [71, 79, 90], [83, 85, 91], [41, 60, 86], [52, 67, 91], [56, 78, 111], [64, 89, 125], [65, 82, 109]],
+  pre_horn: [[45, 51, 64], [57, 63, 81], [106, 105, 144], [81, 93, 114], [95, 109, 121], [134, 137, 174], [136, 144, 164], [106, 113, 135], [94, 108, 120], [112, 128, 155]],
+  tab: [[83, 57, 107], [86, 78, 80], [39, 75, 40], [65, 56, 53], [43, 47, 66], [27, 8, 3], [175, 178, 183], [69, 74, 77], [9, 36, 31], [83, 15, 22]],
+  this_app: Array.from({ length: 10 }, () => [21, 27, 36]),
+  black: Array.from({ length: 10 }, () => [0, 0, 0]),
+} as const satisfies Record<string, ReadonlyArray<readonly [number, number, number]>>;
+
+test("player-colour bars: only the draft screen shows them", async () => {
+  const { countPlayerBars, BAR_THRESHOLDS } = await import("../src/screen-match.js");
+  assert.equal(countPlayerBars(BARS.empty_draft), 10);
+  for (const k of ["demo_game", "live_game", "pre_horn", "tab", "this_app", "black"] as const) {
+    assert.ok(countPlayerBars(BARS[k]) < BAR_THRESHOLDS.minBars, `${k}: ${countPlayerBars(BARS[k])}`);
+  }
+});
+
+test("tracker: 10 'empty' slots without the draft bars (loading, black frame, menu) keep the draft", async () => {
+  const { countPlayerBars } = await import("../src/screen-match.js");
+  const H = (valve: string): SlotRead => ({ kind: "hero", valve, score: 0.9, margin: 0.3 });
+  const E: SlotRead = { kind: "empty" };
+  const t = new ScreenTracker(2);
+  const picked: Frame = { left: [H("viper"), H("sniper"), E, E, E], right: [H("lion"), E, E, E, E], bars: 10 };
+  t.push(picked);
+  t.push(picked);
+  const black: Frame = { left: [E, E, E, E, E], right: [E, E, E, E, E], bars: countPlayerBars(BARS.black) };
+  for (let i = 0; i < 6; i++) assert.notEqual(t.push(black)?.reset, true, "a black frame is not a new draft");
+  const newDraft: Frame = { ...black, bars: countPlayerBars(BARS.empty_draft) };
+  t.push(newDraft);
+  assert.equal(t.push(newDraft)?.reset, true, "the real empty draft still resets");
+});

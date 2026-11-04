@@ -67,6 +67,10 @@ test("timers: schedule from data/timings.yaml, filtered by role", () => {
   assert.equal(upcoming(tm, 255, 1).find((u) => u.id === "bounty_rune")!.at, 480);
   assert.equal(upcoming(tm, 245, 1).find((u) => u.id === "bounty_rune")!.state, "now", "shown 10 s after it spawned");
   assert.equal(upcoming(tm, 1000, 1).find((u) => u.id === "tormentor")!.at, 1200);
+  // neutral camps appear at 1:00: no stack before 1:53, no pull before 1:15
+  assert.equal(upcoming(tm, 27, 5).find((u) => u.id === "stack")!.at, 113);
+  assert.equal(upcoming(tm, 27, 5).find((u) => u.id === "pull")!.at, 75);
+  assert.equal(upcoming(tm, -60, 5).find((u) => u.id === "stack")!.at, 113);
   // pre-horn: the first bounty runes at 0:00
   assert.equal(upcoming(tm, -60, 4).find((u) => u.id === "bounty_rune")!.at, 0);
 });
@@ -84,15 +88,19 @@ test("timers: manual marks - Roshan window 8-11 min after the kill", () => {
 
 test("ClockConfirm: a game clock confirms after 3 s, a draft timer or a stall never does", async () => {
   const { ClockConfirm } = await import("../src/game-timers.js");
-  const up = new ClockConfirm();
-  const ok = [0, 1, 2, 3].map((k) => up.push(36 + k, false, false, k * 1000));
-  assert.deepEqual(ok, [false, false, false, true]);
-  const pre = new ClockConfirm();
-  assert.equal([0, 1, 2, 3].map((k) => pre.push(80 - k, true, false, k * 1000)).at(-1), true, "pre-horn countdown under the moon");
-  const draft = new ClockConfirm();
-  assert.equal([0, 1, 2, 3, 4].some((k) => draft.push(25 - k, false, false, k * 1000)), false, "countdown without the moon");
-  const stall = new ClockConfirm();
-  assert.equal([0, 1, 2, 3, 4].some((k) => stall.push(120, false, false, k * 1000)), false, "stalled clock");
+  // reads every 300 ms (ScreenReader rate)
+  const run = (f: (at: number) => number, night: boolean, n = 14) => {
+    const c = new ClockConfirm();
+    const out: boolean[] = [];
+    for (let k = 0; k < n; k++) out.push(c.push(f(k * 300), night, false, k * 300));
+    return out;
+  };
+  const up = run((at) => 36 + Math.floor(at / 1000), false);
+  assert.equal(up.at(-1), true, "game clock");
+  assert.equal(up.findIndex(Boolean) * 300 >= 3000, true, "not before 3 s");
+  assert.equal(run((at) => 80 - Math.floor(at / 1000), true).at(-1), true, "pre-horn countdown under the moon");
+  assert.equal(run((at) => 25 - Math.floor(at / 1000), false, 20).some(Boolean), false, "countdown without the moon");
+  assert.equal(run(() => 120, false, 20).some(Boolean), false, "stalled clock");
 });
 
 test("parseClock / isNight", async () => {
@@ -107,4 +115,25 @@ test("parseClock / isNight", async () => {
   assert.equal(isNight(299), false);
   assert.equal(isNight(300), true);
   assert.equal(isNight(600), false);
+});
+
+test("GameClock ignores a single misread; ClockConfirm survives misreads", async () => {
+  const { ClockConfirm } = await import("../src/game-timers.js");
+  const g = new GameClock();
+  const rd = (seconds: number, night = false) => ({ seconds, text: "", night, minScore: 1 });
+  g.push(rd(100), 0);
+  g.push(rd(101), 1000);
+  assert.equal(g.push(rd(181), 1300).gameSeconds, 101, "a one-off 3:01 is not accepted");
+  assert.equal(g.push(rd(102), 2000).gameSeconds, 102);
+  g.push(rd(500), 2300);
+  assert.equal(g.push(rd(500), 2600).gameSeconds, 500, "a repeated jump is accepted (new match / replay seek)");
+  // reads every 300 ms over 4 s, every 7th read wrong
+  const c = new ClockConfirm();
+  let ok = false;
+  for (let k = 0; k <= 14 && !ok; k++) {
+    const at = k * 300;
+    const shown = k % 7 === 3 ? 999 : 27 + Math.floor(at / 1000);
+    ok = c.push(shown, false, false, at);
+  }
+  assert.equal(ok, true);
 });
