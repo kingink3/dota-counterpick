@@ -32,6 +32,22 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Browser access check (CORS; response headers only, no secrets printed)
+        if: inputs.dataset == 'review'
+        env:
+          STRATZ_TOKEN: ${{ secrets.STRATZ_TOKEN }}
+        run: |
+          o="https://kingink3.github.io"
+          echo "== preflight"
+          curl -s -o /dev/null -D - -X OPTIONS https://api.stratz.com/graphql -H "Origin: $o" \
+            -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: authorization,content-type" \
+            | grep -iE "^HTTP|access-control|^server|cf-mitigated" || true
+          echo "== POST with a browser user agent"
+          curl -s -o /tmp/cors.json -D - https://api.stratz.com/graphql -H "Origin: $o" \
+            -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36" \
+            -H "content-type: application/json" -H "authorization: Bearer $STRATZ_TOKEN" \
+            --data '{"query":"{ constants { gameVersions { id } } }"}' | grep -iE "^HTTP|access-control|^server|cf-mitigated" || true
+          head -c 200 /tmp/cors.json; echo
       - name: Query STRATZ
         env:
           STRATZ_TOKEN: ${{ secrets.STRATZ_TOKEN }}
