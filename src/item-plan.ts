@@ -290,6 +290,7 @@ export function buildPlan(inp: PlanInput): ItemPlan | undefined {
     if (parent && (used.has(parent) || late.some((c) => c.key === parent))) continue;
     late.push(take(k));
   }
+  if (late.every((x) => x.at !== undefined)) late.sort((x, y) => x.at! - y.at!);
   fold(lane, [...core, ...late]);
   fold(core, [...core, ...late]);
 
