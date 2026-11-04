@@ -65,7 +65,7 @@
       #auto-status[data-kind="live"]::before { background: var(--good); box-shadow: 0 0 6px var(--good); }
 
       /* ---------- game tab: a dense second-monitor panel ---------- */
-      .game { max-width: 980px; margin: 0 auto; padding: 18px; }
+      .game { margin: 0 auto; padding: 18px; }
       .game-head { display: flex; gap: 28px; align-items: center; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
       .game-clock { font: 700 64px/1 var(--cond); font-variant-numeric: tabular-nums; letter-spacing: .02em; min-width: 3.6ch; }
       .game-badges { display: flex; gap: 10px; font: 600 14px/1.4 var(--cond); color: var(--muted); }
@@ -94,6 +94,38 @@
       .ev.now { background: #1f2c19; }
       .ev.now .ev-in, .ev.now .ev-what { color: var(--good); }
       .game-foot { font-size: 12px; margin-top: 10px; }
+      .game { max-width: 1400px; }
+      .game-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 28px; margin-top: 14px; }
+      @media (max-width: 960px) { .game-cols { grid-template-columns: minmax(0, 1fr); } }
+      .game-h { margin: 0 0 6px; font: 700 15px/1.2 var(--cond); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+      .game-plan { min-width: 0; }
+      .plan-phase { margin: 0 0 12px; }
+      .plan-ph { font: 700 14px/1.2 var(--cond); color: var(--text2); padding: 4px 0; border-bottom: 1px solid var(--line); }
+      .plan-items, .plan-spikes { list-style: none; margin: 0; padding: 0; }
+      .plan-item { display: grid; grid-template-columns: 33px minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; padding: 5px 4px; border-bottom: 1px solid #ffffff0a; }
+      .plan-item img { width: 33px; height: 24px; border-radius: 2px; grid-row: span 1; }
+      .pi-name { font-size: 14px; color: var(--text); }
+      .pi-meta { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+      .pi-why, .pi-place { grid-column: 2 / 4; font-size: 12.5px; color: var(--muted); }
+      .pi-place { color: var(--text2); }
+      .plan-item.k-counter .pi-name, .plan-item.k-both .pi-name { color: var(--gold); }
+      .plan-item.k-both .pi-why { color: var(--text2); }
+      .plan-item.due, .plan-spikes li.due { background: #2a2617; }
+      .plan-item.past .pi-meta { text-decoration: line-through; opacity: .7; }
+      .plan-spikes li { display: grid; grid-template-columns: 5ch minmax(0, 1fr); gap: 0 10px; padding: 4px; font-size: 13px; }
+      .sp-at { color: var(--muted); font-variant-numeric: tabular-nums; }
+      .sp-why { grid-column: 2; color: var(--muted); font-size: 12.5px; }
+      .win-bars { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; align-items: end; height: 92px; margin: 8px 0 4px; }
+      .win-col { display: grid; grid-template-rows: auto 1fr auto; justify-items: center; height: 100%; font-size: 12px; cursor: help; }
+      .win-bar { width: 60%; align-self: end; height: var(--h); min-height: 2px; border-radius: 2px 2px 0 0; }
+      .win-col.ours .win-bar { background: var(--ally); } .win-col.theirs .win-bar { background: var(--enemy); }
+      .win-v { font-variant-numeric: tabular-nums; color: var(--text2); }
+      .win-l { color: var(--muted); white-space: nowrap; }
+      .win-text { font-size: 13px; color: var(--text2); margin: 4px 0 0; }
+      .plan-src { font-size: 12px; }
+      .plan-hint { font-size: 13px; color: var(--muted); margin: 6px 0 10px; }
+      .plan-item.have .pi-name::after { content: " ✓"; color: var(--good); }
+      .plan-item.have { opacity: .75; }
 
       /* ---------- match band (the memorable thing) ---------- */
       .band { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);

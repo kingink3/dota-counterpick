@@ -119,8 +119,14 @@ export class GameView {
             </div>
           </div>
         </div>
-        <ol id="game-events" class="game-events" aria-label="Next map events"></ol>
-        <p id="game-foot" class="muted game-foot"></p>
+        <div class="game-cols">
+          <div class="game-col">
+            <h3 class="game-h">Map timers</h3>
+            <ol id="game-events" class="game-events" aria-label="Next map events"></ol>
+            <p id="game-foot" class="muted game-foot"></p>
+          </div>
+          <aside id="game-plan" class="game-col game-plan" aria-label="Item plan and power spikes"></aside>
+        </div>
       </section>`;
     const roles = this.root.querySelector<HTMLElement>("#game-roles")!;
     for (const r of [undefined, 1, 2, 3, 4, 5]) {
@@ -167,8 +173,19 @@ export class GameView {
     }
   }
 
+  /** the plan column (built by main.ts when the draft / hero changes). */
+  planRoot(): HTMLElement {
+    return this.root.querySelector<HTMLElement>("#game-plan")!;
+  }
+
   render(): void {
     const t = this.now();
+    // plan items due within a minute / already past their typical time
+    for (const li of this.root.querySelectorAll<HTMLElement>("#game-plan [data-at]")) {
+      const at = Number(li.dataset.at);
+      li.classList.toggle("due", t !== undefined && t >= at - 60 && t < at + 120);
+      li.classList.toggle("past", t !== undefined && t >= at + 120);
+    }
     const c = this.clock;
     const $ = <T extends HTMLElement>(s: string) => this.root.querySelector<T>(s)!;
     $("#game-clock").textContent = t === undefined ? "-:--" : formatClock(Math.floor(t));

@@ -49,12 +49,14 @@ async function main(): Promise<void> {
   // ---- payload ---------------------------------------------------------------
   const js = readFileSync(join(WEB, "app.js"), "utf8").replace(/\n\/\/# sourceMappingURL=.*$/m, "");
   const matchupsPath = join(WEB, "matchups.json");
+  const itemStatsPath = join(WEB, "item-stats.json");
   const payload = {
     js,
     data: {
       kb: JSON.parse(readFileSync(join(WEB, "kb.json"), "utf8")),
       roster: JSON.parse(readFileSync(join(WEB, "roster.json"), "utf8")),
       matchups: existsSync(matchupsPath) ? JSON.parse(readFileSync(matchupsPath, "utf8")) : null,
+      itemStats: existsSync(itemStatsPath) ? JSON.parse(readFileSync(itemStatsPath, "utf8")) : null,
       pages: true,
     },
   };

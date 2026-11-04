@@ -19,6 +19,8 @@ import { AutoInputAdapter, defaultBridgeUrl, type AutoStatus, type DraftPatch } 
 import type { GamePhase, GsiSnapshot } from "../gsi.js";
 import { buildItemTemplates, buildTemplates, ScreenReader, type ScreenStatus } from "./screen-reader.js";
 import { GameView } from "./game-view.js";
+import { renderPlan } from "./plan-view.js";
+import { buildPlan, teamWindow, type ItemStats } from "../item-plan.js";
 import { identifyPlate, type HudRead, type LearnedPlate } from "../item-match.js";
 import type { Frame, ScreenChange, Side } from "../screen-match.js";
 import type { Archetype, AttackType, Combo, DamageRead, DraftState, Reason, Recommendation, TeamRead } from "../types.js";
@@ -78,6 +80,7 @@ interface PagesBundle {
   kb: RawKB;
   roster: { heroes: RosterHero[] };
   matchups: { heroes?: Record<string, Record<string, [number, number]>> } | null;
+  itemStats?: ItemStats | null;
   pages: true;
 }
 const BUNDLE = (window as unknown as { __DOTA_BUNDLE?: PagesBundle }).__DOTA_BUNDLE;
@@ -93,6 +96,9 @@ async function boot(): Promise<void> {
   ]);
   kb = indexKB(rawKb);
   if (matchups?.heroes) kb.matchups = matchups.heroes;
+  itemStats =
+    (BUNDLE ? BUNDLE.itemStats : await fetch("./item-stats.json").then((r) => (r.ok ? r.json() : null)).catch(() => null)) ??
+    undefined;
   buildItemLabels();
 
   // link roster -> KB by valve name (KB code's portrait name == roster valve)
@@ -145,6 +151,54 @@ function setMode(m: Mode): void {
 // ---------------------------------------------------------------------------
 
 let game: GameView | undefined;
+let itemStats: ItemStats | undefined;
+
+/** Game tab, right column: the plan for the hero you play vs this draft. */
+function renderGamePlan(result: ReturnType<typeof resolveDraft>): void {
+  if (!game) return;
+  const hero = state.myHero;
+  const archetype = hero ? archetypeOf(kb, hero, state.role) : undefined;
+  const counters = [...result.items, ...result.defense].sort((a, b) => b.score - a.score);
+  const plan =
+    hero && itemStats
+      ? buildPlan({
+          hero,
+          ...(archetype ? { archetype } : {}),
+          stats: itemStats,
+          counters,
+          dcKey: (id) => kb.itemDcKey?.[id],
+        })
+      : undefined;
+  const window = itemStats && state.allies.size && state.enemies.size ? teamWindow(itemStats, [...state.allies], [...state.enemies]) : undefined;
+  const prompt = hudPrompt();
+  renderPlan(game.planRoot(), {
+    ...(prompt ? { prompt } : {}),
+    ...(myItems ? { have: myItems } : {}),
+    ...(plan ? { plan } : {}),
+    ...(window ? { window } : {}),
+    empty: !itemStats
+      ? "No item statistics in this build."
+      : !hero
+        ? "Mark the hero you play (★ on your team in Draft) to get an item plan."
+        : `No statistics for ${labelFor(hero)} yet.`,
+    heroLabel: labelFor,
+    reasonText: (rec) => {
+      const r = leadReason(rec);
+      return r ? reasonSummaryText(r, rec) : "";
+    },
+    ...(itemStats ? { source: planSource(itemStats) } : {}),
+  });
+}
+function planSource(s: ItemStats): string {
+  return [
+    s.phasesFrom && `Builds: ${s.phasesFrom}.`,
+    s.timingsFrom && `Timings: ${s.timingsFrom}.`,
+    s.curveFrom && `Windows: ${s.curveFrom}; correlation with game length, not a cause.`,
+    s.fetchedAt && `OpenDota, ${s.fetchedAt.slice(0, 10)}.`,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
 function buildGameView(): void {
   game = new GameView({
     timings: () => kb.timings,
@@ -380,6 +434,7 @@ function renderInner(): void {
   }
 
   const result = resolveDraft(kb, draft);
+  renderGamePlan(result);
 
   const tabs: Array<{ id: TabId; label: string; count: number }> = [
     { id: "heroes", label: "Hero picks", count: result.heroes.length },
@@ -415,6 +470,19 @@ function renderInner(): void {
     state.activeTab === "heroes" ? result.heroes
     : state.activeTab === "items" ? result.items
     : result.defense;
+  if (state.activeTab !== "heroes" && recs.length) {
+    // counter items answer the draft; they are not a build order (ADR-026)
+    const hint = document.createElement("p");
+    hint.className = "plan-hint";
+    hint.append("Answers to this draft, not a build order: they come after your standard lane items. ");
+    const go = document.createElement("button");
+    go.type = "button";
+    go.className = "link";
+    go.textContent = "Item plan with timings →";
+    go.addEventListener("click", () => setMode("game"));
+    hint.append(go);
+    panel.appendChild(hint);
+  }
   if (recs.length === 0) panel.appendChild(note("Nothing here for this enemy team."));
   else for (const rec of recs.slice(0, 12)) panel.appendChild(recCard(rec));
   out.appendChild(panel);
@@ -653,8 +721,12 @@ function onHudInventory(r: HudRead): void {
   applyHud(hero, r);
 }
 
+/** your own inventory (dotaconstants keys) as last read from the bottom HUD. */
+let myItems: Set<string> | undefined;
+
 function applyHud(hero: string, r: HudRead): void {
   if (pendingHud === r) pendingHud = undefined;
+  if (hero === state.myHero) myItems = new Set(r.items);
   if (state.enemies.has(hero)) {
     // a fresh look replaces what we knew (items get sold, upgraded, consumed)
     const ids = [...new Set(r.items.map(ourItemId).filter((x): x is string => !!x))];
@@ -1381,6 +1453,7 @@ function applyScreen(c: ScreenChange): void {
     state.enemies.clear();
     state.allies.clear();
     state.myHero = undefined;
+    myItems = undefined;
     screenOwned.clear();
     lastAutoHero = undefined;
     autoAddedAlly = undefined;
