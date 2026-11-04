@@ -50,6 +50,7 @@ async function main(): Promise<void> {
   const js = readFileSync(join(WEB, "app.js"), "utf8").replace(/\n\/\/# sourceMappingURL=.*$/m, "");
   const matchupsPath = join(WEB, "matchups.json");
   const itemStatsPath = join(WEB, "item-stats.json");
+  const opt = (f: string) => (existsSync(join(WEB, f)) ? JSON.parse(readFileSync(join(WEB, f), "utf8")) : null);
   const payload = {
     js,
     data: {
@@ -57,6 +58,8 @@ async function main(): Promise<void> {
       roster: JSON.parse(readFileSync(join(WEB, "roster.json"), "utf8")),
       matchups: existsSync(matchupsPath) ? JSON.parse(readFileSync(matchupsPath, "utf8")) : null,
       itemStats: existsSync(itemStatsPath) ? JSON.parse(readFileSync(itemStatsPath, "utf8")) : null,
+      ids: opt("ids.json"),
+      benchmarks: opt("benchmarks.json"),
       pages: true,
     },
   };

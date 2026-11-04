@@ -51,6 +51,15 @@ async function main(): Promise<void> {
   } catch {
     console.log("matchups.json absent - win rates disabled");
   }
+  // optional: match review data (ADR-029): STRATZ ids + per-minute averages
+  for (const f of ["ids.json", "benchmarks.json"]) {
+    try {
+      copyFileSync(join(ROOT, "data", f), join(WEB, f));
+      console.log(`${f} copied → web/`);
+    } catch {
+      console.log(`${f} absent - match review limited`);
+    }
+  }
   // optional: hero item / timing / game-length stats (ADR-026, scripts/build-item-stats.ts)
   try {
     copyFileSync(join(ROOT, "data", "item-stats.json"), join(WEB, "item-stats.json"));

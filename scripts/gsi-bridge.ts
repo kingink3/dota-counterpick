@@ -207,7 +207,7 @@ function cors(res: ServerResponse): void {
   // the app may also be served by `npm run serve` (:5173) -> cross-origin SSE
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "content-type");
+  res.setHeader("Access-Control-Allow-Headers", "content-type, x-stratz-token");
   res.setHeader("Access-Control-Allow-Private-Network", "true");
 }
 
@@ -247,12 +247,36 @@ function serveStatic(urlPath: string, res: ServerResponse): void {
   res.end(readFileSync(file));
 }
 
+/** Match review (ADR-029): forward a GraphQL query to STRATZ for the page. The browser
+ *  cannot call STRATZ itself (Cloudflare rejects the CORS preflight). The token comes
+ *  from the page (x-stratz-token, kept in the browser) or STRATZ_TOKEN / .stratz-token. */
+async function stratzProxy(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  const body = await readBody(req, 200_000);
+  const fileToken = existsSync(join(ROOT, ".stratz-token")) ? readFileSync(join(ROOT, ".stratz-token"), "utf8").trim() : "";
+  const token = (req.headers["x-stratz-token"] as string | undefined) || process.env.STRATZ_TOKEN || fileToken;
+  if (!token) {
+    res.writeHead(401, { "content-type": "text/plain" }).end("no STRATZ token");
+    return;
+  }
+  const r = await fetch("https://api.stratz.com/graphql", {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: `Bearer ${token}`, "user-agent": "STRATZ_API" },
+    body,
+  });
+  res.writeHead(r.status, { "content-type": r.headers.get("content-type") ?? "application/json" });
+  res.end(await r.text());
+}
+
 const server = createServer(async (req, res) => {
   cors(res);
   const url = req.url ?? "/";
   try {
     if (req.method === "OPTIONS") {
       res.writeHead(204).end();
+      return;
+    }
+    if (req.method === "POST" && url.startsWith("/stratz")) {
+      await stratzProxy(req, res);
       return;
     }
     if (req.method === "POST") {

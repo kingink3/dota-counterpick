@@ -19,6 +19,8 @@ import { AutoInputAdapter, defaultBridgeUrl, type AutoStatus, type DraftPatch } 
 import type { GamePhase, GsiSnapshot } from "../gsi.js";
 import { buildItemTemplates, buildTemplates, ScreenReader, type ScreenStatus } from "./screen-reader.js";
 import { GameView } from "./game-view.js";
+import { ReviewView } from "./review-view.js";
+import type { Benchmarks, Ids } from "../review.js";
 import type { PlanView } from "./plan-view.js";
 import { buildMatchPlan } from "../game-plan.js";
 import { buildPlan, teamWindow, type ItemStats } from "../item-plan.js";
@@ -82,6 +84,8 @@ interface PagesBundle {
   roster: { heroes: RosterHero[] };
   matchups: { heroes?: Record<string, Record<string, [number, number]>> } | null;
   itemStats?: ItemStats | null;
+  ids?: Ids | null;
+  benchmarks?: Benchmarks | null;
   pages: true;
 }
 const BUNDLE = (window as unknown as { __DOTA_BUNDLE?: PagesBundle }).__DOTA_BUNDLE;
@@ -101,6 +105,10 @@ async function boot(): Promise<void> {
   itemStats =
     (BUNDLE ? BUNDLE.itemStats : await fetch("./item-stats.json").then((r) => (r.ok ? r.json() : null)).catch(() => null)) ??
     undefined;
+  const optJson = <T,>(f: string): Promise<T | undefined> => fetch(f).then((r) => (r.ok ? (r.json() as Promise<T>) : undefined)).catch(() => undefined);
+  [reviewIds, reviewBench] = BUNDLE
+    ? [BUNDLE.ids ?? undefined, BUNDLE.benchmarks ?? undefined]
+    : await Promise.all([optJson<Ids>("./ids.json"), optJson<Benchmarks>("./benchmarks.json")]);
   buildItemLabels();
 
   // link roster -> KB by valve name (KB code's portrait name == roster valve)
@@ -124,6 +132,7 @@ async function boot(): Promise<void> {
   buildCombos();
   buildModeNav();
   buildGameView();
+  buildReviewView();
   buildAutoInput();
   buildScreenInput();
   render();
@@ -135,13 +144,15 @@ function buildModeNav(): void {
     btn.addEventListener("click", () => setMode(btn.dataset.mode as Mode));
   }
 }
-type Mode = "counter" | "combo" | "game";
+type Mode = "counter" | "combo" | "game" | "review";
 let mode: Mode = "counter";
 function setMode(m: Mode): void {
   mode = m;
   (el("#counter-view") as HTMLElement).hidden = m !== "counter";
   (el("#combo-view") as HTMLElement).hidden = m !== "combo";
   (el("#game-view") as HTMLElement).hidden = m !== "game";
+  (el("#review-view") as HTMLElement).hidden = m !== "review";
+  if (m === "review") review?.show();
   for (const b of document.querySelectorAll<HTMLElement>(".mode-btn")) {
     b.classList.toggle("active", b.dataset.mode === m);
   }
@@ -153,6 +164,21 @@ function setMode(m: Mode): void {
 // ---------------------------------------------------------------------------
 
 let game: GameView | undefined;
+let review: ReviewView | undefined;
+let reviewIds: Ids | undefined;
+let reviewBench: Benchmarks | undefined;
+
+function buildReviewView(): void {
+  review = new ReviewView({
+    ctx: () =>
+      reviewIds
+        ? { kb, ids: reviewIds, label: labelFor, ...(itemStats ? { stats: itemStats } : {}), ...(reviewBench ? { bench: reviewBench } : {}) }
+        : undefined,
+    heroLabel: labelFor,
+    heroImg: (code) => heroImageUrlByValve(byEngineId.get(code)?.valve ?? heroValveName(code)),
+    heroOf: (id) => reviewIds?.heroes[String(id)] ?? `hero_${id}`,
+  });
+}
 let itemStats: ItemStats | undefined;
 /** where the draft win rates come from (data/matchups.json). */
 let matchupSource = "public matches";

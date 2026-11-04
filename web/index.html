@@ -171,6 +171,43 @@
       @media (max-width: 1200px) { .gz-cols { grid-template-columns: minmax(0, 1fr); } }
       .gz-later { display: block; width: 100%; text-align: left; margin-top: 8px; padding: 7px 10px; border: 1px dashed var(--line2); border-radius: 4px; background: none; color: var(--muted); font-size: 13px; cursor: pointer; }
       .gz-later:hover { color: var(--text); border-color: var(--muted); }
+      /* ---------- Review tab (ADR-029) ---------- */
+      .rv { display: grid; grid-template-columns: 360px minmax(0, 1fr); min-height: calc(100vh - var(--top-h) - 60px); }
+      @media (max-width: 960px) { .rv { grid-template-columns: minmax(0, 1fr); } }
+      .rv-side { background: var(--deep); border-right: 1px solid var(--line); padding: 16px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+      .rv-main { padding: 16px 22px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+      .rv-in { display: block; width: 100%; margin: 0 0 8px; background: var(--panel2); border: 1px solid var(--line); color: var(--text); border-radius: 3px; padding: 5px 8px; font: inherit; font-size: 13px; }
+      .rv-note { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
+      .rv-status { margin: 0; padding: 8px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; font-size: 13.5px; }
+      .rv-list { list-style: none; margin: 0; padding: 0; }
+      .rv-m { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 5px 4px; border-left: 3px solid transparent; border-bottom: 1px solid #ffffff0a; }
+      .rv-m img { width: 48px; height: 27px; object-fit: cover; border-radius: 2px; }
+      .rv-m.win { border-left-color: var(--ally); } .rv-m.loss { border-left-color: var(--enemy); } .rv-m.on { background: var(--panel2); }
+      .rv-mi { font-size: 13px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .rv-head { display: flex; gap: 14px; align-items: center; }
+      .rv-head img { width: 96px; height: 54px; object-fit: cover; border-radius: 3px; }
+      .rv-head h2 { margin: 0; font: 700 22px/1.1 var(--cond); } .rv-head p { margin: 2px 0 0; font-size: 13px; }
+      .rv-report { display: grid; gap: 14px; }
+      .rv-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+      @media (max-width: 1200px) { .rv-grid { grid-template-columns: minmax(0, 1fr); } }
+      .rv-f { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 2px 10px; padding: 7px 0; border-top: 1px solid #ffffff0d; font-size: 13.5px; }
+      .rv-f b { color: var(--text); font-weight: 600; } .rv-det { grid-column: 2; color: var(--text2); font-size: 13px; }
+      .rv-area { grid-row: span 2; font: 600 12px/1.6 var(--cond); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+      .rv-f.good b { color: var(--good); }
+      .rv-t { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+      .rv-t th { text-align: left; color: var(--muted); font-weight: 500; padding: 3px 6px; border-bottom: 1px solid var(--line); }
+      .rv-t td { padding: 4px 6px; border-bottom: 1px solid #ffffff0a; }
+      .rv-t tr.v-slow td:last-child, .rv-t tr.v-missing td:last-child { color: var(--bad); }
+      .rv-t tr.v-fast td:last-child { color: var(--good); }
+      .rv-deaths { list-style: none; margin: 0; padding: 0; }
+      .rv-deaths li { display: grid; grid-template-columns: 5ch minmax(0, 1fr); gap: 8px; padding: 4px 0; border-bottom: 1px solid #ffffff0a; font-size: 13px; }
+      .rv-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+      .rv-chips i { font-style: normal; font-size: 12px; padding: 0 6px; border-radius: 3px; background: var(--panel2); color: var(--text2); }
+      .rv-chips i.bad { background: #45201a; color: var(--bad); } .rv-chips i.warn { background: #4a3a17; color: var(--gold); }
+      .rv-trend { display: grid; grid-template-columns: minmax(0, 1fr) 120px; gap: 2px 10px; padding: 6px 0; border-top: 1px solid #ffffff0d; font-size: 13.5px; }
+      .rv-trend .muted { grid-column: 1 / 3; font-size: 12.5px; }
+      .rv-bar { height: 8px; align-self: center; background: var(--panel2); border-radius: 4px; overflow: hidden; } .rv-bar > i { display: block; height: 100%; background: var(--enemy); }
+      .rv-good { margin: 4px 0; font-size: 13px; color: var(--good); }
       .plan-item.have .pi-name::after { content: " ✓"; color: var(--good); }
       .plan-item.have { opacity: .75; }
 
@@ -418,6 +455,7 @@
         <button class="mode-btn active" data-mode="counter">Draft</button>
         <button class="mode-btn" data-mode="combo">Combos</button>
         <button class="mode-btn" data-mode="game">Game</button>
+        <button class="mode-btn" data-mode="review">Review</button>
       </nav>
       <div class="auto-box">
         <button id="screen-btn" type="button" title="Share the Dota screen: heroes are read from the top bar. Nothing touches the game.">Read screen</button>
@@ -485,6 +523,9 @@
         <div id="combos-panel"></div>
       </section>
     </div>
+
+    <!-- ===================== REVIEW VIEW (ADR-029) ===================== -->
+    <div id="review-view" hidden></div>
 
     <!-- ===================== GAME VIEW (ADR-026) ===================== -->
     <div id="game-view" hidden></div>
