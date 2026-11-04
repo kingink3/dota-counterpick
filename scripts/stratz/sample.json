@@ -1,0 +1,25 @@
+{
+ "note": "sample: the shape of a parsed match (a public professional player's latest game), split by query complexity",
+ "batches": [
+  {
+   "name": "sample_list",
+   "query": "{ player(steamAccountId: 105248644) { matches(request: {take: 5}) { id startDateTime durationSeconds gameMode lobbyType didRadiantWin parsedDateTime players(steamAccountId: 105248644) { heroId isVictory position kills deaths assists } } } }"
+  },
+  {
+   "name": "sample_summary",
+   "query": "{ player(steamAccountId: 105248644) { matches(request: {take: 1}) { id durationSeconds gameMode lobbyType didRadiantWin startDateTime averageRank bracket firstBloodTime players { playerSlot steamAccountId isRadiant heroId position lane role isVictory kills deaths assists networth goldPerMinute experiencePerMinute numLastHits numDenies imp level item0Id item1Id item2Id item3Id item4Id item5Id neutral0Id stats { networthPerMinute lastHitsPerMinute } } radiantNetworthLeads radiantExperienceLeads } } }"
+  },
+  {
+   "name": "sample_me",
+   "query": "{ player(steamAccountId: 105248644) { matches(request: {take: 1}) { id players(steamAccountId: 105248644) { playerSlot heroId position isRadiant stats { lastHitsPerMinute deniesPerMinute networthPerMinute experiencePerMinute impPerMinute heroDamagePerMinute heroDamageReceivedPerMinute tripsFountainPerMinute actionsPerMinute campStack wards { time type positionX positionY } wardDestruction { time } farmDistributionReport { creepLocation { id count gold xp } neutralLocation { id count gold xp } ancientLocation { id count gold xp } buildings { id count gold xp } other { id count gold xp } buyBackGold abandonGold } heroDamageReport { dealtTotal { physicalDamage magicalDamage pureDamage stunCount stunDuration disableCount disableDuration } receivedTotal { physicalDamage magicalDamage pureDamage } } actionReport { moveToPosition moveToTarget attackPosition attackTarget castPosition castTarget castNoTarget heldPosition pingUsed } } playbackData { purchaseEvents { time itemId } deathEvents { time attacker isFromIllusion target byAbility byItem goldFed xpFed timeDead reliableGold unreliableGold positionX positionY goldLost assist isWardWalkThrough isAttemptTpOut isDieBack isBurst isEngagedOnDeath hasHealAvailable isTracked isFeed } killEvents { time attacker isFromIllusion target byAbility byItem gold xp positionX positionY assist isSolo isGank isInvisible isSmoke isTpRecently isRuneEffected } assistEvents { time attacker target gold xp subTime positionX positionY } itemUsedEvents { time itemId attacker target } abilityUsedEvents { time abilityId attacker target } abilityLearnEvents { time abilityId levelObtained level isUltimate isTalent isMaxLevel } playerUpdateHealthEvents { time hp maxHp mp maxMp } playerUpdateGoldEvents { time gold unreliableGold networth networthDifference } buyBackEvents { time heroId deathTimeRemaining cost } runeEvents { time rune action gold positionX positionY } inventoryEvents { time item0 { itemId charges } item1 { itemId charges } item2 { itemId charges } item3 { itemId charges } item4 { itemId charges } item5 { itemId charges } backPack0 { itemId charges } backPack1 { itemId charges } backPack2 { itemId charges } neutral0 { itemId charges } } } } } } }"
+  },
+  {
+   "name": "sample_positions",
+   "query": "{ player(steamAccountId: 105248644) { matches(request: {take: 1}) { id players { playerSlot playbackData { playerUpdatePositionEvents { time x y } deathEvents { time positionX positionY } } } } } }"
+  },
+  {
+   "name": "sample_map",
+   "query": "{ player(steamAccountId: 105248644) { matches(request: {take: 1}) { id playbackData { towerDeathEvents { time radiant dire } roshanEvents { time hp maxHp createTime x y } } } } }"
+  }
+ ]
+}

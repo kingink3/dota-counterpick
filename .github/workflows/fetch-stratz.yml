@@ -33,7 +33,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Browser access check (simple requests without a preflight; headers only, no secrets printed)
-        if: inputs.dataset == 'review'
+        if: inputs.dataset == 'sample'
         env:
           STRATZ_TOKEN: ${{ secrets.STRATZ_TOKEN }}
         run: |
