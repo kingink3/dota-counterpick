@@ -249,6 +249,21 @@ Tormentor - with a countdown, gold when it is close, green while it is on. Press
 share, set the clock by hand (`12:30`, `-0:45`). The schedule and its patch-note
 sources live in `data/timings.yaml`.
 
+### Item plan and power windows (ADR-027)
+
+Mark the hero you play (★) and your position: the Game tab shows the plan next to the
+timers.
+- **Start / Lane / Core / Late** are the hero's usual items, from OpenDota statistics.
+- **For this draft** holds the engine's counter items, each with its reason. A cheap
+  counter goes into the lane, an expensive one after the first core item. A late item
+  this draft calls for first (BKB vs a disable lineup) moves up into the core.
+- Typical purchase times come with the win rate of fast vs slow timings.
+- **Power windows** compare both lineups' win rate by match length. This is a heuristic.
+- Items in your inventory (bottom HUD, your hero selected) get a ✓.
+
+Data: Actions -> "Fetch OpenDota stats" -> `opendota-raw` branch -> `scripts/build-item-stats.ts`
+-> `data/item-stats.json`.
+
 ## Auto-input: local companion (ADR-013, optional)
 
 Reads **your** hero, game phase, team and match id from Dota 2 Game State

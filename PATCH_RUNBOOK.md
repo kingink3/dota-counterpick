@@ -78,6 +78,17 @@
 8. **Метка патча:** `taxonomy.yaml → meta.patch: "7.xx"` и `meta.reviewed: <дата>`;
    показывать в UI («KB: patch 7.xx») *(сделать)*.
 
+## B2. Статистика сборок (ADR-027), через 2–3 недели после патча
+
+1. Actions → «Fetch OpenDota stats» → Run workflow. Около 10 минут, 4 запроса на героя, сырые данные в ветке `opendota-raw`.
+2. Локально:
+   `git fetch origin opendota-raw && git worktree add /tmp/od origin/opendota-raw` →
+   `npx tsx scripts/build-item-stats.ts --raw /tmp/od --constants <dotaconstants/build>` →
+   коммит `data/item-stats.json`.
+3. Проверка: `npm test` (`test/plan.test.ts` гоняет правила порядка на реальных данных для 5 героев).
+4. STRATZ (ранги и позиции) — Actions → «Fetch STRATZ stats», секрет `STRATZ_TOKEN`. API
+   требует 100 публичных игр на аккаунте владельца токена.
+
 ## C. Чтение экрана (регрессия)
 
 1. **Фикстуры:** `test/fixtures/draft-<res>-pre.png` / `-post.png` + ожидаемые
