@@ -1,0 +1,12 @@
+{
+ "batches": [
+  {
+   "name": "positions",
+   "query": "{ heroStats { stats(bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], groupByPosition: true) { heroId position matchCount winCount } } }"
+  },
+  {
+   "name": "probe_am",
+   "query": "{ heroStats { full: itemFullPurchase(heroId: 1, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount bracketBasicIds position } start: itemStartingPurchase(heroId: 1, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance wasGiven matchCount winCount } boots: itemBootPurchase(heroId: 1, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1]) { itemId instance time matchCount winCount } curve: stats(heroIds: [1], bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], positionIds: [POSITION_1], groupByTime: true) { time position matchCount winCount } } }"
+  }
+ ]
+}
