@@ -267,9 +267,11 @@ The report shows:
 - last hits, networth and XP vs Crusader-Ancient averages for your hero and position;
 - every death (in their power window? alone? with BKB / Blink ready? with a heal? with
   unspent gold?), map and role checks, and the top 10 growth areas;
-- **Battles** (2+ heroes a side): per spell / item — casts, seconds it sat ready and unused
-  (cooldown at your level and mana counted), the longest gap; who your disables went on
-  and whether the target died; front-most / outnumbered / deep deaths (ADR-029b);
+- **Battles** (2+ heroes a side): per spell / item — chances (ready with the mana and
+  usable: an enemy hero in range for spells on enemies, an allied core in range losing HP
+  for spells on allies, your last 5 s for saves on yourself), how many were used / missed,
+  idle seconds; who your disables went on and whether the target died; front-most /
+  outnumbered / deep deaths (ADR-029b);
 - trends across the reviewed matches.
 
 STRATZ does not accept calls from a web page, so the companion forwards them. The token

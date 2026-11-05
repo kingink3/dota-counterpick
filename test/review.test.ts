@@ -127,6 +127,7 @@ test("review on the real STRATZ sample match (when present)", () => {
     assert.ok(r.battles && r.battles.battles.length > 0, "battles found");
     assert.ok(r.battles!.battles.every((b) => (b.allies ?? 2) >= 2 && (b.enemies ?? 2) >= 2), "2+ heroes a side");
     assert.ok(r.battles!.totals.some((u) => u.casts > 0));
+    if (s.health) assert.ok(r.battles!.allyHealth, "allies' HP loaded");
   }
 });
 
