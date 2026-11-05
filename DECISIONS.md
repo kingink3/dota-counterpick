@@ -976,6 +976,20 @@ Start → Lane (до ~10 мин) → Core → For this draft → Late game.
 - В блоке Coach — список английских голосов системы и «Auto (best English)». Auto — «Natural», если есть, иначе Google / en-US. Плюс скорость речи 0,8–1,5. Голос сохраняется по имени; список обновляется по `voiceschanged`.
 - Если английских голосов нет, показывается подсказка: Windows → Settings → Time & language → Speech → Add voices.
 
+## ADR-032 — Инструменты героев заполнены; проверка по способностям (2026-11-05)
+
+- **Повод:** у 21 из 127 героев не было раздела `tool` в `hero_tags`: Juggernaut, Terrorblade, Phantom Lancer, Morphling, Ursa, Wraith King, Chaos Knight, Lone Druid, Riki, Arc Warden, Meepo, Alchemist, Muerta, Storm Spirit, Pangolier, Centaur, Bristleback, Lycan, Broodmother, Visage, Nature's Prophet. Из-за этого падал «План матча» (вкладка Draft оставалась пустой), а сами герои были недооценены: как враги — их контроль и взрывной урон не учитывались; как пики — не получали очков за то, что приносят.
+- **Решение:**
+  - всем 21 заданы инструменты — экспертные веса с комментарием о механике (Centaur: Hoof Stomp → `lockdown_early`, Stampede → `ally_save`; Riki: Smoke Screen → `silence`; Storm: Vortex → `lockdown_early`, Ball Lightning → `pickoff`; …);
+  - тест: у каждого героя непустой `tool`.
+- **Проверка** `scripts/audit-tools.ts --constants <dotaconstants>`: способности героя (описание, «пробивает BKB») против его инструментов — контроль, контроль сквозь BKB, сайленс, break, снижение лечения и брони, дизарм, убийство иллюзий.
+  - Первый прогон: 40 героев с расхождениями. У 26 дописаны реальные пропуски: Sand King — Burrowstrike, Sven — Storm Hammer, Invoker — Cold Snap / Deafening Blast, Nyx — Impale, Weaver — The Swarm, Slark — Pounce, Medusa — Stone Gaze сквозь BKB, …
+  - Остальные 16 — совпадение текста, а не механики. Они разобраны и записаны в `REVIEWED` с причиной.
+  - Запускать после патча: новые расхождения появятся в выводе.
+- **Калибровочные тесты** сдвинулись по делу:
+  - против Lifestealer + Witch Doctor поднялся Chaos Knight (Chaos Bolt прерывает Death Ward) — Medusa в топ-8 вместо топ-5;
+  - против Medusa в топ-3 вошёл Invoker (дизарм Deafening Blast).
+
 ---
 
 ## Дорожная карта (фазы)

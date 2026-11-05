@@ -739,61 +739,61 @@ hero_tags:
   #  POSITION 1 - CARRY
   # ===========================================================================
   anti_mage:       { pos: [1], reliance: {mobility_dependent: 0.8, greedy_farmer: 0.7, attack_reliant: 0.6, bkb_reliant: 1.0}, tool: {mana_burn: 1.0}, resist: {magic_resistance: 0.8} }  # high magic resist - NOT magic_burst
-  juggernaut:      { pos: [1], reliance: {attack_reliant: 0.7, spell_reliant: 0.4, bkb_reliant: 0.7}, resist: {self_debuff_immunity: 0.7} }
+  juggernaut:      {pos: [1], reliance: {attack_reliant: 0.7, spell_reliant: 0.4, bkb_reliant: 0.7}, tool: {physical_burst: 0.8, pickoff: 0.5, aoe_clear: 0.3}, resist: {self_debuff_immunity: 0.7} }   # tools: Omnislash single-target burst; Blade Fury clears
   phantom_assassin: { pos: [1], reliance: {evasion: 1.0, attack_reliant: 0.9, melee_commit: 0.7, bkb_reliant: 1.0, dispellable_buffs: 0.3}, tool: {physical_burst: 0.9, true_strike: 0.7, break: 0.2}, resist: {evades_attacks: 0.6} }
   faceless_void:   { pos: [1], reliance: {dodge_backtrack: 0.9, attack_reliant: 0.7, melee_commit: 0.6, bkb_reliant: 0.8}, tool: {bkb_piercing_disable: 1.0} }   # backtrack = dodge, NOT evasion (ADR-010); Chrono = bkb-pierce. true_strike intentionally NOT applicable
   spectre:         { pos: [1], reliance: {greedy_farmer: 0.8, melee_commit: 0.3, key_passive: 0.6}, tool: {pickoff: 0.4}, resist: {passive_damage_reduction: 0.5} }   # tanky; break removes Dispersion + Desolate
-  medusa:          { pos: [1,2], reliance: {mana_dependent: 1.0, greedy_farmer: 0.8, attack_reliant: 0.7, low_mobility: 0.6, low_armor: 0.3}, tool: {aoe_clear: 0.6}, resist: {mana_shield: 1.0} }
-  terrorblade:     { pos: [1], reliance: {illusion_based: 0.6, greedy_farmer: 0.6, attack_reliant: 0.6, low_armor: 0.4, magic_burst_vulnerable: 0.3} }
-  phantom_lancer:  { pos: [1], reliance: {illusion_based: 1.0, mana_dependent: 0.4, greedy_farmer: 0.6, melee_commit: 0.4} }
+  medusa:          { pos: [1,2], reliance: {mana_dependent: 1.0, greedy_farmer: 0.8, attack_reliant: 0.7, low_mobility: 0.6, low_armor: 0.3}, tool: {aoe_clear: 0.6, bkb_piercing_disable: 0.5, lockdown_root: 0.4}, resist: {mana_shield: 1.0} }
+  terrorblade:     {pos: [1], reliance: {illusion_based: 0.6, greedy_farmer: 0.6, attack_reliant: 0.6, low_armor: 0.4, magic_burst_vulnerable: 0.3}, tool: {physical_burst: 0.7, out_scales: 0.8, lockdown_early: 0.3} }   # tools: Metamorphosis / Reflection illusions hit hard; scales late
+  phantom_lancer:  {pos: [1], reliance: {illusion_based: 1.0, mana_dependent: 0.4, greedy_farmer: 0.6, melee_commit: 0.4}, tool: {out_scales: 0.8, physical_burst: 0.5} }   # tools: illusion army scales; Spirit Lance
   naga_siren:      { pos: [1], reliance: {illusion_based: 0.9, greedy_farmer: 0.7}, tool: {bkb_piercing_disable: 0.8, aoe_clear: 0.4, break: 0.2} }
-  morphling:       { pos: [1,2], reliance: {attack_reliant: 0.6, mobility_dependent: 0.6, spell_reliant: 0.5, mana_dependent: 0.4, magic_burst_vulnerable: 0.4} }
-  slark:           { pos: [1], reliance: {mobility_dependent: 0.6, snowball_dependent: 0.7, mana_dependent: 0.3, bkb_reliant: 0.6, sustain_dependent: 0.5}, tool: {healing_reduction: 0.4}, resist: {self_dispel: 0.8} }   # Shadow Dance = HIDDEN, not invis (special_cases)
-  sven:            { pos: [1], reliance: {attack_reliant: 0.8, melee_commit: 0.7, low_mobility: 0.5, snowball_dependent: 0.4, bkb_reliant: 1.0}, tool: {physical_burst: 0.9, aoe_clear: 0.6} }
-  luna:            { pos: [1], reliance: {attack_reliant: 0.7, low_armor: 0.4, squishy_to_burst: 0.5, low_mobility: 0.5}, tool: {physical_burst: 0.6, true_strike: 0.3, aoe_clear: 0.6} }
+  morphling:       {pos: [1,2], reliance: {attack_reliant: 0.6, mobility_dependent: 0.6, spell_reliant: 0.5, mana_dependent: 0.4, magic_burst_vulnerable: 0.4}, tool: {physical_burst: 0.6, out_scales: 0.6, interrupt: 0.4, magic_burst: 0.3} }   # tools: Attribute Shift burst; Adaptive Strike (str) stuns
+  slark:           { pos: [1], reliance: {mobility_dependent: 0.6, snowball_dependent: 0.7, mana_dependent: 0.3, bkb_reliant: 0.6, sustain_dependent: 0.5}, tool: {healing_reduction: 0.4, lockdown_root: 0.6}, resist: {self_dispel: 0.8} }   # Shadow Dance = HIDDEN, not invis (special_cases)
+  sven:            { pos: [1], reliance: {attack_reliant: 0.8, melee_commit: 0.7, low_mobility: 0.5, snowball_dependent: 0.4, bkb_reliant: 1.0}, tool: {physical_burst: 0.9, aoe_clear: 0.6, lockdown_early: 0.6} }
+  luna:            { pos: [1], reliance: {attack_reliant: 0.7, low_armor: 0.4, squishy_to_burst: 0.5, low_mobility: 0.5}, tool: {physical_burst: 0.6, true_strike: 0.3, aoe_clear: 0.6, interrupt: 0.4} }
   drow_ranger:     { pos: [1], reliance: {attack_reliant: 0.8, magic_burst_vulnerable: 0.7, low_mobility: 0.6, low_armor: 0.3}, tool: {silence: 0.6, physical_burst: 0.5, healing_reduction: 0.2, true_strike: 0.5} }
-  sniper:          { pos: [1,2], reliance: {attack_reliant: 0.8, magic_burst_vulnerable: 0.8, squishy_to_burst: 0.7, low_mobility: 0.5, low_armor: 0.4}, tool: {true_strike: 0.2} }
+  sniper:          { pos: [1,2], reliance: {attack_reliant: 0.8, magic_burst_vulnerable: 0.8, squishy_to_burst: 0.7, low_mobility: 0.5, low_armor: 0.4}, tool: {true_strike: 0.2, interrupt: 0.4, disarm: 0.4} }
   gyrocopter:      { pos: [1], reliance: {attack_reliant: 0.7, squishy_to_burst: 0.5, dispellable_buffs: 0.3}, tool: {aoe_clear: 0.5} }
   lifestealer:     { pos: [1], reliance: {sustain_dependent: 0.7, attack_reliant: 0.6, melee_commit: 0.6, spell_reliant: 0.3, bkb_reliant: 1.0}, tool: {health_based_damage: 0.7, creep_execute: 0.4}, resist: {self_debuff_immunity: 0.8} }   # Rage = built-in BKB
   troll_warlord:   { pos: [1], reliance: {attack_reliant: 0.9, low_mobility: 0.4, bkb_reliant: 1.0, pickoff_reliant: 0.5}, tool: {bkb_piercing_disable: 0.3}, resist: {cheat_death: 0.5} }
-  ursa:            { pos: [1], reliance: {attack_reliant: 0.8, melee_commit: 0.8, low_mobility: 0.5, snowball_dependent: 0.6, bkb_reliant: 1.0, dispellable_buffs: 0.5}, resist: {active_damage_reduction: 0.6, self_dispel: 0.5} }
-  wraith_king:     { pos: [1], reliance: {sustain_dependent: 0.6, attack_reliant: 0.7, melee_commit: 0.6, low_mobility: 0.6, summon_clearable: 0.4, bkb_reliant: 0.8, mana_dependent: 0.4}, resist: {cheat_death: 0.7} }
-  chaos_knight:    { pos: [1], reliance: {illusion_based: 0.8, melee_commit: 0.6, mana_dependent: 0.3} }
-  lone_druid:      { pos: [1], reliance: {summon_tanky: 0.9, greedy_farmer: 0.5, attack_reliant: 0.5} }   # Bear is NOT AoE-cleared
-  monkey_king:     { pos: [1,3], reliance: {attack_reliant: 0.7, melee_commit: 0.5, dispellable_buffs: 0.4}, tool: {true_strike: 0.4} }
+  ursa:            {pos: [1], reliance: {attack_reliant: 0.8, melee_commit: 0.8, low_mobility: 0.5, snowball_dependent: 0.6, bkb_reliant: 1.0, dispellable_buffs: 0.5}, tool: {physical_burst: 0.9, pickoff: 0.7, early_pressure: 0.5}, resist: {active_damage_reduction: 0.6, self_dispel: 0.5} }   # tools: Fury Swipes burst, early Roshan
+  wraith_king:     {pos: [1], reliance: {sustain_dependent: 0.6, attack_reliant: 0.7, melee_commit: 0.6, low_mobility: 0.6, summon_clearable: 0.4, bkb_reliant: 0.8, mana_dependent: 0.4}, tool: {lockdown_early: 0.5, physical_burst: 0.5, interrupt: 0.4}, resist: {cheat_death: 0.7} }   # tools: Wraithfire Blast stun
+  chaos_knight:    {pos: [1], reliance: {illusion_based: 0.8, melee_commit: 0.6, mana_dependent: 0.3}, tool: {lockdown_early: 0.7, physical_burst: 0.7, pickoff: 0.6, interrupt: 0.5, armor_reduction: 0.4} }   # tools: Chaos Bolt stun, Reality Rift pull, Phantasm crits
+  lone_druid:      {pos: [1], reliance: {summon_tanky: 0.9, greedy_farmer: 0.5, attack_reliant: 0.5}, tool: {early_pressure: 0.6, out_scales: 0.6, physical_burst: 0.4, lockdown_root: 0.3, bkb_piercing_disable: 0.3} }   # Bear is NOT AoE-cleared  # tools: Bear: early pressure, root on attack (approx.)
+  monkey_king:     { pos: [1,3], reliance: {attack_reliant: 0.7, melee_commit: 0.5, dispellable_buffs: 0.4}, tool: {true_strike: 0.4, lockdown_early: 0.5} }
   clinkz:          { pos: [1,2], reliance: {relies_on_invisibility: 0.8, attack_reliant: 0.7, squishy_to_burst: 0.6, sustain_dependent: 0.4}, tool: {creep_execute: 0.5} }
-  riki:            { pos: [1,4], reliance: {relies_on_invisibility: 1.0, melee_commit: 0.6, attack_reliant: 0.6, squishy_to_burst: 0.6, pickoff_reliant: 0.4} }
-  bloodseeker:     { pos: [1,3], reliance: {snowball_dependent: 0.5, attack_reliant: 0.5, melee_commit: 0.5}, tool: {pickoff: 0.6, healing_reduction: 0.5, health_based_damage: 0.4} }
+  riki:            {pos: [1,4], reliance: {relies_on_invisibility: 1.0, melee_commit: 0.6, attack_reliant: 0.6, squishy_to_burst: 0.6, pickoff_reliant: 0.4}, tool: {silence: 0.7, pickoff: 0.7, physical_burst: 0.4} }   # tools: Smoke Screen silence + miss; Blink Strike pickoff
+  bloodseeker:     { pos: [1,3], reliance: {snowball_dependent: 0.5, attack_reliant: 0.5, melee_commit: 0.5}, tool: {pickoff: 0.6, healing_reduction: 0.5, health_based_damage: 0.4, silence: 0.5} }
   razor:           { pos: [1,2,3], reliance: {attack_reliant: 0.6, mobility_dependent: 0.4}, tool: {armor_reduction: 0.4, aoe_clear: 0.4} }
-  weaver:          { pos: [1], reliance: {relies_on_invisibility: 0.6, mobility_dependent: 0.7, attack_reliant: 0.5, snowball_dependent: 0.4, squishy_to_burst: 0.4}, tool: {ally_save: 0.3}, resist: {cheat_death: 0.6, self_dispel: 0.4} }
-  arc_warden:      { pos: [1,2], reliance: {greedy_farmer: 0.7, mobility_dependent: 0.5, attack_reliant: 0.5} }   # Tempest Double = a unit, NOT an illusion
-  meepo:           { pos: [1,2], reliance: {magic_burst_vulnerable: 0.7, greedy_farmer: 0.6, mana_dependent: 0.3, squishy_to_burst: 0.6} }   # clones = real units, AoE-magic hits all; NOT illusion_based
-  alchemist:       { pos: [1,2], reliance: {sustain_dependent: 0.5, greedy_farmer: 0.6, attack_reliant: 0.5, bkb_reliant: 0.7} }
+  weaver:          { pos: [1], reliance: {relies_on_invisibility: 0.6, mobility_dependent: 0.7, attack_reliant: 0.5, snowball_dependent: 0.4, squishy_to_burst: 0.4}, tool: {ally_save: 0.3, armor_reduction: 0.6}, resist: {cheat_death: 0.6, self_dispel: 0.4} }
+  arc_warden:      {pos: [1,2], reliance: {greedy_farmer: 0.7, mobility_dependent: 0.5, attack_reliant: 0.5}, tool: {out_scales: 0.7, magic_damage: 0.4, ally_save: 0.3} }   # Tempest Double = a unit, NOT an illusion  # tools: Tempest Double scales; Spark Wraith magic; Magnetic Field protects allies
+  meepo:           {pos: [1,2], reliance: {magic_burst_vulnerable: 0.7, greedy_farmer: 0.6, mana_dependent: 0.3, squishy_to_burst: 0.6}, tool: {pickoff: 0.8, lockdown_root: 0.7, magic_burst: 0.5, early_pressure: 0.5} }   # clones = real units, AoE-magic hits all; NOT illusion_based  # tools: Earthbind net (root) + Poof burst
+  alchemist:       {pos: [1,2], reliance: {sustain_dependent: 0.5, greedy_farmer: 0.6, attack_reliant: 0.5, bkb_reliant: 0.7}, tool: {lockdown_early: 0.5, armor_reduction: 0.5, out_scales: 0.5} }   # tools: Unstable Concoction stun; Acid Spray armor reduction
   templar_assassin: { pos: [2,1], reliance: {attack_reliant: 0.6, magic_burst_vulnerable: 0.3}, tool: {armor_reduction: 0.4}, resist: {active_damage_reduction: 0.6} }   # Refraction blocks instances
-  muerta:          { pos: [1,2], reliance: {attack_reliant: 0.6, magic_burst_vulnerable: 0.4, low_mobility: 0.5} }   # flex carry
+  muerta:          {pos: [1,2], reliance: {attack_reliant: 0.6, magic_burst_vulnerable: 0.4, low_mobility: 0.5}, tool: {magic_damage: 0.6, lockdown_early: 0.5, out_scales: 0.5, silence: 0.3} }   # flex carry  # tools: Dead Shot fear; Pierce the Veil = magic attacks
 
   # ===========================================================================
   #  POSITION 2 - MID
   # ===========================================================================
-  invoker:         { pos: [2], reliance: {mana_dependent: 0.7, spell_reliant: 0.8, squishy_to_burst: 0.5}, tool: {magic_burst: 0.7, aoe_clear: 0.4, purge: 0.3, mana_burn: 0.3} }
-  storm_spirit:    { pos: [2], reliance: {mana_dependent: 1.0, mobility_dependent: 0.9, snowball_dependent: 0.6, spell_reliant: 0.5, bkb_reliant: 0.6} }
+  invoker:         { pos: [2], reliance: {mana_dependent: 0.7, spell_reliant: 0.8, squishy_to_burst: 0.5}, tool: {magic_burst: 0.7, aoe_clear: 0.4, purge: 0.3, mana_burn: 0.3, lockdown_early: 0.6, disarm: 0.5, interrupt: 0.5} }
+  storm_spirit:    {pos: [2], reliance: {mana_dependent: 1.0, mobility_dependent: 0.9, snowball_dependent: 0.6, spell_reliant: 0.5, bkb_reliant: 0.6}, tool: {pickoff: 0.7, lockdown_early: 0.6, magic_burst: 0.6, interrupt: 0.4} }   # tools: Electric Vortex pull; Ball Lightning pickoff; Overload burst
   queen_of_pain:   { pos: [2], reliance: {mobility_dependent: 0.7, magic_burst_vulnerable: 0.4, spell_reliant: 0.6}, tool: {magic_burst: 0.7, silence: 0.5, aoe_clear: 0.4} }
   puck:            { pos: [2], reliance: {mobility_dependent: 0.9, magic_burst_vulnerable: 0.4, spell_reliant: 0.6}, tool: {magic_burst: 0.5, silence: 0.4} }
   shadow_fiend:    { pos: [2,1], reliance: {attack_reliant: 0.5, magic_burst_vulnerable: 0.6, squishy_to_burst: 0.6, low_mobility: 0.6, spell_reliant: 0.5}, tool: {aoe_clear: 0.4} }
-  void_spirit:     { pos: [2], reliance: {mobility_dependent: 0.8, spell_reliant: 0.5}, tool: {magic_burst: 0.5, true_strike: 0.3} }
+  void_spirit:     { pos: [2], reliance: {mobility_dependent: 0.8, spell_reliant: 0.5}, tool: {magic_burst: 0.5, true_strike: 0.3, lockdown_early: 0.5} }
   ember_spirit:    { pos: [2,1], reliance: {mobility_dependent: 0.8, attack_reliant: 0.4, dispellable_buffs: 0.6}, tool: {bkb_piercing_disable: 0.4, aoe_clear: 0.4} }
   tinker:          { pos: [2], reliance: {spell_reliant: 0.9, mobility_dependent: 0.7, mana_dependent: 0.5, squishy_to_burst: 0.7, magic_burst_vulnerable: 0.5, low_armor: 0.3}, tool: {magic_burst: 0.7, aoe_clear: 0.5} }
   death_prophet:   { pos: [2,3], reliance: {spell_reliant: 0.6, low_mobility: 0.5, magic_burst_vulnerable: 0.4}, tool: {aoe_clear: 0.3} }
   outworld_destroyer: { pos: [2], reliance: {mana_dependent: 0.8, spell_reliant: 0.6, magic_burst_vulnerable: 0.3}, tool: {ally_save: 0.5} }
-  leshrac:         { pos: [2,3], reliance: {spell_reliant: 0.7, squishy_to_burst: 0.5, magic_burst_vulnerable: 0.5}, tool: {magic_burst: 0.6, aoe_clear: 0.6} }
-  pugna:           { pos: [2,4], reliance: {spell_reliant: 0.7, squishy_to_burst: 0.7, low_mobility: 0.6}, tool: {magic_burst: 0.6} }
+  leshrac:         { pos: [2,3], reliance: {spell_reliant: 0.7, squishy_to_burst: 0.5, magic_burst_vulnerable: 0.5}, tool: {magic_burst: 0.6, aoe_clear: 0.6, lockdown_early: 0.5} }
+  pugna:           { pos: [2,4], reliance: {spell_reliant: 0.7, squishy_to_burst: 0.7, low_mobility: 0.6}, tool: {magic_burst: 0.6, disarm: 0.4} }
   zeus:            { pos: [2,4], reliance: {squishy_to_burst: 0.7, low_mobility: 0.7, spell_reliant: 0.8, magic_burst_vulnerable: 0.5}, tool: {magic_burst: 0.8, detection: 0.5, health_based_damage: 0.3} }
-  lina:            { pos: [2,4], reliance: {squishy_to_burst: 0.6, low_mobility: 0.5, spell_reliant: 0.7, attack_reliant: 0.4, low_armor: 0.3, pickoff_reliant: 0.3}, tool: {magic_burst: 0.9, aoe_clear: 0.4} }
+  lina:            { pos: [2,4], reliance: {squishy_to_burst: 0.6, low_mobility: 0.5, spell_reliant: 0.7, attack_reliant: 0.4, low_armor: 0.3, pickoff_reliant: 0.3}, tool: {magic_burst: 0.9, aoe_clear: 0.4, lockdown_early: 0.5} }
   kunkka:          { pos: [2,3,1], reliance: {spell_reliant: 0.6, attack_reliant: 0.4}, tool: {aoe_clear: 0.4} }
   dragon_knight:   { pos: [2,3], reliance: {sustain_dependent: 0.5, attack_reliant: 0.5, low_mobility: 0.5, high_armor: 0.7, bkb_reliant: 0.6}, tool: {armor_reduction: 0.3} }   # Dragon Blood = lots of armor
   viper:           { pos: [2,1,3], reliance: {attack_reliant: 0.6, low_mobility: 0.5}, tool: {break: 0.4}, resist: {magic_resistance: 0.5} }
   huskar:          { pos: [2,1], reliance: {sustain_dependent: 1.0, snowball_dependent: 0.7, attack_reliant: 0.5, magic_burst_vulnerable: 0.5}, tool: {health_based_damage: 0.5}, resist: {magic_resistance: 0.4, no_mana_pool: 1.0} }
-  pangolier:       { pos: [2,3], reliance: {mobility_dependent: 0.7, spell_reliant: 0.5}, resist: {self_debuff_immunity: 0.6} }
+  pangolier:       {pos: [2,3], reliance: {mobility_dependent: 0.7, spell_reliant: 0.5}, tool: {lockdown_early: 0.6, aoe_clear: 0.4, magic_burst: 0.4}, resist: {self_debuff_immunity: 0.6} }   # tools: Rolling Thunder stun; Swashbuckle
   windranger:      { pos: [2,4], reliance: {evasion: 0.5, mobility_dependent: 0.5, spell_reliant: 0.5, dispellable_buffs: 0.5}, tool: {true_strike: 0.6, magic_burst: 0.5}, resist: {evades_attacks: 0.4} }
   necrophos:       { pos: [2,3], reliance: {sustain_dependent: 0.8, low_mobility: 0.6, magic_burst_vulnerable: 0.3, pickoff_reliant: 0.4}, tool: {healing_reduction: 0.6, detection: 0.3, health_based_damage: 0.6} }
 
@@ -801,9 +801,9 @@ hero_tags:
   #  POSITION 3 - OFFLANE
   # ===========================================================================
   axe:             { pos: [3], reliance: {melee_commit: 0.6, low_mobility: 0.5, spell_reliant: 0.4}, tool: {bkb_piercing_disable: 0.8, health_based_damage: 0.4} }   # Berserker's Call pierces debuff immunity; tank, few vulnerabilities
-  centaur_warrunner: { pos: [3], reliance: {melee_commit: 0.5, low_mobility: 0.4} }
-  tidehunter:      { pos: [3], reliance: {low_mobility: 0.5, spell_reliant: 0.5, high_armor: 0.6, bkb_reliant: 0.4}, tool: {true_strike: 0.2}, resist: {physical_damage_block: 0.4, self_dispel: 0.4} }   # Kraken Shell + armor
-  bristleback:     { pos: [3], reliance: {sustain_dependent: 0.8, low_mobility: 0.5, high_armor: 0.7, key_passive: 0.9}, resist: {passive_damage_reduction: 0.8} }   # Bristleback passive cuts ALL damage from behind (resist); break turns it and Warpath off
+  centaur_warrunner: {pos: [3], reliance: {melee_commit: 0.5, low_mobility: 0.4}, tool: {lockdown_early: 0.7, ally_save: 0.6, interrupt: 0.5, magic_damage: 0.3} }   # tools: Hoof Stomp stun; Stampede saves the team
+  tidehunter:      { pos: [3], reliance: {low_mobility: 0.5, spell_reliant: 0.5, high_armor: 0.6, bkb_reliant: 0.4}, tool: {true_strike: 0.2, lockdown_early: 0.6, interrupt: 0.5}, resist: {physical_damage_block: 0.4, self_dispel: 0.4} }   # Kraken Shell + armor
+  bristleback:     {pos: [3], reliance: {sustain_dependent: 0.8, low_mobility: 0.5, high_armor: 0.7, key_passive: 0.9}, tool: {armor_reduction: 0.6, physical_burst: 0.4}, resist: {passive_damage_reduction: 0.8} }   # Bristleback passive cuts ALL damage from behind (resist); break turns it and Warpath off  # tools: Viscous Nasal Goo armor reduction; Quill Spray stacks
   underlord:       { pos: [3], reliance: {spell_reliant: 0.5, low_mobility: 0.5, high_armor: 0.4}, tool: {aoe_clear: 0.6} }
   mars:            { pos: [3], reliance: {melee_commit: 0.5, spell_reliant: 0.5}, tool: {bkb_piercing_disable: 0.4}, resist: {physical_damage_block: 0.5} }
   doom:            { pos: [3,2], reliance: {melee_commit: 0.4, mana_dependent: 0.3, low_mobility: 0.4, pickoff_reliant: 0.3}, tool: {break: 1.0, bkb_piercing_disable: 1.0, health_based_damage: 0.4, creep_execute: 0.6, healing_reduction: 0.4} }
@@ -811,17 +811,17 @@ hero_tags:
   beastmaster:     { pos: [3], reliance: {summon_clearable: 0.6, low_mobility: 0.4}, tool: {bkb_piercing_disable: 0.9, detection: 0.5} }
   timbersaw:       { pos: [3], reliance: {spell_reliant: 0.6, mana_dependent: 0.4, magic_burst_vulnerable: 0.5, high_armor: 0.9, key_passive: 1.0}, tool: {aoe_clear: 0.5} }   # Reactive Armor = stacks armor; bring magic / break it
   night_stalker:   { pos: [3,1], reliance: {snowball_dependent: 0.7, attack_reliant: 0.5, melee_commit: 0.5}, tool: {silence: 0.6, creep_execute: 0.4} }
-  slardar:         { pos: [3,4], reliance: {melee_commit: 0.5, low_mobility: 0.4}, tool: {detection: 0.7, armor_reduction: 0.9} }
+  slardar:         { pos: [3,4], reliance: {melee_commit: 0.5, low_mobility: 0.4}, tool: {detection: 0.7, armor_reduction: 0.9, lockdown_early: 0.5} }
   brewmaster:      { pos: [3], reliance: {evasion: 0.6, melee_commit: 0.5, bkb_reliant: 0.6}, tool: {bkb_piercing_disable: 0.5, purge: 0.3, illusion_execute: 0.5} }
   legion_commander: { pos: [3], reliance: {melee_commit: 0.7, low_mobility: 0.5, bkb_reliant: 0.7, pickoff_reliant: 0.8}, tool: {bkb_piercing_disable: 0.8}, resist: {self_dispel: 0.4} }
   magnus:          { pos: [3,2], reliance: {spell_reliant: 0.6, low_mobility: 0.5}, tool: {bkb_piercing_disable: 0.7, aoe_clear: 0.4} }
   primal_beast:    { pos: [3], reliance: {melee_commit: 0.6, spell_reliant: 0.4, dispellable_buffs: 0.3}, tool: {bkb_piercing_disable: 0.5} }
-  lycan:           { pos: [3,1], reliance: {summon_clearable: 0.5, snowball_dependent: 0.6, attack_reliant: 0.5, bkb_reliant: 0.6} }
-  broodmother:     { pos: [3,1], reliance: {summon_clearable: 0.9, snowball_dependent: 0.6, sustain_dependent: 0.5, melee_commit: 0.4} }
-  sand_king:       { pos: [3,4], reliance: {channeling_ultimate: 0.7, relies_on_invisibility: 0.3, spell_reliant: 0.5}, tool: {magic_burst: 0.6, aoe_clear: 0.3, true_strike: 0.2} }
+  lycan:           {pos: [3,1], reliance: {summon_clearable: 0.5, snowball_dependent: 0.6, attack_reliant: 0.5, bkb_reliant: 0.6}, tool: {early_pressure: 0.8, pickoff: 0.5, physical_burst: 0.5, armor_reduction: 0.3} }   # tools: Shapeshift ganks / push
+  broodmother:     {pos: [3,1], reliance: {summon_clearable: 0.9, snowball_dependent: 0.6, sustain_dependent: 0.5, melee_commit: 0.4}, tool: {early_pressure: 0.7, pickoff: 0.6, lockdown_root: 0.4} }   # tools: Spinner's Snare root; spiderlings pressure
+  sand_king:       { pos: [3,4], reliance: {channeling_ultimate: 0.7, relies_on_invisibility: 0.3, spell_reliant: 0.5}, tool: {magic_burst: 0.6, aoe_clear: 0.3, true_strike: 0.2, lockdown_early: 0.7, interrupt: 0.4} }
   enigma:          { pos: [3,4], reliance: {summon_clearable: 0.6, channeling_ultimate: 1.0, low_mobility: 0.5}, tool: {aoe_clear: 0.7, bkb_piercing_disable: 0.9, health_based_damage: 0.5} }
-  visage:          { pos: [3,4], reliance: {summon_clearable: 0.8, low_mobility: 0.4}, resist: {passive_damage_reduction: 0.6} }
-  natures_prophet: { pos: [3,1,4], reliance: {summon_clearable: 0.5, mobility_dependent: 0.5} }
+  visage:          {pos: [3,4], reliance: {summon_clearable: 0.8, low_mobility: 0.4}, tool: {lockdown_early: 0.5, magic_burst: 0.5, pickoff: 0.4}, resist: {passive_damage_reduction: 0.6} }   # tools: Familiars' Stone Form stun; Soul Assumption
+  natures_prophet: {pos: [3,1,4], reliance: {summon_clearable: 0.5, mobility_dependent: 0.5}, tool: {early_pressure: 0.8, lockdown_root: 0.5, pickoff: 0.4} }   # tools: Sprout traps; global teleport pressure
   abaddon:         { pos: [3,4,5], reliance: {sustain_dependent: 0.6, high_armor: 0.4}, tool: {healing_reduction: 0.4, ally_save: 0.5}, resist: {cheat_death: 0.8, self_dispel: 0.6} }   # dispel-heavy; Aphotic Shield + armor
   undying:         { pos: [3,4], reliance: {sustain_dependent: 0.6, summon_clearable: 0.3}, tool: {ally_save: 0.3} }
   pudge:           { pos: [3,4], reliance: {low_mobility: 0.4, spell_reliant: 0.4, pickoff_reliant: 0.4}, tool: {pickoff: 0.7, illusion_execute: 0.3, creep_execute: 0.3, bkb_piercing_disable: 0.5, healing_reduction: 0.2}, resist: {active_damage_reduction: 0.4} }   # flex off/support
@@ -834,10 +834,10 @@ hero_tags:
   lion:            { pos: [4,5], reliance: {squishy_to_burst: 0.7, low_mobility: 0.7, spell_reliant: 0.7, pickoff_reliant: 0.3}, tool: {lockdown_early: 0.8, magic_burst: 0.7, mana_burn: 0.5, illusion_execute: 0.5} }   # Earth Spike / Hex: hard disables, but not through debuff immunity
   silencer:        { pos: [4,5], reliance: {low_mobility: 0.6, squishy_to_burst: 0.5, attack_reliant: 0.3}, tool: {silence: 1.0, bkb_piercing_disable: 0.6, mana_burn: 0.3} }
   earthshaker:     { pos: [4,5], reliance: {spell_reliant: 0.7, mobility_dependent: 0.5, squishy_to_burst: 0.4}, tool: {aoe_clear: 0.9, bkb_piercing_disable: 0.4} }   # Blink-initiation: root/lock him before the jump
-  ancient_apparition: { pos: [4,5], reliance: {low_mobility: 0.8, squishy_to_burst: 0.7, spell_reliant: 0.6}, tool: {healing_reduction: 1.0, health_based_damage: 0.4} }
+  ancient_apparition: { pos: [4,5], reliance: {low_mobility: 0.8, squishy_to_burst: 0.7, spell_reliant: 0.6}, tool: {healing_reduction: 1.0, health_based_damage: 0.4, lockdown_early: 0.4} }
   batrider:        { pos: [3,4], reliance: {mobility_dependent: 0.6, spell_reliant: 0.6, squishy_to_burst: 0.4}, tool: {lockdown_root: 0.9, bkb_piercing_disable: 0.7} }
   shadow_shaman:   { pos: [4,5], reliance: {channeling_ultimate: 0.6, low_mobility: 0.8, squishy_to_burst: 0.6, spell_reliant: 0.6}, tool: {lockdown_root: 0.8, bkb_piercing_disable: 0.4, illusion_execute: 0.5} }   # Shackles is a channel
-  crystal_maiden:  { pos: [5], reliance: {channeling_ultimate: 0.8, low_mobility: 0.9, squishy_to_burst: 0.8, magic_burst_vulnerable: 0.5}, tool: {aoe_clear: 0.4, creep_execute: 0.3} }   # Freezing Field channel
+  crystal_maiden:  { pos: [5], reliance: {channeling_ultimate: 0.8, low_mobility: 0.9, squishy_to_burst: 0.8, magic_burst_vulnerable: 0.5}, tool: {aoe_clear: 0.4, creep_execute: 0.3, lockdown_root: 0.6} }   # Freezing Field channel
   bane:            { pos: [4,5], reliance: {channeling_ultimate: 0.7, low_mobility: 0.6, squishy_to_burst: 0.5, spell_reliant: 0.6, pickoff_reliant: 0.4}, tool: {bkb_piercing_disable: 0.7, disarm: 0.6, mana_burn: 0.3, ally_save: 0.3} }   # Fiend's Grip channel
   vengeful_spirit: { pos: [4,5], reliance: {squishy_to_burst: 0.5, low_mobility: 0.4, spell_reliant: 0.5}, tool: {armor_reduction: 0.8, bkb_piercing_disable: 0.5, ally_save: 0.4} }
   bounty_hunter:   { pos: [4], reliance: {relies_on_invisibility: 0.7, pickoff_reliant: 0.4}, tool: {detection: 0.6} }
@@ -865,15 +865,15 @@ hero_tags:
   mirana:          { pos: [4,2], reliance: {squishy_to_burst: 0.6, mobility_dependent: 0.6, relies_on_invisibility: 0.4, spell_reliant: 0.5}, tool: {pickoff: 0.6, lockdown_early: 0.5, creep_execute: 0.3} }   # Leap; Moonlight Shadow
   ogre_magi:       { pos: [5,4], reliance: {low_mobility: 0.6, spell_reliant: 0.5}, tool: {lockdown_early: 0.6, interrupt: 0.5} }
   omniknight:      { pos: [5,4,3], reliance: {melee_commit: 0.5, low_mobility: 0.6, spell_reliant: 0.6, dispellable_buffs: 0.3}, tool: {ally_save: 0.6}, resist: {self_debuff_immunity: 0.5, cheat_death: 0.4} }   # Repel = debuff immunity, Guardian Angel = save (resist, ADR-020)
-  oracle:          { pos: [5], reliance: {squishy_to_burst: 0.7, low_mobility: 0.5, spell_reliant: 0.7}, tool: {lockdown_root: 0.5, purge: 0.6, ally_save: 0.8}, resist: {cheat_death: 0.5} }   # Fortune's End root
+  oracle:          { pos: [5], reliance: {squishy_to_burst: 0.7, low_mobility: 0.5, spell_reliant: 0.7}, tool: {lockdown_root: 0.5, purge: 0.6, ally_save: 0.8, disarm: 0.6}, resist: {cheat_death: 0.5} }   # Fortune's End root
   phoenix:         { pos: [4,5,3], reliance: {spell_reliant: 0.7, mobility_dependent: 0.4}, tool: {magic_damage: 0.4, aoe_clear: 0.3}, resist: {cheat_death: 0.5} }   # Supernova is NOT a channel (an interrupt does nothing) - the egg dies to hero hits
   ringmaster:      { pos: [5,4], reliance: {spell_reliant: 0.7, squishy_to_burst: 0.6, low_mobility: 0.4, channeling_ultimate: 0.3}, tool: {lockdown_early: 0.4, pickoff: 0.3} }   # TENTATIVE (7.37): Wheel of Wonder taunt does NOT pierce BKB; Tame the Beasts is a channel
   rubick:          { pos: [4,5], reliance: {squishy_to_burst: 0.6, spell_reliant: 0.8, low_mobility: 0.4}, tool: {lockdown_early: 0.4, interrupt: 0.4, bkb_piercing_disable: 0.3} }
   shadow_demon:    { pos: [5,4], reliance: {squishy_to_burst: 0.6, spell_reliant: 0.7}, tool: {interrupt: 0.4, purge: 0.8, ally_save: 0.6, break: 0.2} }   # Disruption banish
   skywrath_mage:   { pos: [4,5,2], reliance: {squishy_to_burst: 0.9, low_mobility: 0.8, magic_burst_vulnerable: 0.6, spell_reliant: 0.7}, tool: {magic_burst: 0.9, silence: 0.7, illusion_execute: 0.4} }   # Ancient Seal
-  snapfire:        { pos: [4,5], reliance: {low_mobility: 0.5, spell_reliant: 0.6, squishy_to_burst: 0.5}, tool: {lockdown_early: 0.5, magic_burst: 0.4} }
+  snapfire:        { pos: [4,5], reliance: {low_mobility: 0.5, spell_reliant: 0.6, squishy_to_burst: 0.5}, tool: {lockdown_early: 0.5, magic_burst: 0.4, armor_reduction: 0.4} }
   spirit_breaker:  { pos: [4,3], reliance: {melee_commit: 0.6, attack_reliant: 0.5, pickoff_reliant: 0.4}, tool: {pickoff: 0.8, lockdown_early: 0.6} }   # global Charge
-  techies:         { pos: [5,4], reliance: {squishy_to_burst: 0.7, relies_on_invisibility: 0.5, spell_reliant: 0.6, low_mobility: 0.4}, tool: {magic_burst: 0.5, purge: 0.3} }   # mines are invisible: Sentry/Gem clear them
+  techies:         { pos: [5,4], reliance: {squishy_to_burst: 0.7, relies_on_invisibility: 0.5, spell_reliant: 0.6, low_mobility: 0.4}, tool: {magic_burst: 0.5, purge: 0.3, lockdown_early: 0.4, disarm: 0.4} }   # mines are invisible: Sentry/Gem clear them
   tiny:            { pos: [4,2,3], reliance: {melee_commit: 0.5, attack_reliant: 0.5, spell_reliant: 0.5, low_mobility: 0.5, mana_dependent: 0.4}, tool: {magic_burst: 0.7, lockdown_early: 0.6, true_strike: 0.2} }   # Avalanche + Toss = magic burst
   treant:          { pos: [5,4], reliance: {low_mobility: 0.7, spell_reliant: 0.5, relies_on_invisibility: 0.3}, tool: {lockdown_root: 0.9, bkb_piercing_disable: 0.5, ally_save: 0.4} }   # Overgrowth; Nature's Guise
   tusk:            { pos: [4,5,3], reliance: {melee_commit: 0.6, spell_reliant: 0.6, mobility_dependent: 0.4}, tool: {pickoff: 0.6, lockdown_early: 0.6, physical_burst: 0.4, ally_save: 0.3, bkb_piercing_disable: 0.4} }   # Ice Shards trap; Walrus Punch
@@ -881,4 +881,4 @@ hero_tags:
   warlock:         { pos: [5,4], reliance: {low_mobility: 0.7, summon_tanky: 0.7, spell_reliant: 0.6, channeling_ultimate: 0.4}, tool: {lockdown_early: 0.4, bkb_piercing_disable: 0.5} }   # Golem is TANKY (special_cases), Upheaval channel
   winter_wyvern:   { pos: [5,4], reliance: {squishy_to_burst: 0.5, spell_reliant: 0.7, low_mobility: 0.4}, tool: {interrupt: 0.4, lockdown_early: 0.4, health_based_damage: 0.4, bkb_piercing_disable: 0.6, ally_save: 0.6} }
   witch_doctor:    { pos: [5,4], reliance: {channeling_ultimate: 0.9, low_mobility: 0.7, squishy_to_burst: 0.6, spell_reliant: 0.6}, tool: {lockdown_early: 0.5, magic_damage: 0.4, health_based_damage: 0.7} }   # Death Ward channel
-  nyx_assassin:    { pos: [4], reliance: {relies_on_invisibility: 0.4, pickoff_reliant: 0.4}, tool: {mana_burn: 0.6, magic_burst: 0.5, break: 0.4} }
+  nyx_assassin:    { pos: [4], reliance: {relies_on_invisibility: 0.4, pickoff_reliant: 0.4}, tool: {mana_burn: 0.6, magic_burst: 0.5, break: 0.4, lockdown_early: 0.7, interrupt: 0.4} }

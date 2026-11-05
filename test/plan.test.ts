@@ -201,8 +201,8 @@ test("match plan: heroes with no tool tags (Bristleback, Storm Spirit, PL...) do
   const { resolve } = await import("../src/resolver.js");
   const { buildMatchPlan } = await import("../src/game-plan.js");
   const kb = loadKB();
-  const noTools = Object.entries(kb.taxonomy.hero_tags).filter(([, t]) => !(t as { tool?: unknown }).tool).map(([h]) => h);
-  assert.ok(noTools.includes("bristleback"), "the data case still exists");
+  // a hero with no tool section (21 heroes had none until 2026-11-05): simulate one
+  delete (kb.taxonomy.hero_tags.bristleback as { tool?: unknown }).tool;
   const enemies = ["death_prophet", "bristleback", "dragon_knight", "anti_mage", "dazzle"];
   const result = resolve(kb, { enemyHeroes: enemies, allyHeroes: [], myRole: 3 });
   const m = buildMatchPlan({ kb, result, enemies, allies: [], label: (h) => h, itemLabel: (k) => k, dcKey: (id) => kb.itemDcKey?.[id] });

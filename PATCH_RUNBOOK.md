@@ -135,3 +135,7 @@
 - **Предметы, которых нет в магазине** (cost = 0): Hood of Defiance, Dragon Scale,
   Book of the Dead, Medallion of Courage → внесены в `unavailable` (B6, сделано).
 - Baseline для diff способностей создан 2026-11-03 (dotaconstants 10.8.0, 7.41).
+
+## Инструменты героев (ADR-032)
+- После патча: `npx tsx scripts/audit-tools.ts --constants <dotaconstants/build>` — герои, у которых способности показывают механику, которой нет в их `tool` (taxonomy.yaml, hero_tags). Реальное — дописать с весом и комментарием; совпадение текста — в `REVIEWED` с причиной.
+
