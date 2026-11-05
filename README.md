@@ -258,6 +258,15 @@ sources live in `data/timings.yaml`.
 - **Match plan** (right) follows the game phase (Lane / Mid / Late; click a phase to pin it):
   a phase focus, damage & defence, threats & answers, and the full item plan.
 
+### Coach: voice and an overlay (ADR-030)
+
+On the Game tab, **Coach** speaks short English cues ("Power rune in 15", "Their power window
+until 25. Avoid even fights.") and chimes for routine ones (stacks for supports), each once,
+on time. **Overlay** opens a small always-on-top window (Chrome / Edge Document
+Picture-in-Picture) with the next two events, the item target and the power window. Run Dota
+in borderless window mode; nothing is injected into the game. Categories are voice / chime /
+off, with defaults per position.
+
 ### Review: plan vs fact (ADR-029)
 
 Run the local companion (`npm run companion`), open **Review**, paste your STRATZ token

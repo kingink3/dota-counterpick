@@ -147,6 +147,13 @@
       .gz-line > i.ours { background: var(--ally); } .gz-line > i.theirs { background: var(--enemy); } .gz-line > i.even { background: var(--line2); }
       .gz-line .gz-lab { position: absolute; top: 19px; transform: translateX(-50%); font-size: 11px; color: var(--muted); }
       .gz-line .gz-mark { position: absolute; top: 0; width: 2px; height: 24px; background: var(--text); transform: translateX(-1px); }
+      .gz-coach { font-size: 13px; display: grid; gap: 6px; }
+      .gz-coach .g-btn.on { border-color: var(--gold); color: var(--gold); }
+      .cv-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; color: var(--text2); }
+      .cv-cats { display: grid; gap: 3px; }
+      .cv-cats select { background: var(--panel2); color: var(--text); border: 1px solid var(--line); border-radius: 3px; font: inherit; font-size: 12.5px; padding: 1px 4px; }
+      .cv-vol { width: 130px; accent-color: var(--gold); }
+      .cv-reset { justify-self: start; } .cv-last { min-height: 1.2em; color: var(--gold); } .cv-note { font-size: 12px; line-height: 1.35; }
       .gz-set { margin-top: 12px; font-size: 13px; color: var(--muted); }
       .gz-set summary { cursor: pointer; }
       .gz-set .game-row { margin-top: 6px; }

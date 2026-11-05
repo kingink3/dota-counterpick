@@ -42,6 +42,8 @@ export interface Upcoming {
   in: number;
   /** "soon" = within its lead time, "now" = window open / just happened. */
   state: "later" | "soon" | "now";
+  /** seconds of warning (from the timings). */
+  lead: number;
   window?: number;
   note?: string;
   confidence?: "rule" | "approx";
@@ -90,6 +92,7 @@ export function upcoming(
       at,
       in: dt,
       state,
+      lead: e.lead,
       ...(e.window ? { window: e.window } : {}),
       ...(e.note ? { note: e.note } : {}),
       ...(e.confidence ? { confidence: e.confidence } : {}),

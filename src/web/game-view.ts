@@ -13,6 +13,7 @@ import { ClockConfirm, formatClock, isNight, parseClock, upcoming, type Timings,
 import type { ClockTick } from "./screen-reader.js";
 import { phaseAt, type GamePhase } from "../game-plan.js";
 import { renderPlanZone, renderTarget, renderWindowLine, type ZoneData } from "./plan-view.js";
+import { CoachView, workerTicker } from "./coach-view.js";
 
 interface Clock {
   /** game seconds at `at` (negative before the horn). */
@@ -51,10 +52,33 @@ export class GameView {
   /** a phase the user picked; undefined = follow the clock. */
   private phaseManual?: GamePhase;
   private shownPhase?: GamePhase;
+  private coach: CoachView;
 
   constructor(private readonly d: GameDeps) {
     this.root = document.querySelector<HTMLElement>("#game-view")!;
     this.build();
+    this.coach = new CoachView(this.root.querySelector<HTMLElement>("#game-coach")!);
+    // the coach runs whatever tab is open, and when the page is in the background
+    workerTicker(250, () => this.coachTick());
+  }
+
+  private coachTick(): void {
+    const t = this.now();
+    const tm = this.d.timings();
+    const c = this.clock;
+    const v = this.data?.view;
+    const lost = c?.source === "screen" && c.readAt !== undefined && performance.now() - c.readAt > LOST_AFTER_MS;
+    this.coach.tick({
+      t: t ?? 0,
+      events: tm && t !== undefined ? upcoming(tm, t, this.d.role(), this.marks) : [],
+      ...(v?.plan ? { plan: v.plan } : {}),
+      ...(v?.have ? { have: v.have } : {}),
+      ...(v?.window ? { window: v.window } : {}),
+      role: this.d.role(),
+      clock: t === undefined ? "-:--" : formatClock(Math.floor(t)),
+      // no cues on a paused / lost / missing clock
+      running: t !== undefined && !!c?.running && !lost,
+    });
   }
 
   /** current game time (fractional seconds) or undefined if no clock yet. */
@@ -118,6 +142,8 @@ export class GameView {
             <button id="mark-rosh" type="button" class="g-btn mark" data-mark="roshan_killed">Roshan killed</button>
             <button id="mark-torm" type="button" class="g-btn mark" data-mark="tormentor_killed">Tormentor killed</button>
           </div>
+          <h3 class="game-h">Coach · voice &amp; overlay</h3>
+          <div id="game-coach" class="gz-coach"></div>
           <details class="gz-set">
             <summary>Clock</summary>
             <div class="game-row">
