@@ -195,3 +195,16 @@ test("plan: draft answers the hero practically never builds drop out; a teammate
   const st = stats.heroes.storm_spirit.buy.orchid;
   assert.ok(st >= 0.25, "Storm buys Orchid in a quarter of games or more");
 });
+
+test("match plan: heroes with no tool tags (Bristleback, Anti-Mage...) do not break the draft", async () => {
+  const { loadKB } = await import("../src/kb.js");
+  const { resolve } = await import("../src/resolver.js");
+  const { buildMatchPlan } = await import("../src/game-plan.js");
+  const kb = loadKB();
+  const noTools = Object.entries(kb.taxonomy.hero_tags).filter(([, t]) => !(t as { tool?: unknown }).tool).map(([h]) => h);
+  assert.ok(noTools.includes("bristleback"), "the data case still exists");
+  const enemies = ["death_prophet", "bristleback", "dragon_knight", "anti_mage", "dazzle"];
+  const result = resolve(kb, { enemyHeroes: enemies, allyHeroes: [], myRole: 3 });
+  const m = buildMatchPlan({ kb, result, enemies, allies: [], label: (h) => h, itemLabel: (k) => k, dcKey: (id) => kb.itemDcKey?.[id] });
+  assert.ok(Number.isFinite(m.damage.physical) && Number.isFinite(m.damage.magic));
+});

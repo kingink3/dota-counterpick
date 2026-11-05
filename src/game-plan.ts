@@ -76,8 +76,8 @@ export function buildMatchPlan(inp: MatchPlanInput): MatchPlan {
   // --- damage: the engine's per-hero census (attack/spell reliance + burst tools)
   const per = inp.enemies.map((e) => {
     const t = tags(e);
-    const phys = (t?.reliance.attack_reliant ?? 0) + (t?.tool.physical_burst ?? 0);
-    const magic = (t?.reliance.spell_reliant ?? 0) + (t?.tool.magic_burst ?? 0);
+    const phys = (t?.reliance?.attack_reliant ?? 0) + (t?.tool?.physical_burst ?? 0);
+    const magic = (t?.reliance?.spell_reliant ?? 0) + (t?.tool?.magic_burst ?? 0);
     return { e, phys, magic };
   });
   const sum = result.damage.physThreat + result.damage.magicThreat || 1;
