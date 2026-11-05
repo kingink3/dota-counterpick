@@ -1,6 +1,6 @@
 // =============================================================================
 //  Review tab (ADR-029): your recent matches from STRATZ (or any match by ID) ->
-//  pick any player with an open profile, allies or opponents -> plan vs fact, farm
+//  pick any player, allies or opponents -> plan vs fact, farm
 //  vs Crusader-Ancient, deaths, battles, map & role, execution, the top growth
 //  areas; trends over your reviewed matches. Token + history stay local.
 // =============================================================================
@@ -8,6 +8,7 @@
 import { mmss } from "../item-plan.js";
 import { reviewMatch, trends, type Finding, type MatchReview, type ReviewContext } from "../review.js";
 import type { BattleReport, UseStat } from "../review-battles.js";
+import { adviceText, GRADE_LABEL, matchOverview, type MatchOverview, type OverviewRow } from "../review-match.js";
 import {
   accountFromToken,
   loadHistory,
@@ -164,10 +165,10 @@ export class ReviewView {
     const main = el("main", "rv-main");
     left.append(this.settingsCard(), this.byIdCard(), this.matchList());
     if (this.status) main.append(el("p", "rv-status", this.status));
-    if (this.open) main.append(this.switcher(this.open));
+    if (this.open) main.append(this.switcher(this.open), this.overviewCard(this.open));
     else if (this.current) main.append(this.otherPlayersButton(this.current));
     if (this.current) main.append(this.report(this.current));
-    else if (this.open) main.append(el("p", "muted", "Pick a player above (players with a private profile cannot be read)."));
+    else if (this.open) main.append(el("p", "muted", "Pick a player above."));
     else main.append(this.trendsCard() ?? el("p", "muted", "Pick a match on the left and press Analyse, or open any match by its ID."));
     if (this.current && (this.current.account === undefined || this.current.account === this.settings.account) && this.mine().length >= 3) main.append(this.trendsCard()!);
     wrap.append(left, main);
@@ -230,7 +231,7 @@ export class ReviewView {
     inp.addEventListener("keydown", (e) => {
       if (e.key === "Enter") run();
     });
-    c.append(inp, go, el("p", "rv-note", "Any parsed match: pick any player with an open profile, allies and opponents."));
+    c.append(inp, go, el("p", "rv-note", "Any parsed match: pick any player, allies and opponents."));
     return c;
   }
 
@@ -262,13 +263,13 @@ export class ReviewView {
         const b = el("button", `rv-sw-p${ok ? "" : " private"}${this.current?.matchId === o.id && this.current.account === acc ? " on" : ""}${state}`) as HTMLButtonElement;
         b.type = "button";
         b.disabled = !ok || !acc;
-        b.title = !ok ? "Private profile (\"Expose Public Match Data\" off): STRATZ does not give out this player's events" : (acc && o.failed.get(acc)) || "";
+        b.title = !ok ? "No Steam id for this player in the match" : (acc && o.failed.get(acc)) || (p.steamAccount?.isAnonymous ? "Private profile - its events are still in the match" : "");
         const img = document.createElement("img");
         img.src = this.d.heroImg(hero);
         img.alt = "";
         const t = el("span", "rv-sw-t", "");
         t.append(el("b", "", this.d.heroLabel(hero)), el("span", "muted", ` ${posOf(p.position) || "?"} · ${p.kills}/${p.deaths}/${p.assists}`));
-        const name = acc === me && me ? "you" : ok ? p.steamAccount?.name ?? "player" : "private";
+        const name = acc === me && me ? "you" : !ok ? "no id" : p.steamAccount?.isAnonymous ? "private profile" : p.steamAccount?.name ?? "player";
         t.append(el("span", "rv-sw-n", `${name}${state === " loading" ? " · loading…" : state === " done" ? " · ✓" : state === " failed" ? " · failed" : ""}`));
         b.append(img, t);
         if (ok && acc) b.addEventListener("click", () => void this.selectPlayer(acc));
@@ -278,14 +279,83 @@ export class ReviewView {
     }
     const open = s.players.filter((p) => openPlayer(p) && p.steamAccountId);
     const left = open.filter((p) => !o.reviews.has(p.steamAccountId!)).length;
-    const all = el("button", "g-btn", left ? `Analyse all open (${left} left · ${left * 4} requests)` : `All ${open.length} open players analysed`) as HTMLButtonElement;
+    const all = el("button", "g-btn", left ? `Analyse all (${left} left · ${left * 4} requests)` : `All ${open.length} players analysed`) as HTMLButtonElement;
     all.type = "button";
     all.disabled = !left || o.loading.size > 0;
     all.addEventListener("click", () => void this.analyseAll());
     const foot = el("div", "rv-sw-foot", "");
-    foot.append(all, el("span", "muted", ` ${open.length} of ${s.players.length} profiles open · match ${o.id}`));
+    foot.append(all, el("span", "muted", ` ${open.length} of ${s.players.length} players readable · match ${o.id}`));
     box.append(foot);
     return box;
+  }
+
+  private overview(o: NonNullable<ReviewView["open"]>): MatchOverview | undefined {
+    const ctx = this.d.ctx();
+    if (!ctx) return undefined;
+    return matchOverview(o.base.summary, { ...(ctx.bench ? { bench: ctx.bench } : {}), heroOf: this.d.heroOf, ...(o.base.vision ? { vision: o.base.vision } : {}) }, o.reviews);
+  }
+
+  /** who played well, who has work to do: all ten, best first within each team. */
+  private overviewCard(o: NonNullable<ReviewView["open"]>): HTMLElement {
+    const c = card("Match overview · who played well");
+    const ov = this.overview(o);
+    if (!ov) return c;
+    const me = this.settings.account;
+    const tb = el("table", "rv-t rv-ov");
+    tb.append(rowEl(["", "Player", "Pos", "K/D/A", "IMP", "Networth", "Deaths", "KP", "Vision · stacks", "Battles", "Items", "Overall", "Work on / good at"], true));
+    for (const radiant of [true, false]) {
+      const rows = ov.rows.filter((x) => x.isRadiant === radiant).sort((a, b) => b.score - a.score);
+      const side = rowEl([`${radiant ? "Radiant" : "Dire"}${rows[0]?.won ? " · won" : ""}`], true);
+      side.classList.add("rv-ov-side");
+      (side.firstChild as HTMLTableCellElement).colSpan = 13;
+      tb.append(side);
+      for (const x of rows) tb.append(this.overviewRow(o, x, me));
+    }
+    c.append(tb);
+    const missing = ov.rows.filter((x) => !x.reviewed && x.account).length;
+    c.append(
+      el(
+        "p",
+        "rv-note",
+        `Overall is a heuristic: STRATZ IMP, networth and deaths vs the Crusader-Ancient average for the hero and position, kill participation, vision for supports` +
+          `${missing ? `; item timings and battle chances need the player analysed (${missing} not yet - "Analyse all" above)` : ", item timings and battle chances"}. Click a row to open that player.`,
+      ),
+    );
+    return c;
+  }
+
+  private overviewRow(o: NonNullable<ReviewView["open"]>, x: OverviewRow, me?: number): HTMLElement {
+    const p = o.base.summary.players.find((q) => q.playerSlot === x.slot)!;
+    const name = x.account === me && me ? "you" : p.steamAccount?.isAnonymous ? "private" : p.steamAccount?.name ?? "";
+    const pc = (r?: number) => (r === undefined ? "-" : `${r >= 1 ? "+" : ""}${Math.round((r - 1) * 100)}%`);
+    const v = x.vision;
+    const tr = rowEl([
+      "",
+      `${this.d.heroLabel(x.hero)}${name ? ` · ${name}` : ""}`,
+      x.position ? String(x.position) : "?",
+      x.kda.join("/"),
+      x.imp !== undefined ? `${x.imp > 0 ? "+" : ""}${x.imp}` : "-",
+      x.nwRatio !== undefined ? `${pc(x.nwRatio)} @${x.nwMinute}` : "-",
+      x.deathsAvg !== undefined ? `${x.deaths} (${x.deathsAvg.toFixed(1)})` : String(x.deaths),
+      x.kp !== undefined ? `${Math.round(x.kp * 100)}%` : "-",
+      v ? `${v.observers}/${v.sentries} · ${v.dewards} dw · ${v.stacks} st` : "-",
+      x.battles ? `${x.battles.used}/${x.battles.windows}` : x.reviewed ? "-" : "…",
+      x.timing ? `${x.timing.fast + x.timing.typical} ok · ${x.timing.slow + x.timing.missing} late` : x.reviewed ? "-" : "…",
+      GRADE_LABEL[x.grade],
+      "",
+    ]);
+    tr.classList.add("rv-ov-r", `g-${x.grade}`);
+    if (this.current?.matchId === o.id && this.current.slot === x.slot) tr.classList.add("on");
+    const img = document.createElement("img");
+    img.src = this.d.heroImg(x.hero);
+    img.alt = "";
+    tr.firstElementChild!.append(img);
+    const last = tr.lastElementChild as HTMLElement;
+    if (x.workOn) last.append(el("span", "rv-ov-bad", x.workOn));
+    if (x.goodAt) last.append(el("span", "rv-ov-good", x.goodAt));
+    tr.title = x.parts.map((q) => `${q.label}: ${q.text}`).join("\n");
+    if (x.account) tr.addEventListener("click", () => void this.selectPlayer(x.account!));
+    return tr;
   }
 
   private matchList(): HTMLElement {
@@ -343,6 +413,24 @@ export class ReviewView {
     t.append(el("h2", "", `${who}${this.d.heroLabel(r.hero)}${r.position ? ` · position ${r.position}` : ""}`));
     t.append(el("p", "muted", `${r.won ? "Won" : "Lost"} · ${r.kda.join("/")} · ${mmss(r.duration)} · ${r.mode}${r.comparable ? "" : " - timings and averages are from ranked games, not comparable"}`));
     head.append(t);
+    const copy = el("button", "g-btn rv-copy", "Copy for Discord / Telegram") as HTMLButtonElement;
+    copy.type = "button";
+    copy.addEventListener("click", () => {
+      const grade = this.open?.id === r.matchId ? this.overview(this.open)?.rows.find((x) => x.slot === r.slot)?.grade : undefined;
+      const txt = adviceText(r, this.d.heroLabel, { ...(grade ? { grade } : {}), ...(who ? { who: who.replace(/ · $/, "") } : {}) });
+      void copyText(txt).then((ok) => {
+        copy.textContent = ok ? "Copied ✓" : "Copy failed - text selected below";
+        if (!ok) {
+          const ta = document.createElement("textarea");
+          ta.className = "rv-in rv-copy-ta";
+          ta.value = txt;
+          head.after(ta);
+          ta.select();
+        }
+        setTimeout(() => (copy.textContent = "Copy for Discord / Telegram"), 2500);
+      });
+    });
+    head.append(copy);
     box.append(head);
 
     const g = card(`Growth areas${r.growth.length > 3 ? ` · top ${r.growth.length}` : ""}`);
@@ -551,4 +639,13 @@ function rowEl(cells: string[], head = false): HTMLElement {
   const tr = document.createElement("tr");
   for (const c of cells) tr.append(el(head ? "th" : "td", "", c));
   return tr;
+}
+
+async function copyText(t: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(t);
+    return true;
+  } catch {
+    return false;
+  }
 }

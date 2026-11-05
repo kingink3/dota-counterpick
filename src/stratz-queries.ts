@@ -16,7 +16,7 @@ export function matchSummaryQuery(id: number): string {
 
 /** your player in parts; each part stays under the complexity limit. */
 export const ME_PARTS = {
-  stats: "playerSlot heroId position isRadiant stats { lastHitsPerMinute deniesPerMinute networthPerMinute experiencePerMinute impPerMinute heroDamagePerMinute heroDamageReceivedPerMinute tripsFountainPerMinute actionsPerMinute campStack wards { time type positionX positionY } farmDistributionReport { creepLocation { id count gold xp } neutralLocation { id count gold xp } ancientLocation { id count gold xp } buildings { id count gold xp } other { id count gold xp } } heroDamageReport { dealtTotal { physicalDamage magicalDamage pureDamage stunCount stunDuration disableCount disableDuration } receivedTotal { physicalDamage magicalDamage pureDamage } } }",
+  stats: "playerSlot heroId position isRadiant stats { lastHitsPerMinute deniesPerMinute networthPerMinute experiencePerMinute impPerMinute heroDamagePerMinute heroDamageReceivedPerMinute tripsFountainPerMinute actionsPerMinute campStack wards { time type positionX positionY } wardDestruction { time isWard } farmDistributionReport { creepLocation { id count gold xp } neutralLocation { id count gold xp } ancientLocation { id count gold xp } buildings { id count gold xp } other { id count gold xp } } heroDamageReport { dealtTotal { physicalDamage magicalDamage pureDamage stunCount stunDuration disableCount disableDuration } receivedTotal { physicalDamage magicalDamage pureDamage } } }",
   events: "playerSlot playbackData { purchaseEvents { time itemId } deathEvents { time attacker isFromIllusion target byAbility byItem goldFed xpFed timeDead reliableGold unreliableGold positionX positionY goldLost assist isWardWalkThrough isAttemptTpOut isDieBack isBurst isEngagedOnDeath hasHealAvailable isTracked isFeed } killEvents { time target positionX positionY isSolo isGank } assistEvents { time target } itemUsedEvents { time itemId attacker target } buyBackEvents { time heroId deathTimeRemaining cost } runeEvents { time rune action } abilityLearnEvents { time abilityId level isUltimate isTalent } }",
   timeline: "playerSlot playbackData { abilityUsedEvents { time abilityId target } playerUpdateHealthEvents { time hp maxHp mp maxMp } playerUpdateGoldEvents { time gold unreliableGold networth } }",
   inventory: "playerSlot playbackData { inventoryEvents { time item0 { itemId charges } item1 { itemId charges } item2 { itemId charges } item3 { itemId charges } item4 { itemId charges } item5 { itemId charges } backPack0 { itemId charges } backPack1 { itemId charges } backPack2 { itemId charges } neutral0 { itemId charges } } }",
@@ -28,6 +28,11 @@ export function matchMeQuery(id: number, account: number, part: keyof typeof ME_
 
 export function matchPositionsQuery(id: number): string {
   return `{ match(id: ${id}) { players { playerSlot isRadiant playbackData { playerUpdatePositionEvents { time x y } } } } }`;
+}
+
+/** wards placed / destroyed and stacks of all ten (the match overview, support play). */
+export function matchVisionQuery(id: number): string {
+  return `{ match(id: ${id}) { players { playerSlot stats { campStack wards { time type } wardDestruction { time isWard } } } } }`;
 }
 
 /** HP of all ten heroes (the battle review checks saves on your cores). */

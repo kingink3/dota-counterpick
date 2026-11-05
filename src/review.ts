@@ -92,6 +92,8 @@ export interface StratzMe {
     tripsFountainPerMinute?: number[] | null;
     campStack?: number[] | null;
     wards?: Array<{ time: number; type: number }> | null;
+    /** enemy wards (isWard) and other units you destroyed. */
+    wardDestruction?: Array<{ time: number; isWard?: boolean | null }> | null;
   } | null;
   playbackData?: {
     purchaseEvents?: Array<TimeEvt & { itemId?: number | null }> | null;
@@ -113,12 +115,35 @@ export interface StratzPositions {
 export interface StratzHealth {
   players: Array<{ playerSlot: number; playbackData?: { playerUpdateHealthEvents?: Array<TimeEvt & { hp: number; maxHp: number }> | null } | null }>;
 }
+export interface StratzVision {
+  players: Array<{ playerSlot: number; stats?: { campStack?: number[] | null; wards?: Array<{ time: number; type: number }> | null; wardDestruction?: Array<{ time: number; isWard?: boolean | null }> | null } | null }>;
+}
+/** observers / sentries placed, enemy wards destroyed, camps stacked. */
+export interface VisionStats {
+  observers: number;
+  sentries: number;
+  dewards: number;
+  stacks: number;
+}
+export function visionOf(st: StratzVision["players"][number]["stats"] | StratzMe["stats"] | undefined): VisionStats {
+  const w = st?.wards ?? [];
+  return {
+    // type 0 = observer, 1 = sentry (checked against purchases)
+    observers: w.filter((x) => x.type === 0).length,
+    sentries: w.filter((x) => x.type === 1).length,
+    dewards: (st?.wardDestruction ?? []).filter((x) => x.isWard).length,
+    // campStack is cumulative per minute
+    stacks: Math.max(0, ...(st?.campStack ?? [0])),
+  };
+}
 export interface MatchData {
   summary: StratzSummary;
   me: StratzMe;
   positions?: StratzPositions;
   /** every hero's HP (optional: saves on allied cores need it). */
   health?: StratzHealth;
+  /** every player's wards / dewards / stacks (optional: the match overview). */
+  vision?: StratzVision;
 }
 
 export interface Ids {
@@ -136,9 +161,9 @@ export interface Benchmarks {
   heroes: Record<string, Record<string, Record<string, number[]> & { games: number }>>;
 }
 
-/** players reviewed: an id and "Expose Public Match Data" on (STRATZ gives out private ones too - by the user's choice they are not read). */
+/** players that can be reviewed: STRATZ gives out events by Steam id, private profiles included (ADR-029c). */
 export function openPlayer(p: { steamAccountId?: number | null; steamAccount?: { isAnonymous?: boolean | null } | null }): boolean {
-  return !!p.steamAccountId && !p.steamAccount?.isAnonymous;
+  return !!p.steamAccountId;
 }
 
 export interface ReviewContext {
@@ -212,6 +237,8 @@ export interface MatchReview {
   farm: FarmRow[];
   deaths: DeathRow[];
   findings: Finding[];
+  /** wards placed / destroyed and stacks: the support metrics, shown for every position. */
+  vision?: VisionStats;
   /** spell / item use in battles (2+ heroes a side), targets, positioning. */
   battles?: BattleReport;
   /** the top problems by severity (up to GROWTH). */
@@ -577,19 +604,24 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
       findings.push({ id: "few_power_runes", area: "map", severity: 0.2, title: `Power runes: ${power} of ~${spawns} spawns`, detail: "A mid / roaming support usually controls more of them (spawn every 2 min from 6:00)." });
     }
   }
-  const wards = me.stats?.wards ?? [];
-  // campStack is cumulative per minute
-  const stacks = Math.max(0, ...(me.stats?.campStack ?? [0]));
+  const vision = visionOf(me.stats);
+  const stacks = vision.stacks;
   if (position && position >= 4) {
     const per10 = (n: number) => (n / Math.max(1, duration / 600)).toFixed(1);
-    // type 0 = observer, 1 = sentry (checked against purchases: a sentry used at 0:22 -> type 1)
-    const obs = wards.filter((w) => w.type === 0).length;
+    const obs = vision.observers;
     if (obs / Math.max(1, duration / 600) < 1.5) {
       findings.push({ id: "few_wards", area: "map", severity: 0.25, title: `${obs} observer wards (${per10(obs)} per 10 min)`, detail: "A support usually keeps 2+ observers up per 10 minutes." });
     }
     if (duration > 1200 && stacks / Math.max(1, (duration - 120) / 600) < 0.5) {
       findings.push({ id: "few_stacks", area: "map", severity: 0.15, title: `${stacks} stacks`, detail: `Under 1 per 20 minutes; stack windows are on the Game tab (:53).` });
     }
+    // dewarding: sentries bought / placed and enemy wards destroyed (heuristic: ~1 per 10 min for a support)
+    if (me.stats?.wardDestruction !== undefined && duration > 1500) {
+      const dw = vision.dewards;
+      if (dw === 0) findings.push({ id: "no_dewards", area: "map", severity: 0.2, title: `No enemy wards destroyed (${vision.sentries} sentries placed)`, detail: "Supports clear the enemy's vision around their own jungle, Roshan and the next objective: sentry + gem / dust before fights." });
+      else if (dw / (duration / 600) >= 1) findings.push({ id: "good_dewards", area: "map", severity: 0.15, good: true, title: `${dw} enemy wards destroyed`, detail: `${per10(dw)} per 10 min with ${vision.sentries} sentries placed.` });
+    }
+    if (obs / Math.max(1, duration / 600) >= 2.5) findings.push({ id: "good_wards", area: "map", severity: 0.15, good: true, title: `${obs} observer wards (${per10(obs)} per 10 min)`, detail: "Good vision count." });
   }
   const fountain = (me.stats?.tripsFountainPerMinute ?? []).reduce((a, b) => a + b, 0);
   if (duration > 1200 && fountain / (duration / 600) > 3) {
@@ -622,6 +654,7 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
     farm,
     deaths,
     findings,
+    vision,
     ...(battles?.battles.length ? { battles } : {}),
     growth,
   };
@@ -766,16 +799,19 @@ const TREND_TITLES: Record<string, string> = {
   few_power_runes: "Few power runes",
   few_wards: "Few observer wards",
   few_stacks: "Few stacks",
+  no_dewards: "No enemy wards destroyed",
   fountain_trips: "Many fountain trips",
   fast_core: "Core items on time",
   good_cs10: "Strong laning last hits",
+  good_wards: "Good observer count",
+  good_dewards: "Dewarding",
 };
 
 function pctD(v: number, b: number): string {
   const d = Math.round((v / b - 1) * 100);
   return `${d >= 0 ? "+" : ""}${d}%`;
 }
-function clamp(x: number, lo: number, hi: number): number {
+export function clamp(x: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, x));
 }
 function pct(x: number): string {

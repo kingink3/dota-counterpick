@@ -11,7 +11,7 @@
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { leaderboardQuery, matchMeQuery, matchPositionsQuery, matchHealthQuery, matchSummaryQuery, ME_PARTS, recentMatchesQuery } from "../src/stratz-queries.js";
+import { leaderboardQuery, matchMeQuery, matchPositionsQuery, matchHealthQuery, matchSummaryQuery, matchVisionQuery, ME_PARTS, recentMatchesQuery } from "../src/stratz-queries.js";
 
 const API = "https://api.stratz.com/graphql";
 const MIN_GAP_MS = 800;
@@ -68,7 +68,7 @@ function ownerOf(token: string): number | undefined {
 }
 
 /** players -> 1..10 (the owner -> 1), match id -> 1, no start time. */
-function anonymise(d: { account: number; summary: unknown; me: unknown; positions: unknown; health?: unknown; others?: Record<string, unknown> }): void {
+function anonymise(d: { account: number; summary: unknown; me: unknown; positions: unknown; health?: unknown; vision?: unknown; others?: Record<string, unknown> }): void {
   const map = new Map<number, number>([[d.account, 1]]);
   const walk = (x: unknown): void => {
     if (Array.isArray(x)) x.forEach(walk);
@@ -89,6 +89,7 @@ function anonymise(d: { account: number; summary: unknown; me: unknown; position
   walk(d.me);
   walk(d.positions);
   walk(d.health);
+  walk(d.vision);
   if (d.others) {
     const o: Record<string, unknown> = {};
     for (const [acc, me] of Object.entries(d.others)) {
@@ -207,9 +208,7 @@ async function main(): Promise<void> {
         try {
           const o = await playerOf(p.steamAccountId);
           const has = !!((o.playbackData as Record<string, unknown[] | null>)?.deathEvents || (o.playbackData as Record<string, unknown[] | null>)?.inventoryEvents);
-          // a private profile: only whether STRATZ returns its events (logged), never stored
-          if (p.steamAccount?.isAnonymous) console.log(`own: a private player - events ${has ? "returned" : "not returned"}`);
-          else if (has) others[String(p.steamAccountId)] = o;
+          if (has) others[String(p.steamAccountId)] = o; // private profiles too (anonymised like everyone)
         } catch (e) {
           console.log(`a player failed: ${String(e).slice(0, 120)}`);
         }
@@ -228,7 +227,13 @@ async function main(): Promise<void> {
     } catch (e) {
       console.log(`health failed: ${String(e).slice(0, 200)}`);
     }
-    const data = { account: found.acc, summary: summary.match, me, positions, health, ...(mode === "own" ? { others } : {}) };
+    let vision: unknown;
+    try {
+      vision = (await gql<{ match: unknown }>(matchVisionQuery(found.id))).match;
+    } catch (e) {
+      console.log(`vision failed: ${String(e).slice(0, 200)}`);
+    }
+    const data = { account: found.acc, summary: summary.match, me, positions, health, vision, ...(mode === "own" ? { others } : {}) };
     if (mode === "own") anonymise(data);
     writeFileSync(join(out, "match.json"), JSON.stringify(data));
     console.log(mode === "own" ? "own latest match fetched (anonymised)" : `sample match ${found.id}`);

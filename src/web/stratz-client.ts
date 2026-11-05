@@ -13,9 +13,10 @@ import {
   matchHealthQuery,
   matchPositionsQuery,
   matchSummaryQuery,
+  matchVisionQuery,
   recentMatchesQuery,
 } from "../stratz-queries.js";
-import type { MatchData, MatchReview, StratzHealth, StratzMe, StratzPositions, StratzSummary } from "../review.js";
+import type { MatchData, MatchReview, StratzHealth, StratzMe, StratzPositions, StratzSummary, StratzVision } from "../review.js";
 
 const KEY = "dotaapp.stratz.v1";
 const HISTORY = "dotaapp.reviews.v1";
@@ -109,7 +110,7 @@ export class StratzClient {
     return this.q<{ player: { matches: RecentMatch[] } }>(recentMatchesQuery(acc, take)).then((d) => d.player?.matches ?? []);
   }
 
-  /** what every player's review shares: summary, positions and HP of all ten (3 requests). */
+  /** what every player's review shares: summary, positions, HP and vision of all ten (4 requests). */
   async base(id: number): Promise<MatchBase> {
     const sum = await this.q<{ match: StratzSummary }>(matchSummaryQuery(id));
     if (!sum.match) throw new StratzError(`match ${id} not found`, "query");
@@ -125,7 +126,13 @@ export class StratzClient {
     } catch {
       health = undefined; // saves on allied cores are not judged
     }
-    return { summary: sum.match, ...(positions ? { positions } : {}), ...(health ? { health } : {}) };
+    let vision: StratzVision | undefined;
+    try {
+      vision = (await this.q<{ match: StratzVision }>(matchVisionQuery(id))).match;
+    } catch {
+      vision = undefined; // the overview goes without wards / stacks for players not reviewed
+    }
+    return { summary: sum.match, ...(positions ? { positions } : {}), ...(health ? { health } : {}), ...(vision ? { vision } : {}) };
   }
 
   /** one player's events, in 4 parts (STRATZ's complexity limit). Needs an open profile. */
@@ -145,7 +152,7 @@ export class StratzClient {
     return me;
   }
 
-  /** a match for one player: base + that player (7 requests). */
+  /** a match for one player: base + that player (8 requests). */
   async match(id: number, account = this.s.account!): Promise<MatchData> {
     const b = await this.base(id);
     return { ...b, me: await this.player(id, account) };

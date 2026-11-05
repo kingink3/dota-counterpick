@@ -209,10 +209,10 @@ test("battles: no enemy in range -> not a missed chance", () => {
   assert.ok(u.ready >= 3, "it was off cooldown, just with nobody to cast it on");
 });
 
-test("players: open = an id and not anonymous; any open player can be reviewed", () => {
+test("players: anyone with a Steam id can be reviewed", () => {
   assert.equal(openPlayer({ steamAccountId: 5, steamAccount: { isAnonymous: false } }), true);
   assert.equal(openPlayer({ steamAccountId: 5 }), true);
-  assert.equal(openPlayer({ steamAccountId: 5, steamAccount: { isAnonymous: true } }), false);
+  assert.equal(openPlayer({ steamAccountId: 5, steamAccount: { isAnonymous: true } }), true, "private profiles are read too");
   assert.equal(openPlayer({ steamAccountId: null }), false);
   // an opponent of the synthetic match, with "his" events
   const m = match();
