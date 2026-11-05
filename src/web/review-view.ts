@@ -422,12 +422,18 @@ export class ReviewView {
     if (!ov) return c;
     const me = this.settings.account;
     const tb = el("table", "rv-t rv-ov");
-    tb.append(rowEl(["", "Player", "Pos", "K/D/A", "IMP", "Networth", "Deaths", "KP", "Vision · stacks", "Battles", "Items", "Overall"], true));
+    tb.append(rowEl(["", "Player", "Pos", "K/D/A", "IMP", "Networth", "Deaths", "KP", "Vision · stacks", "Casts", "Items", "Overall"], true));
     for (const radiant of [true, false]) {
       const rows = ov.rows.filter((x) => x.isRadiant === radiant).sort((a, b) => b.score - a.score);
-      const side = rowEl([`${radiant ? "Radiant" : "Dire"}${rows[0]?.won ? " · won" : ""}`], true);
+      // the team line: its kills / deaths / assists under the K/D/A column
+      const team = o.base.summary.players.filter((p) => p.isRadiant === radiant);
+      const sum = (k: "kills" | "deaths" | "assists") => team.reduce((a, p) => a + p[k], 0);
+      const side = rowEl([`${radiant ? "Radiant" : "Dire"}${rows[0]?.won ? " · won" : ""}`, `${sum("kills")}/${sum("deaths")}/${sum("assists")}`, ""], true);
       side.classList.add("rv-ov-side");
-      (side.firstChild as HTMLTableCellElement).colSpan = 12;
+      (side.children[0] as HTMLTableCellElement).colSpan = 3;
+      (side.children[1] as HTMLTableCellElement).title = "Team kills / deaths / assists";
+      side.children[1]!.className = "rv-ov-team";
+      (side.children[2] as HTMLTableCellElement).colSpan = 8;
       tb.append(side);
       for (const x of rows) {
         tb.append(this.overviewRow(o, x, me));
@@ -440,7 +446,8 @@ export class ReviewView {
       el(
         "p",
         "rv-note",
-        `Overall is a heuristic: STRATZ IMP, networth and deaths vs the Crusader-Ancient average for the hero and position, kill participation, vision for supports` +
+        `Casts = share of the chances to cast in battles that were used (the ultimate and control spells / items count double). ` +
+          `Overall is a heuristic: STRATZ IMP, networth and deaths vs the Crusader-Ancient average for the hero and position, kill participation, vision for supports` +
           `${missing ? `; item timings and battle chances need the player analysed (${missing} not yet - "Analyse all" above)` : ", item timings and battle chances"}. Click a row for that player's build and main points.`,
       ),
     );
@@ -462,7 +469,7 @@ export class ReviewView {
       x.deathsAvg !== undefined ? `${x.deaths} (${x.deathsAvg.toFixed(1)})` : String(x.deaths),
       x.kp !== undefined ? `${Math.round(x.kp * 100)}%` : "-",
       v ? `${v.observers}/${v.sentries} · ${v.dewards} dw · ${v.stacks} st` : "-",
-      x.battles ? `${x.battles.used}/${x.battles.windows}` : x.reviewed ? "-" : "…",
+      x.battles ? `${Math.round(x.battles.rate * 100)}%` : x.reviewed ? "-" : "…",
       x.timing ? `${x.timing.fast + x.timing.typical} ok · ${x.timing.slow + x.timing.missing} late` : x.reviewed ? "-" : "…",
       GRADE_LABEL[x.grade],
     ]);
@@ -762,7 +769,7 @@ export class ReviewView {
       tb.append(rowEl(["Spell / item", "Chance when", "Battles", "Casts", "Chances", "Used", "Missed", "Idle", "Longest", "No mana"], true));
       for (const u of b.totals) {
         const tr = rowEl([
-          `${u.name}${u.ult ? " (ult)" : ""}`,
+          `${u.name}${u.ult ? " (ult)" : ""}${u.weight === 2 ? " ×2" : ""}`,
           u.use === "enemy" && u.reach ? `${USE.enemy} (${u.reach})` : USE[u.use],
           String(u.battles),
           String(u.casts),

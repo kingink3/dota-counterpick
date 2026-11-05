@@ -10,6 +10,7 @@
 //  parts that exist; the weights favour farm for cores and vision for supports.
 // =============================================================================
 
+import { castRate } from "./review-battles.js";
 import { clamp, visionOf, type Benchmarks, type MatchReview, type StratzSummary, type StratzVision, type VisionStats } from "./review.js";
 
 export type Grade = "strong" | "solid" | "mixed" | "work";
@@ -39,8 +40,8 @@ export interface OverviewRow {
   deaths: number;
   deathsAvg?: number;
   vision?: VisionStats;
-  /** battle chances used / all (a loaded review). */
-  battles?: { used: number; windows: number };
+  /** battle chances used / all (a loaded review); rate is weighted (ultimate / control x2). */
+  battles?: { used: number; windows: number; rate: number };
   /** core items: fast / typical / slow / missing (a loaded review). */
   timing?: { fast: number; typical: number; slow: number; missing: number };
   parts: OverviewPart[];
@@ -131,11 +132,13 @@ export function matchOverview(
 
     let battles: OverviewRow["battles"];
     if (r?.battles) {
+      // weighted: the ultimate and control spells / items count double (ADR-029f)
+      const w = castRate(r.battles.totals);
       const used = r.battles.totals.reduce((a, u) => a + u.used, 0);
       const windows = r.battles.totals.reduce((a, u) => a + u.windows, 0);
-      if (windows >= 5) {
-        battles = { used, windows };
-        add("battles", "Spells & items in battles", (used / windows - 0.55) * 2.5, `${used} of ${windows} chances used`);
+      if (windows >= 5 && w.rate !== undefined) {
+        battles = { used, windows, rate: w.rate };
+        add("battles", "Casts in battles", (w.rate - 0.55) * 2.5, `${Math.round(w.rate * 100)}% of chances used (ultimate / control x2; ${used} of ${windows})`);
       }
     }
 
@@ -209,9 +212,8 @@ export function adviceText(r: MatchReview, label: (hero: string) => string, opts
   const v = r.vision;
   if (v && (r.position ?? 0) >= 4) lines.push(`Vision: ${v.observers} observers, ${v.sentries} sentries, ${v.dewards} enemy wards destroyed, ${v.stacks} stacks`);
   if (r.battles?.battles.length) {
-    const used = r.battles.totals.reduce((a, u) => a + u.used, 0);
-    const windows = r.battles.totals.reduce((a, u) => a + u.windows, 0);
-    lines.push(`Battles: ${r.battles.battles.length}, spell / item chances used ${used} of ${windows}`);
+    const w = castRate(r.battles.totals);
+    if (w.rate !== undefined) lines.push(`Battles: ${r.battles.battles.length}, casts ${Math.round(w.rate * 100)}% of chances (ultimate / control count double)`);
   }
   const growth = r.growth.slice(0, opts.top ?? 6);
   const fix = growth.filter((g) => (r.fixFirst ?? []).includes(g));

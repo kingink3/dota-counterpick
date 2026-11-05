@@ -54,7 +54,11 @@ interface DcAbility {
   mc?: string | string[] | number;
   target_team?: string | string[];
   attrib?: Array<{ key: string; value: string | string[] }>;
+  desc?: string;
 }
+/** control: stuns, hexes, silences, roots, sleeps, fears, taunts, banishes, displacement (desc + attribute names). */
+const CONTROL_DESC = /\b(stun(s|ned)?|hex|transforms? an enemy|silenc\w*|roots?|rooted|prohibiting movement|disabl\w*|sleep|fear\w*|taunts?|banish\w*|cyclone|ensnar\w*|leash\w*|trapping|lift\w*|can't pass|dragging|pulls?|knocks?)\b/i;
+const CONTROL_KEY = /^(\w+_)?(stun|silence|hex|root|sleep|fear|taunt)_duration$/;
 const abilities = JSON.parse(readFileSync(join(constants, "abilities.json"), "utf8")) as Record<string, DcAbility>;
 const abilityIds = JSON.parse(readFileSync(join(constants, "ability_ids.json"), "utf8")) as Record<string, string>;
 const heroAbilities = JSON.parse(readFileSync(join(constants, "hero_abilities.json"), "utf8")) as Record<string, { abilities: string[] }>;
@@ -72,11 +76,13 @@ for (const [id, key] of Object.entries(abilityIds)) {
   const beh = ([] as string[]).concat(a.behavior ?? []);
   const team = ([] as string[]).concat(a.target_team ?? []);
   // flags: p passive, h hidden (granted by shard / scepter / sub-ability), u unit target, t point target,
-  // n no target, e enemy target, a ally target, c channelled
+  // n no target, e enemy target, a ally target, c channelled, x control
   const both = team.includes("Both");
   const f = [
     beh.includes("Passive") && "p", beh.includes("Hidden") && "h", beh.includes("Unit Target") && "u", beh.includes("Point Target") && "t",
     beh.includes("No Target") && "n", (team.includes("Enemy") || both) && "e", (team.includes("Friendly") || both) && "a", beh.includes("Channeled") && "c",
+    // x = control (weighted x2 in the battle chances, ADR-029f)
+    !beh.includes("Passive") && (CONTROL_DESC.test(a.desc ?? "") || (a.attrib ?? []).some((x) => CONTROL_KEY.test(x.key) && !/^(fail|self)_/.test(x.key))) && "x",
   ].filter(Boolean).join("");
   // cast range (max over levels) and effect radius, for "was an enemy in range"
   const at = a.attrib ?? [];

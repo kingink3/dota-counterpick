@@ -5,7 +5,7 @@ import { test } from "node:test";
 import { loadKB } from "../src/kb.js";
 import type { ItemStats } from "../src/item-plan.js";
 import { GROWTH, openPlayer, reviewMatch, trends, type Benchmarks, type Ids, type MatchData, type MatchReview } from "../src/review.js";
-import { analyseBattles } from "../src/review-battles.js";
+import { analyseBattles, castRate } from "../src/review-battles.js";
 
 const kb = loadKB();
 const ids = JSON.parse(readFileSync("data/ids.json", "utf8")) as Ids;
@@ -198,6 +198,7 @@ test("battles: 2+ heroes a side; chances need a target in range; targets, positi
   assert.equal(f.enemies, 2);
   const u = f.uses.find((x) => x.name === "Shackleshot")!;
   assert.equal(u.use, "enemy");
+  assert.equal(u.weight, 2, "Shackleshot is control: counts double");
   // chance 1: 995-1000, ended by the cast (used); chance 2: 1016-1020 after the 16 s cooldown, PA in range (missed)
   assert.equal(u.casts, 1);
   assert.equal(u.windows, 2);
@@ -278,4 +279,13 @@ test("priorities: skipping the draft's answers is not a problem when the game we
   const cm2 = r.findings.find((f) => f.id === "counter_missing");
   assert.ok(cm2 && !cm2.note, "a problem when the game went badly");
   assert.ok(good.build.length > 0 && good.build.every((b, i) => i === 0 || good.build[i - 1]!.at <= b.at), "the build in order");
+});
+
+test("casts: the ultimate and control count double", () => {
+  const u = (used: number, windows: number, weight: 1 | 2) => ({ used, windows, weight }) as never;
+  // control 1 of 4 (x2) + routine 4 of 4 -> (2 + 4) / (8 + 4) = 50%, not 5 / 8
+  const r = castRate([u(1, 4, 2), u(4, 4, 1)]);
+  assert.equal(r.rate, 0.5);
+  assert.equal(castRate([]).rate, undefined);
+  assert.ok(ids.abilities!["5130"]!.f.includes("x") && !ids.abilities!["5131"]!.f.includes("x"), "Shackleshot control, Powershot not");
 });

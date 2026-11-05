@@ -65,6 +65,8 @@ export interface UseStat {
   /** cooldown range over its levels, seconds. */
   cd?: [number, number];
   ult?: boolean;
+  /** 2 = the ultimate or control (stun, hex, silence, root...), 1 = routine (ADR-029f). */
+  weight: 1 | 2;
 }
 
 export interface Battle {
@@ -126,6 +128,15 @@ const ITEM_USE: Record<string, [UseKind, number?]> = {
   silver_edge: ["save"], blink: ["save"], overwhelming_blink: ["save"], swift_blink: ["save"], arcane_blink: ["save"],
   cyclone: ["save"], magic_wand: ["save"], magic_stick: ["save"], faerie_fire: ["save"],
 };
+/** items that disable (weighted x2 like control spells). */
+const CONTROL_ITEMS = new Set(["sheepstick", "orchid", "bloodthorn", "abyssal_blade", "rod_of_atos", "gungir", "heavens_halberd", "harpoon", "wind_waker", "cyclone"]);
+/** weighted share of chances used: the ultimate and control count double. */
+export function castRate(us: readonly UseStat[]): { used: number; windows: number; rate?: number } {
+  const used = us.reduce((a, u) => a + u.used * (u.weight ?? 1), 0);
+  const windows = us.reduce((a, u) => a + u.windows * (u.weight ?? 1), 0);
+  return { used, windows, ...(windows ? { rate: used / windows } : {}) };
+}
+
 const STEP = 0.5;
 const GAP = 20;
 const CELL = 64; // world units per map cell (STRATZ positions)
@@ -326,7 +337,7 @@ export function analyseBattles(
       name: string,
       kind: UseStat["kind"],
       use: { use: UseKind; reach?: number },
-      extra: Pick<UseStat, "cd" | "ult">,
+      extra: Pick<UseStat, "cd" | "ult" | "weight">,
       times: number[],
       cdAt: (t: number) => number | undefined,
       mcAt: (t: number) => number,
@@ -393,7 +404,7 @@ export function analyseBattles(
         a.n,
         "ability",
         u,
-        { cd: [Math.min(...a.cd), Math.max(...a.cd)], ...(ultIds.has(id) ? { ult: true } : {}) },
+        { cd: [Math.min(...a.cd), Math.max(...a.cd)], ...(ultIds.has(id) ? { ult: true } : {}), weight: ultIds.has(id) || a.f.includes("x") ? 2 : 1 },
         castTimes(id),
         (t) => {
           const lv = hidden ? 0 : levelAt(id, t);
@@ -422,7 +433,7 @@ export function analyseBattles(
         itemLabel(k),
         "item",
         { use, ...(reach ? { reach } : {}) },
-        { cd: [ids.cd[k] ?? 20, ids.cd[k] ?? 20] },
+        { cd: [ids.cd[k] ?? 20, ids.cd[k] ?? 20], weight: CONTROL_ITEMS.has(k) ? 2 : 1 },
         itemTimes(k),
         () => ids.cd[k] ?? 20,
         () => ids.mc?.[k] ?? 0,
