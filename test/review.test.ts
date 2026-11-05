@@ -4,9 +4,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { test } from "node:test";
 import { loadKB } from "../src/kb.js";
 import type { ItemStats } from "../src/item-plan.js";
-import { GROWTH, reviewMatch, trends, type Benchmarks, type Ids, type MatchData, type MatchReview } from "../src/review.js";
+import { GROWTH, openPlayer, reviewMatch, trends, type Benchmarks, type Ids, type MatchData, type MatchReview } from "../src/review.js";
 import { analyseBattles } from "../src/review-battles.js";
-import { openPlayer } from "../src/web/stratz-client.js";
 
 const kb = loadKB();
 const ids = JSON.parse(readFileSync("data/ids.json", "utf8")) as Ids;

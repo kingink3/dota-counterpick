@@ -154,10 +154,7 @@ export class StratzClient {
 
 export type MatchBase = Omit<MatchData, "me">;
 
-/** players whose events STRATZ gives out: an id and "Expose Public Match Data" on. */
-export function openPlayer(p: { steamAccountId?: number | null; steamAccount?: { isAnonymous?: boolean | null } | null }): boolean {
-  return !!p.steamAccountId && !p.steamAccount?.isAnonymous;
-}
+export { openPlayer } from "../review.js";
 
 export interface RecentMatch {
   id: number;

@@ -136,6 +136,11 @@ export interface Benchmarks {
   heroes: Record<string, Record<string, Record<string, number[]> & { games: number }>>;
 }
 
+/** players reviewed: an id and "Expose Public Match Data" on (STRATZ gives out private ones too - by the user's choice they are not read). */
+export function openPlayer(p: { steamAccountId?: number | null; steamAccount?: { isAnonymous?: boolean | null } | null }): boolean {
+  return !!p.steamAccountId && !p.steamAccount?.isAnonymous;
+}
+
 export interface ReviewContext {
   kb: KnowledgeBase;
   stats?: ItemStats;
