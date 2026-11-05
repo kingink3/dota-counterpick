@@ -431,6 +431,9 @@ export function heroCurve(hs: HeroStats | undefined, minGames = 200): number[] |
 }
 
 export const CURVE_LABELS = ["before 25 min", "25-35 min", "35-45 min", "after 45 min"] as const;
+/** a lineup is "stronger" in a stretch only from this many percentage points of win rate:
+ *  below it the gap is within the noise of the averages (ADR-027d; was 0.5). */
+export const WINDOW_PP = 1.5;
 
 export interface TeamWindow {
   /** our minus their mean relative win rate per bin (percentage points). */

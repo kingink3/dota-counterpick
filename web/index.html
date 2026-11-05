@@ -142,10 +142,11 @@
       .gz-tbar > i { display: block; height: 100%; background: var(--gold); }
       .gz-tbar.late > i { background: var(--bad); }
       .gz-sub { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
-      .gz-line { position: relative; height: 30px; }
-      .gz-line > i { position: absolute; top: 6px; height: 12px; border-radius: 2px; border-right: 1px solid var(--deep); }
+      .gz-line { position: relative; height: 34px; }
+      .gz-line > i { position: absolute; top: 4px; height: 15px; border-radius: 2px; border-right: 1px solid var(--deep); font: 600 10.5px/15px var(--cond); font-style: normal; color: #10151cdd; text-align: center; overflow: hidden; }
+      .gz-line > i.even { color: var(--text2); }
       .gz-line > i.ours { background: var(--ally); } .gz-line > i.theirs { background: var(--enemy); } .gz-line > i.even { background: var(--line2); }
-      .gz-line .gz-lab { position: absolute; top: 19px; transform: translateX(-50%); font-size: 11px; color: var(--muted); }
+      .gz-line .gz-lab { position: absolute; top: 21px; transform: translateX(-50%); font-size: 11px; color: var(--muted); }
       .gz-line .gz-mark { position: absolute; top: 0; width: 2px; height: 24px; background: var(--text); transform: translateX(-1px); }
       .gz-coach { font-size: 13px; display: grid; gap: 6px; }
       .gz-coach .g-btn.on { border-color: var(--gold); color: var(--gold); }

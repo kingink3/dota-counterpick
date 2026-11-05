@@ -288,7 +288,20 @@ interface ItemFit {
   info?: { archetype: Archetype; attack?: AttackType };
   /** tools the hero you play already has (Drow's Gust = silence): an item for the same tool is worth less. */
   self?: Record<string, number>;
+  /** resistances the hero already has (Juggernaut's Blade Fury = debuff immunity): an item granting the same is worth less. */
+  selfResist?: Record<string, number>;
 }
+
+/** what a defensive item grants, as a taxonomy resistance (for the "you already have it" check). */
+const GRANTS: Record<string, string> = {
+  black_king_bar: "self_debuff_immunity",
+  linkens_sphere: "spell_block",
+  crimson_guard: "physical_damage_block",
+  vanguard: "physical_damage_block",
+  butterfly: "evades_attacks",
+  aeon_disk: "cheat_death",
+  manta_style: "self_dispel",
+};
 
 /** the hero's own tool weight at or above this makes an item for the same tool redundant (ADR-027c). */
 const SELF_TOOL = 0.5;
@@ -315,14 +328,16 @@ function itemFitFor(kb: KnowledgeBase, draft: DraftState): ItemFit {
   const table = kb.itemFit;
   const archetype = archetypeOf(kb, draft.myHero, draft.myRole);
   const self = draft.myHero ? kb.taxonomy.hero_tags[draft.myHero]?.tool : undefined;
-  if (!table || !archetype) return { mult: () => 1, ...(self ? { self } : {}) };
+  const selfResist = draft.myHero ? kb.taxonomy.hero_tags[draft.myHero]?.resist : undefined;
+  const own = { ...(self ? { self } : {}), ...(selfResist ? { selfResist } : {}) };
+  if (!table || !archetype) return { mult: () => 1, ...own };
   const attack = draft.myHero ? kb.heroAttack?.[draft.myHero] : undefined;
   const col = ARCHETYPES.indexOf(archetype);
   const meleeOnly = new Set(table.meleeOnly);
   const rangedOnly = new Set(table.rangedOnly);
   return {
     info: { archetype, ...(attack ? { attack } : {}) },
-    ...(self ? { self } : {}),
+    ...own,
     mult: (code) => {
       let m = table.fit[code]?.[col] ?? 1;
       if (attack === "ranged" && meleeOnly.has(code)) m = Math.min(m, table.wrongAttack);
@@ -337,9 +352,11 @@ function finalizeItem(code: string, label: string, reasons: Reason[], fit: ItemF
   const m = fit.mult(code);
   // a tool your hero already brings (Drow's Gust silences): the item adds little for it
   const own = (r: Reason) => (r.tool && r.contribution > 0 ? fit.self?.[r.tool] ?? 0 : 0);
+  // an item granting what your hero already has (BKB on Juggernaut: Blade Fury) helps less
+  const granted = GRANTS[code] ? fit.selfResist?.[GRANTS[code]!] ?? 0 : 0;
   const deduped = reasons.map((r) => {
-    const w = own(r);
-    return w >= SELF_TOOL ? { ...r, contribution: r.contribution * Math.max(0.25, 1 - w), selfHas: true } : r;
+    const w = Math.max(own(r), r.contribution > 0 ? granted : 0);
+    return w >= SELF_TOOL ? { ...r, contribution: r.contribution * Math.max(0.25, 1 - w), selfHas: true, ...(granted >= SELF_TOOL ? { selfGrant: GRANTS[code] } : {}) } : r;
   });
   const rec = finalizeRec("item", code, label, undefined, scaleReasons(deduped, m));
   if (fit.info) rec.fit = { ...fit.info, mult: m };

@@ -4,7 +4,7 @@
 //  item plan and the power windows - no free text beyond fixed sentence frames.
 // =============================================================================
 
-import { CURVE_LABELS, mmss, type ItemPlan, type PlanItem, type TeamWindow } from "./item-plan.js";
+import { CURVE_LABELS, mmss, WINDOW_PP, type ItemPlan, type PlanItem, type TeamWindow } from "./item-plan.js";
 import type { KnowledgeBase } from "./knowledge.js";
 import type { EngineResult, Recommendation } from "./types.js";
 
@@ -148,11 +148,11 @@ function focusLines(inp: MatchPlanInput, threats: Threat[]): MatchPlan["focus"] 
   const windowLine = (bin: number): string | undefined => {
     const d = w?.diff[bin];
     if (d === undefined) return undefined;
-    if (d > 0.5) {
+    if (d > WINDOW_PP) {
       const who = drivers(bin, "ally");
       return `${cap(CURVE_LABELS[bin]!)} your lineup is ahead (+${d.toFixed(1)} pp${who ? `; ${who}` : ""}).`;
     }
-    if (d < -0.5) {
+    if (d < -WINDOW_PP) {
       const who = drivers(bin, "enemy");
       return `${cap(CURVE_LABELS[bin]!)} they are ahead (${d.toFixed(1)} pp${who ? `; ${who}` : ""}).`;
     }
@@ -177,7 +177,7 @@ function focusLines(inp: MatchPlanInput, threats: Threat[]): MatchPlan["focus"] 
     .map(([e, its]) => `${label(e)}: ${its.map(inp.itemLabel).join(", ")}`);
   const titleFor = (bins: number[], ours: string, theirs: string, even: string) => {
     const d = bins.map((b) => w?.diff[b] ?? 0).reduce((a, b) => a + b, 0) / bins.length;
-    return w ? (d > 0.5 ? ours : d < -0.5 ? theirs : even) : even;
+    return w ? (d > WINDOW_PP ? ours : d < -WINDOW_PP ? theirs : even) : even;
   };
   const clean = (xs: Array<string | undefined | false>) => xs.filter((x): x is string => !!x);
 

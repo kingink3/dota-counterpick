@@ -11,7 +11,7 @@
 //    - categories are on / chime / off per role (defaults below), user-editable.
 // =============================================================================
 
-import type { ItemPlan, PlanItem, TeamWindow } from "./item-plan.js";
+import { WINDOW_PP, type ItemPlan, type PlanItem, type TeamWindow } from "./item-plan.js";
 import type { Upcoming } from "./game-timers.js";
 
 export type CueCat = "runes" | "stacks" | "pulls" | "jungle" | "wards" | "objectives" | "neutrals" | "items" | "windows" | "daynight";
@@ -146,8 +146,8 @@ function windowBin(t: number): number {
 function windowText(d: number, bin: number): string {
   const until = BIN_EDGES[bin];
   const u = until ? ` until ${until}` : "";
-  if (d > 0.5) return `Your power window${u}. Take fights.`;
-  if (d < -0.5) return `Their power window${u}. Avoid even fights.`;
+  if (d > WINDOW_PP) return `Your power window${u}. Take fights.`;
+  if (d < -WINDOW_PP) return `Their power window${u}. Avoid even fights.`;
   return `Even game${u}.`;
 }
 
@@ -223,7 +223,7 @@ export function overlayLines(x: Omit<CoachInput, "modes"> & { modes: Record<CueC
   if (cur) parts.push(`${cur.label}${cur.at !== undefined ? ` ~${clock(cur.at)}` : ""}`);
   if (x.window && x.t >= 0) {
     const d = x.window.diff[windowBin(x.t)]!;
-    parts.push(d > 0.5 ? "your window" : d < -0.5 ? "their window" : "even");
+    parts.push(d > WINDOW_PP ? "your window" : d < -WINDOW_PP ? "their window" : "even");
   }
   return [ev.join(" · ") || "-", parts.join(" · ") || "-"];
 }

@@ -4,7 +4,7 @@
 //  Pure: no fetch, no DOM. Every finding carries its evidence (times, counts).
 // =============================================================================
 
-import { buildPlan, mmss, teamWindow, type ItemPlan, type ItemStats, type ItemTiming } from "./item-plan.js";
+import { buildPlan, mmss, teamWindow, WINDOW_PP, type ItemPlan, type ItemStats, type ItemTiming } from "./item-plan.js";
 import type { KnowledgeBase } from "./knowledge.js";
 import { archetypeOf, resolve } from "./resolver.js";
 import { analyseBattles, type AbilityInfo, type BattleReport } from "./review-battles.js";
@@ -560,7 +560,7 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
     return {
       time: dd.time,
       ...(killer && enemies.includes(killer) ? { killer } : {}),
-      inEnemyWindow: (win?.diff[binOf(dd.time)] ?? 0) < -0.5,
+      inEnemyWindow: (win?.diff[binOf(dd.time)] ?? 0) < -WINDOW_PP,
       ...(alone !== undefined ? { alone } : {}),
       unspent: (dd.reliableGold ?? 0) + (dd.unreliableGold ?? 0),
       unused,

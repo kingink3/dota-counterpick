@@ -627,3 +627,12 @@ test("items: a tool the hero you play already has is worth less (Drow's Gust = s
   const sil = (r: EngineResult) => orchid(r)?.reasons.filter((x) => x.tool === "silence").reduce((a, x) => a + x.contribution, 0) ?? 0;
   assert.ok(sil(drow) < sil(sven) * 0.6, `Drow ${sil(drow).toFixed(2)} vs Sven ${sil(sven).toFixed(2)}`);
 });
+
+test("defense: BKB is worth less on a hero with his own debuff immunity (Juggernaut's Blade Fury)", () => {
+  const draft = { enemyHeroes: ["faceless_void", "night_stalker", "puck", "pugna", "shadow_demon"], allyHeroes: ["alchemist", "dazzle"], myRole: 1 };
+  const bkb = (me: string) => engine.recommend({ ...draft, myHero: me }).defense.find((d) => d.code === "black_king_bar");
+  const j = bkb("juggernaut")!;
+  const s = bkb("sven")!;
+  assert.ok(j.reasons.some((x) => x.selfGrant === "self_debuff_immunity"));
+  assert.ok(j.score < s.score * 0.5, `Juggernaut ${j.score.toFixed(2)} vs Sven ${s.score.toFixed(2)}`);
+});

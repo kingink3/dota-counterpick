@@ -304,6 +304,8 @@ export interface Reason {
   mechanism: string;
   /** an item reason for a tool the hero you play already has (scaled down, ADR-027c). */
   selfHas?: boolean;
+  /** the resistance the item grants that the hero already has (BKB / Blade Fury). */
+  selfGrant?: string;
   /** score this reason contributed. */
   contribution: number;
   /** transparent factor breakdown for the contribution. */

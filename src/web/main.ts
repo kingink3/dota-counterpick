@@ -505,7 +505,6 @@ function renderInner(): void {
   }
 
   const result = resolveDraft(kb, draft);
-  renderGamePlan(result);
   // the hero you play: items it practically never builds sink (STRATZ purchase shares, ADR-027b)
   if (state.myHero && itemStats?.heroes[state.myHero]?.buy) {
     const buy = itemStats.heroes[state.myHero]!.buy;
@@ -522,6 +521,7 @@ function renderInner(): void {
     }
   }
 
+  renderGamePlan(result);
   const tabs: Array<{ id: TabId; label: string; count: number }> = [
     { id: "heroes", label: "Hero picks", count: result.heroes.length },
     { id: "items", label: "Counter items", count: result.items.length },
@@ -1120,7 +1120,7 @@ function recCard(rec: Recommendation): HTMLElement {
   if (rec.rareOnHero !== undefined && state.myHero) {
     meta.push(`<span class="off" title="STRATZ: share of ${esc(labelFor(state.myHero))} games with this item - score lowered">rare on ${esc(labelFor(state.myHero))} (${Math.round(rec.rareOnHero * 100)}% of games)</span>`);
   }
-  const own = rec.reasons.filter((r) => r.selfHas && r.tool).map((r) => toolLabel(r.tool!));
+  const own = rec.reasons.filter((r) => r.selfHas && (r.tool || r.selfGrant)).map((r) => (r.selfGrant ? resistLabel(r.selfGrant) : toolLabel(r.tool!)));
   if (own.length && state.myHero) {
     meta.push(`<span class="off" title="The hero you play already brings this - the item adds little for it">${esc(labelFor(state.myHero))} already has ${esc([...new Set(own)].join(", ").toLowerCase())}</span>`);
   }

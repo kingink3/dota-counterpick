@@ -4,7 +4,7 @@
 //  MatchPlan (src/item-plan.ts, src/game-plan.ts).
 // =============================================================================
 
-import { CURVE_LABELS, mmss, type ItemPlan, type PlanItem, type TeamWindow } from "../item-plan.js";
+import { CURVE_LABELS, mmss, WINDOW_PP, type ItemPlan, type PlanItem, type TeamWindow } from "../item-plan.js";
 import { PHASES, type GamePhase, type MatchPlan } from "../game-plan.js";
 import type { Recommendation } from "../types.js";
 
@@ -206,10 +206,13 @@ export function renderWindowLine(root: HTMLElement, w: TeamWindow | undefined, t
   const line = el("div", "gz-line", "");
   const edges = [0, 25, 35, 45, 50];
   w.diff.forEach((d, i) => {
-    const seg = el("i", d > 0.5 ? "ours" : d < -0.5 ? "theirs" : "even", "");
+    const seg = el("i", d > WINDOW_PP ? "ours" : d < -WINDOW_PP ? "theirs" : "even", "");
     seg.style.left = `${(edges[i]! / 50) * 100}%`;
     seg.style.width = `${((edges[i + 1]! - edges[i]!) / 50) * 100}%`;
     seg.title = `${CURVE_LABELS[i]}: ${d >= 0 ? "+" : ""}${d.toFixed(1)} pp`;
+    // how big the gap is: stronger colour for a bigger gap, the number on the segment
+    if (Math.abs(d) > WINDOW_PP) seg.style.opacity = String(Math.min(1, 0.4 + Math.abs(d) / 10));
+    seg.textContent = `${d >= 0 ? "+" : ""}${d.toFixed(1)}`;
     line.append(seg);
   });
   for (const m of [25, 35, 45]) {
@@ -230,9 +233,9 @@ export function renderWindowLine(root: HTMLElement, w: TeamWindow | undefined, t
   root.append(
     p(
       "gz-sub",
-      d > 0.5
+      d > WINDOW_PP
         ? `You are stronger now (+${d.toFixed(1)} pp${until ? ` until ${until}` : ""})`
-        : d < -0.5
+        : d < -WINDOW_PP
           ? `They are stronger now (${d.toFixed(1)} pp${until ? ` until ${until}` : ""})`
           : `Even right now${until ? ` (until ${until})` : ""}`,
     ),
@@ -279,11 +282,11 @@ export function windowText(w: TeamWindow, heroLabel: (c: string) => string): str
       .map((x) => `${heroLabel(x.hero)} ${x.pp >= 0 ? "+" : ""}${x.pp.toFixed(1)}`)
       .join(", ");
   const parts: string[] = [];
-  if (w.diff[best]! > 0.5) {
+  if (w.diff[best]! > WINDOW_PP) {
     const ours = who(best, "ally", 1);
     parts.push(`Your window: ${CURVE_LABELS[best]} (+${w.diff[best]!.toFixed(1)} pp)${ours ? ` - ${ours}` : ""}.`);
   }
-  if (w.diff[worst]! < -0.5) {
+  if (w.diff[worst]! < -WINDOW_PP) {
     const theirs = who(worst, "enemy", 1);
     parts.push(`They are stronger ${CURVE_LABELS[worst]} (${w.diff[worst]!.toFixed(1)} pp)${theirs ? ` - ${theirs}` : ""}.`);
   }
