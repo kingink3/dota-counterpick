@@ -95,12 +95,18 @@ test("review: plan vs fact, farm, deaths and execution checks", () => {
   assert.equal(d2100.alone, false, "Crystal Maiden is next to him");
   assert.deepEqual(r.deaths.find((d) => d.time === 1805)!.unused, [], "BKB was just used");
   assert.ok(r.deaths.find((d) => d.time === 900)!.alone, "nobody within range");
-  assert.ok(ids.includes("died_with_item_ready"));
-  assert.ok(ids.includes("heal_unused"));
+  // with battle data the precise "save ready before dying" replaces the older death checks
+  if (r.battles) {
+    assert.ok(!ids.includes("died_with_item_ready") && !ids.includes("heal_unused"), "no duplicates of the battle checks");
+  } else {
+    assert.ok(ids.includes("died_with_item_ready"));
+    assert.ok(ids.includes("heal_unused"));
+  }
+  assert.ok(r.fixFirst.length <= 3 && r.workOn.length <= 5 && r.fixFirst.every((f) => f.tier === 1));
   assert.ok(ids.includes("died_alone"));
   assert.ok(ids.includes("died_with_gold"));
   assert.ok(r.growth.length > 0 && r.growth.length <= GROWTH);
-  assert.ok(r.growth.every((g, i) => i === 0 || r.growth[i - 1]!.severity >= g.severity), "growth sorted by severity");
+  for (const part of [r.fixFirst, r.workOn]) assert.ok(part.every((g, i) => i === 0 || part[i - 1]!.severity >= g.severity), "each tier sorted by severity");
 });
 
 test("review: turbo is not compared with ranked timings and averages", () => {
@@ -110,7 +116,7 @@ test("review: turbo is not compared with ranked timings and averages", () => {
   assert.equal(r.comparable, false);
   const ids = r.findings.map((f) => f.id);
   assert.ok(!ids.includes("slow_core") && !ids.includes("low_cs10"), "no timing / farm verdicts in turbo");
-  assert.ok(ids.includes("died_with_item_ready"), "execution checks still apply");
+  assert.ok(ids.includes("died_with_item_ready") || ids.some((x) => x.startsWith("idle:")) || ids.includes("died_alone"), "execution checks still apply");
 });
 
 test("trends: a problem in 3 of 4 matches recurs; a one-off does not", () => {
@@ -249,5 +255,27 @@ test("match overview: every player graded; reviews add timings and battles; advi
   assert.ok(am.timing, "a reviewed player gets item timings");
   assert.equal(am.workOn, r.growth[0]!.title);
   const t = adviceText(r, (h) => h);
-  assert.ok(t.length <= 1900 && t.includes("Work on") && t.includes(r.growth[0]!.title));
+  assert.ok(t.length <= 1900 && /Fix first|Work on/.test(t) && t.includes(r.growth[0]!.title));
+});
+
+test("priorities: skipping the draft's answers is not a problem when the game went well", () => {
+  const m = match();
+  const pb = m.me.playbackData!;
+  pb.inventoryEvents = pb.inventoryEvents!.map((e) => ({ time: e.time, item0: { itemId: I("power_treads") }, item1: { itemId: I("bfury") } }));
+  pb.itemUsedEvents = [];
+  pb.deathEvents = [{ time: 2100, positionX: 100, positionY: 100 }];
+  m.me.stats!.networthPerMinute = Array.from({ length: 41 }, (_, k) => 600 + k * 700);
+  m.summary.players[0]!.isVictory = true;
+  const good = reviewMatch(m, ACC, ctx);
+  const cm = good.findings.find((f) => f.id === "counter_missing");
+  assert.ok(cm, "the draft's answers were skipped");
+  assert.ok(cm.note, "a deviation that worked is a note");
+  assert.ok(!good.growth.includes(cm));
+  // the same build in a game that went badly is a problem
+  const bad = match();
+  bad.me.playbackData!.inventoryEvents = pb.inventoryEvents;
+  const r = reviewMatch(bad, ACC, ctx);
+  const cm2 = r.findings.find((f) => f.id === "counter_missing");
+  assert.ok(cm2 && !cm2.note, "a problem when the game went badly");
+  assert.ok(good.build.length > 0 && good.build.every((b, i) => i === 0 || good.build[i - 1]!.at <= b.at), "the build in order");
 });

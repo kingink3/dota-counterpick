@@ -188,6 +188,10 @@ export interface Finding {
   times?: number[];
   /** a strength rather than a problem. */
   good?: boolean;
+  /** 1 = cost fights / deaths (fix first), 2 = efficiency (farm, timings, vision). */
+  tier?: 1 | 2;
+  /** a deviation with no sign it cost anything: shown in its section, not as a problem. */
+  note?: boolean;
 }
 export interface PlanCheck {
   key: string;
@@ -241,11 +245,40 @@ export interface MatchReview {
   vision?: VisionStats;
   /** spell / item use in battles (2+ heroes a side), targets, positioning. */
   battles?: BattleReport;
-  /** the top problems by severity (up to GROWTH). */
+  /** fixFirst + workOn (kept for the copy text / older code). */
   growth: Finding[];
+  /** up to 3: what cost deaths / fights, with evidence. */
+  fixFirst: Finding[];
+  /** up to 5 more. */
+  workOn: Finding[];
+  /** up to 3: what went well (an own build that worked counts). */
+  strengths: Finding[];
+  /** finished items in order, with how they compare to the hero's typical timing. */
+  build: BuildItem[];
+  /** one line on the build: plan items vs own choices. */
+  buildNote?: string;
+  /** runes taken. */
+  runes?: { power: number; bounty: number };
 }
 
-export const GROWTH = 10;
+export interface BuildItem {
+  key: string;
+  label: string;
+  at: number;
+  verdict?: "fast" | "typical" | "slow";
+  /** in the plan the app made for this draft. */
+  planned: boolean;
+  /** the hero's typical (median) time for it. */
+  typical?: number;
+}
+
+export const GROWTH = 8;
+const FIX_FIRST = 3;
+const WORK_ON = 5;
+/** findings that cost deaths or fights (tier 1); the rest is efficiency (tier 2). */
+const TIER1 = new Set(["many_deaths", "died_alone", "ward_walk", "front_deaths", "outnumbered", "silent_death", "silent_battles", "deep_deaths", "low_kp", "ult_unused", "died_with_item_ready", "heal_unused"]);
+/** plan-conformity findings: problems only with evidence that the game went badly for this player. */
+const PLAN_IDS = new Set(["counter_missing", "counter_late"]);
 
 /** items that save you when used in time (escape, immunity, defence). */
 export const SAVE_ITEMS = new Set([
@@ -640,7 +673,74 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
   const battles = analyseBattles(s, me, d.positions, ids, name, ultIds, d.health);
   if (battles?.battles.length) findings.push(...battleFindings(battles, position));
 
-  const growth = findings.filter((f) => !f.good).sort((a, b) => b.severity - a.severity).slice(0, GROWTH);
+  // ---- priorities: a problem is what cost the game, not what differs from the plan ----
+  const nwAt = [...farm].reverse().find((f) => f.minute <= 20 && f.nw !== undefined && f.nwBench);
+  const nwRatio = nwAt ? nwAt.nw! / nwAt.nwBench! : undefined;
+  const deadShare = dead / Math.max(1, duration);
+  const struggling = deathsList.length >= Math.max(4, (dB ?? 5) * 1.2) || deadShare >= 0.1 || (nwRatio !== undefined && nwRatio < 0.9);
+  const farmBehind = nwRatio !== undefined ? nwRatio < 0.95 : !mine.isVictory;
+  const evidence = `${deathsList.length} deaths${dB !== undefined ? ` (avg ${dB.toFixed(1)})` : ""}${nwRatio !== undefined ? `, networth ${pctD(nwRatio, 1)} at ${nwAt!.minute}:00` : ""}`;
+  // with battle data the precise checks replace the older heuristics about the same deaths
+  const dup = battles?.battles.length ? new Set(["ult_unused", "died_with_item_ready", "heal_unused"]) : new Set<string>();
+  const kept = findings.filter((f) => !dup.has(f.id));
+  findings.length = 0;
+  findings.push(...kept);
+  for (const f of findings) {
+    if (f.good) continue;
+    if (PLAN_IDS.has(f.id) && !struggling) {
+      f.note = true;
+      f.detail = `No sign it cost you (${evidence}): an own build that worked. ${f.detail}`;
+    } else if (f.id === "slow_core" && !farmBehind) {
+      f.note = true;
+      f.detail = `Farm was on track (${evidence}), so other items came first. ${f.detail}`;
+    } else if (f.id === "low_imp" || f.id === "high_imp") {
+      f.note = true; // IMP is the summary in the header / overview, not a separate problem
+    }
+    const idle = /^idle:/.test(f.id) && /before \d+ death|ultimate/.test(f.title);
+    f.tier = TIER1.has(f.id) || idle ? 1 : 2;
+    // few deaths overall: how they happened is worth a look, not the first thing to fix
+    if (f.tier === 1 && f.id !== "low_kp" && !/ultimate/.test(f.title) && deathsList.length <= Math.max(2, (dB ?? 4) * 0.5)) f.tier = 2;
+  }
+
+  // ---- the build: finished items in order, vs the hero's typical timing ----------
+  const hs = ctx.stats?.heroes[hero];
+  const hsPos = position ? hs?.byPos?.[String(position)] : undefined;
+  const planned = new Set((plan?.phases ?? []).flatMap((p) => p.items.map((i) => i.key)));
+  const comps = new Set<string>();
+  for (const k of done.keys()) for (const c of ctx.stats?.items[k]?.components ?? []) if (done.has(k)) comps.add(c);
+  const build: BuildItem[] = [...done.entries()]
+    .filter(([k]) => (ctx.stats?.items[k]?.cost ?? 0) >= 1000 && !comps.has(k) && !/^(recipe_|ward_|tango|clarity|flask|tpscroll|dust|smoke)/.test(k))
+    .sort((a, b) => a[1] - b[1])
+    .map(([k, at]) => {
+      const t = hsPos?.timing?.[k] ?? hs?.timing?.[k];
+      const verdict = t && comparable ? (at <= (t.fastBy ?? t.p25) ? "fast" : at >= (t.slowAfter ?? t.p75) ? "slow" : "typical") : undefined;
+      return { key: k, label: name(k), at, ...(verdict ? { verdict } : {}), planned: planned.has(k), ...(t ? { typical: t.p50 } : {}) } as BuildItem;
+    });
+  const own = build.filter((b) => !b.planned);
+  const onTime = build.filter((b) => b.verdict === "fast" || b.verdict === "typical").length;
+  const buildNote = build.length
+    ? `${build.length} items, ${onTime} on time or faster` +
+      (own.length ? `; own choices: ${own.map((b) => `${b.label}${b.verdict === "fast" ? " (fast)" : b.verdict === "slow" ? " (late)" : ""}`).join(", ")}` : "; all from the plan")
+    : undefined;
+  if (!struggling && findings.some((f) => f.note && PLAN_IDS.has(f.id))) {
+    const skipped = checks.filter((c) => c.phase === "situational" && c.actual === undefined).map((c) => c.label);
+    const fast = build.filter((b) => b.verdict === "fast").map((b) => b.label);
+    const went = fast.length ? `${fast.join(", ")} fast` : own.length ? own.map((b) => b.label).join(", ") : "your own items";
+    findings.push({
+      id: "own_build",
+      area: "plan",
+      severity: 0.3,
+      good: true,
+      title: `Own build worked: ${went}${skipped.length ? ` (skipped ${skipped.join(", ")})` : ""}`,
+      detail: `Away from the draft's answers, and it paid off (${evidence}).`,
+    });
+  }
+
+  const problems = findings.filter((f) => !f.good && !f.note).sort((a, b) => b.severity - a.severity);
+  const fixFirst = problems.filter((f) => f.tier === 1).slice(0, FIX_FIRST);
+  const workOn = problems.filter((f) => !fixFirst.includes(f)).slice(0, WORK_ON);
+  const strengths = findings.filter((f) => f.good).sort((a, b) => b.severity - a.severity).slice(0, 3);
+  const growth = [...fixFirst, ...workOn];
   return {
     matchId: s.id,
     account,
@@ -662,6 +762,12 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
     vision,
     ...(battles?.battles.length ? { battles } : {}),
     growth,
+    fixFirst,
+    workOn,
+    strengths,
+    build,
+    ...(buildNote ? { buildNote } : {}),
+    runes: { power, bounty },
   };
 }
 
@@ -686,8 +792,7 @@ function battleFindings(b: BattleReport, position?: number): Finding[] {
           ? `${u.name} ready and not used before ${u.missed} death${u.missed > 1 ? "s" : ""}`
           : `${u.name}${u.ult ? " (ultimate)" : ""}: ${u.used} of ${u.windows} chances used`,
       detail:
-        `Ready (cooldown ${cd}, mana) ${what}: ${u.missed} time${u.missed > 1 ? "s" : ""} not cast, ${s(u.idle)} in total, longest ${s(u.longest)}. ` +
-        "1 s to react is not counted; cooldown reduction, stuns on you and vision are not in the data.",
+        `Ready (cooldown ${cd}, mana) ${what}: ${u.missed} time${u.missed > 1 ? "s" : ""} not cast, ${s(u.idle)} in total, longest ${s(u.longest)}.`,
     });
   }
   const mana = b.totals.filter((u) => u.manaShort >= 15);

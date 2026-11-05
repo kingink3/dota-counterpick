@@ -48,7 +48,7 @@ export class ReviewView {
   private history: MatchReview[] = loadHistory();
   private current?: MatchReview;
   /** the match open in the player switcher: shared data + every player's review so far. */
-  private open?: { id: number; base: MatchBase; reviews: Map<number, MatchReview>; loading: Set<number>; failed: Map<number, string> };
+  private open?: { id: number; base: MatchBase; reviews: Map<number, MatchReview>; loading: Set<number>; failed: Map<number, string>; expanded: Set<number> };
   private matchInput = "";
   private status = "";
   private busy = false;
@@ -103,7 +103,7 @@ export class ReviewView {
     this.render();
     try {
       const base = await this.client().base(id);
-      this.open = { id, base, reviews: new Map(), loading: new Set(), failed: new Map() };
+      this.open = { id, base, reviews: new Map(), loading: new Set(), failed: new Map(), expanded: new Set() };
       if (known?.account) this.open.reviews.set(known.account, known);
       this.status = "";
       this.busy = false;
@@ -309,7 +309,10 @@ export class ReviewView {
       side.classList.add("rv-ov-side");
       (side.firstChild as HTMLTableCellElement).colSpan = 12;
       tb.append(side);
-      for (const x of rows) tb.append(this.overviewRow(o, x, me));
+      for (const x of rows) {
+        tb.append(this.overviewRow(o, x, me));
+        if (o.expanded.has(x.slot)) tb.append(this.overviewDetail(o, x));
+      }
     }
     c.append(tb);
     const missing = ov.rows.filter((x) => !x.reviewed && x.account).length;
@@ -318,7 +321,7 @@ export class ReviewView {
         "p",
         "rv-note",
         `Overall is a heuristic: STRATZ IMP, networth and deaths vs the Crusader-Ancient average for the hero and position, kill participation, vision for supports` +
-          `${missing ? `; item timings and battle chances need the player analysed (${missing} not yet - "Analyse all" above)` : ", item timings and battle chances"}. Click a row to open that player.`,
+          `${missing ? `; item timings and battle chances need the player analysed (${missing} not yet - "Analyse all" above)` : ", item timings and battle chances"}. Click a row for that player's build and main points.`,
       ),
     );
     return c;
@@ -350,7 +353,59 @@ export class ReviewView {
     img.alt = "";
     tr.firstElementChild!.append(img);
     tr.title = x.parts.map((q) => `${q.label}: ${q.text}`).join("\n");
-    if (x.account) tr.addEventListener("click", () => void this.selectPlayer(x.account!));
+    if (o.expanded.has(x.slot)) tr.classList.add("open");
+    tr.addEventListener("click", () => {
+      if (o.expanded.has(x.slot)) o.expanded.delete(x.slot);
+      else {
+        o.expanded.add(x.slot);
+        // the build and main points need the player's events (4 requests, once)
+        if (x.account && !o.reviews.has(x.account)) void this.selectPlayer(x.account, false);
+      }
+      this.render();
+    });
+    return tr;
+  }
+
+  /** under a row: the build in order (fast / typical / late) and the main points. */
+  private overviewDetail(o: NonNullable<ReviewView["open"]>, x: OverviewRow): HTMLElement {
+    const tr = document.createElement("tr");
+    tr.className = "rv-ov-x";
+    const td = document.createElement("td");
+    td.colSpan = 12;
+    tr.append(td);
+    const r = x.account ? o.reviews.get(x.account) : undefined;
+    if (!r) {
+      td.append(el("p", "muted", x.account && o.loading.has(x.account) ? "Loading this player (4 requests)…" : x.account && o.failed.get(x.account) ? `Failed: ${o.failed.get(x.account)}` : "No Steam id for this player."));
+      return tr;
+    }
+    const strip = el("div", "rv-strip", "");
+    for (const b of r.build) {
+      const it = el("span", `rv-si v-${b.verdict ?? "none"}${b.planned ? "" : " own"}`, "");
+      const img = document.createElement("img");
+      img.src = `./items/${b.key}.webp`;
+      img.alt = "";
+      img.onerror = () => img.remove();
+      it.append(img, el("span", "", mmss(b.at)));
+      it.title = `${b.label}: ${mmss(b.at)}${b.typical !== undefined ? ` (typical ~${mmss(b.typical)})` : ""}${b.verdict ? ` - ${b.verdict === "slow" ? "late" : b.verdict}` : ""}${b.planned ? "" : " - own choice"}`;
+      strip.append(it);
+    }
+    if (!r.build.length) strip.append(el("span", "muted", "No finished items."));
+    td.append(strip);
+    if (r.buildNote) td.append(el("p", "rv-sub", r.buildNote));
+    const pts = el("ul", "rv-xp", "");
+    for (const f of (r.fixFirst ?? []).slice(0, 3)) pts.append(el("li", "bad", f.title));
+    if (!(r.fixFirst ?? []).length) for (const f of (r.workOn ?? []).slice(0, 2)) pts.append(el("li", "warn", f.title));
+    for (const f of (r.strengths ?? []).slice(0, 2)) pts.append(el("li", "good", f.title));
+    td.append(pts);
+    const open = el("button", "g-btn", "Full review ↓") as HTMLButtonElement;
+    open.type = "button";
+    open.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.current = r;
+      this.render();
+      document.querySelector(".rv-report")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    td.append(open);
     return tr;
   }
 
@@ -429,17 +484,16 @@ export class ReviewView {
     head.append(copy);
     box.append(head);
 
-    const g = card(`Growth areas${r.growth.length > 3 ? ` · top ${r.growth.length}` : ""}`);
-    if (!r.growth.length) g.append(el("p", "muted", "Nothing stood out against the checks in this match."));
-    r.growth.forEach((f, i) => g.append(findingRow(f, true, i + 1)));
-    box.append(g);
-
+    box.append(this.mainCard(r));
     const grid = el("div", "rv-grid");
-    grid.append(this.planCard(r), this.farmCard(r));
+    grid.append(this.itemsCard(r), this.farmCard(r));
     box.append(grid);
     box.append(this.deathsCard(r));
     if (r.battles) box.append(this.battlesCard(r.battles));
-    const rest = card("All checks");
+    box.append(this.mapCard(r));
+    const rest = document.createElement("details");
+    rest.className = "gz-card rv-all";
+    rest.append(el("summary", "", `All checks (${r.findings.length})`));
     const order: Finding["area"][] = ["plan", "farm", "deaths", "battles", "map", "execution"];
     for (const a of order) {
       const fs = r.findings.filter((f) => f.area === a);
@@ -451,18 +505,51 @@ export class ReviewView {
     return box;
   }
 
-  private planCard(r: MatchReview): HTMLElement {
-    const c = card("Plan vs fact");
-    if (!r.checks.length) {
+  /** fix first (cost deaths / fights) -> work on -> strengths; a click goes to the evidence. */
+  private mainCard(r: MatchReview): HTMLElement {
+    const c = card("Main points");
+    const fix = r.fixFirst ?? r.growth.slice(0, 3);
+    const work = r.workOn ?? r.growth.slice(3);
+    const good = r.strengths ?? r.findings.filter((f) => f.good).slice(0, 3);
+    if (!fix.length && !work.length) c.append(el("p", "muted", "Nothing cost this game in the checks - see the strengths."));
+    let n = 0;
+    const group = (title: string, fs: Finding[], cls: string) => {
+      if (!fs.length) return;
+      c.append(el("div", `plan-ph ${cls}`, title));
+      for (const f of fs) c.append(pointRow(f, f.good ? undefined : ++n));
+    };
+    group("Fix first", fix, "rv-ph-fix");
+    group("Work on", work, "rv-ph-work");
+    group("Strengths", good, "rv-ph-good");
+    return c;
+  }
+
+  private itemsCard(r: MatchReview): HTMLElement {
+    const c = card("Items · plan vs fact");
+    c.id = SECTION.plan;
+    const build = r.build ?? [];
+    if (!r.checks.length && !build.length) {
       c.append(el("p", "muted", "No plan for this hero (no statistics / not in the KB)."));
       return c;
     }
-    const tb = el("table", "rv-t");
-    tb.append(rowEl(["Item", "Plan", "Actual", ""], true));
-    for (const k of r.checks) {
-      const v = { fast: "fast", typical: "typical", slow: "late", missing: "not bought", bought: "bought" }[k.verdict];
-      const tr = rowEl([k.label, k.phase === "situational" ? "draft" : k.planned !== undefined ? `~${mmss(k.planned)}` : "", k.actual !== undefined ? mmss(k.actual) : "-", v]);
-      tr.classList.add(`v-${k.verdict}`);
+    if (r.buildNote) c.append(el("p", "rv-sum", r.buildNote));
+    for (const f of r.findings.filter((x) => x.note && x.area === "plan")) c.append(el("p", "rv-sub", f.title));
+    const V: Record<string, string> = { fast: "fast", typical: "typical", slow: "late", missing: "not bought", bought: "bought" };
+    const tb = el("table", "rv-t rv-it");
+    tb.append(rowEl(["Item", "Typical", "Actual", "", ""], true));
+    // bought: plan items and own choices, in the order they came
+    const rows = new Map<string, { label: string; planned?: number; actual: number; verdict: string; src: string }>();
+    for (const k of r.checks) if (k.actual !== undefined) rows.set(k.key, { label: k.label, ...(k.planned !== undefined ? { planned: k.planned } : {}), actual: k.actual, verdict: k.verdict, src: k.phase === "situational" ? "draft answer" : "plan" });
+    for (const b of build) if (!rows.has(b.key)) rows.set(b.key, { label: b.label, ...(b.typical !== undefined ? { planned: b.typical } : {}), actual: b.at, verdict: b.verdict ?? "bought", src: "own" });
+    for (const x of [...rows.values()].sort((a, b) => a.actual - b.actual)) {
+      const tr = rowEl([x.label, x.planned !== undefined ? `~${mmss(x.planned)}` : "", mmss(x.actual), V[x.verdict] ?? x.verdict, x.src]);
+      tr.classList.add(`v-${x.verdict}`);
+      tb.append(tr);
+    }
+    // not bought: last, grey - a problem only when the main points say so
+    for (const k of r.checks.filter((x) => x.actual === undefined)) {
+      const tr = rowEl([k.label, k.phase === "situational" ? "draft" : k.planned !== undefined ? `~${mmss(k.planned)}` : "", "-", "not bought", k.phase === "situational" ? "draft answer" : "plan"]);
+      tr.classList.add("v-skipped");
       tb.append(tr);
     }
     c.append(tb);
@@ -470,7 +557,10 @@ export class ReviewView {
   }
 
   private farmCard(r: MatchReview): HTMLElement {
-    const c = card("Farm vs Crusader-Ancient average");
+    const c = card("Farm & lane vs Crusader-Ancient average");
+    c.id = SECTION.farm;
+    const lane = r.findings.find((f) => f.id === "lane_won" || f.id === "lane_lost");
+    if (lane) c.append(el("p", `rv-sum${lane.good ? " good" : ""}`, lane.title));
     const tb = el("table", "rv-t");
     tb.append(rowEl(["Min", "Last hits", "Networth", "XP"], true));
     const cell = (v?: number, b?: number) => (v === undefined ? "-" : b ? `${Math.round(v)} (${pctDelta(v, b)})` : String(Math.round(v)));
@@ -484,21 +574,41 @@ export class ReviewView {
   }
 
   private deathsCard(r: MatchReview): HTMLElement {
-    const c = card(`Deaths (${r.deaths.length})`);
+    const c = card(`Deaths & positioning (${r.deaths.length})`);
+    c.id = SECTION.deaths;
     if (!r.deaths.length) {
       c.append(el("p", "muted", "No deaths."));
       return c;
     }
+    // what each death had, from the death checks and the battle it ended
+    const bAt = (t: number) => r.battles?.battles.find((b) => b.died && Math.abs(b.to - t) <= 1);
+    const saves = (t: number) => (r.battles?.battles.find((b) => b.died && Math.abs(b.to - t) <= 1)?.uses ?? []).filter((u) => u.use !== "enemy" && u.missed > 0).map((u) => u.name);
+    const count = new Map<string, number>();
+    const inc = (k: string) => count.set(k, (count.get(k) ?? 0) + 1);
+    const rows = [...r.deaths].sort((a, b) => a.time - b.time).map((d) => {
+      const b = bAt(d.time);
+      const tags: Array<[string, string]> = [];
+      if (d.flags.includes("walked into enemy vision")) tags.push(["bad", "after walking into vision"]);
+      if (d.alone) tags.push(["bad", "alone"]);
+      if (b?.frontmost) tags.push(["bad", "front-most"]);
+      if (b?.outnumbered) tags.push(["bad", `outnumbered ${(b.alliesNear ?? 0) + 1}v${b.enemiesNear}`]);
+      if (b?.deep) tags.push(["warn", "their half"]);
+      const unused = r.battles ? saves(d.time) : [...d.unused.map((k) => k.replace(/_/g, " ")), ...(d.flags.includes("heal available") ? ["heal"] : []), ...(d.flags.includes("ultimate not used") ? ["ultimate"] : [])];
+      if (unused.length) tags.push(["bad", `${unused.join(", ")} ready`]);
+      if (d.inEnemyWindow) tags.push(["warn", "their power window"]);
+      if (d.unspent >= 1500) tags.push(["warn", `${d.unspent} gold unspent`]);
+      if (d.flags.includes("burst")) tags.push(["", "burst"]);
+      for (const [, t] of tags) inc(t.replace(/ \d+v\d+$/, "").replace(/^\d+ gold unspent$/, "gold unspent").replace(/^.+ ready$/, "something ready"));
+      return { d, tags };
+    });
+    const top = [...count.entries()].filter(([k]) => k !== "burst").sort((a, b) => b[1] - a[1]).slice(0, 4);
+    if (top.length) c.append(el("p", "rv-sum", `${r.deaths.length} deaths: ${top.map(([k, n]) => `${n} ${k}`).join(", ")}`));
     const ul = el("ul", "rv-deaths");
-    for (const d of [...r.deaths].sort((a, b) => a.time - b.time)) {
+    for (const { d, tags } of rows) {
       const li = el("li", "", "");
       li.append(el("b", "", mmss(d.time)));
       const chips = el("span", "rv-chips", "");
-      if (d.inEnemyWindow) chips.append(el("i", "bad", "their window"));
-      if (d.alone) chips.append(el("i", "bad", "alone"));
-      for (const k of d.unused) chips.append(el("i", "bad", `${k.replace(/_/g, " ")} ready`));
-      for (const f of d.flags) chips.append(el("i", f === "burst" ? "" : "warn", f));
-      if (d.unspent >= 1500) chips.append(el("i", "warn", `${d.unspent} gold unspent`));
+      for (const [cls, t] of tags) chips.append(el("i", cls, t));
       li.append(chips);
       ul.append(li);
     }
@@ -506,8 +616,25 @@ export class ReviewView {
     return c;
   }
 
+  private mapCard(r: MatchReview): HTMLElement {
+    const c = card("Map & role");
+    c.id = SECTION.map;
+    const per10 = (n: number) => (n / Math.max(1, r.duration / 600)).toFixed(1);
+    const sup = (r.position ?? 0) >= 4;
+    const v = r.vision;
+    const parts: string[] = [];
+    if (v) {
+      parts.push(`${v.observers} observers (${per10(v.observers)} / 10 min${sup ? ", norm 2+" : ""})`, `${v.sentries} sentries`, `${v.dewards} enemy wards destroyed${sup ? " (norm ~1 / 10 min)" : ""}`, `${v.stacks} stacks${sup ? " (norm 1+ / 10 min)" : ""}`);
+    }
+    if (r.runes) parts.push(`${r.runes.power} power runes`, `${r.runes.bounty} bounties`);
+    c.append(el("p", "rv-sum", parts.join(" · ") || "No map data."));
+    for (const f of r.findings.filter((x) => x.area === "map" && !x.note)) c.append(findingRow(f, false));
+    return c;
+  }
+
   private battlesCard(b: BattleReport): HTMLElement {
     const c = card(`Battles (${b.battles.length}) · 2+ heroes a side`);
+    c.id = SECTION.battles;
     const sec = (x: number) => `${Math.round(x)} s`;
     const USE: Record<UseStat["use"], string> = { enemy: "enemy in range", ally: "core in trouble", save: "last 5 s alive" };
     if (b.totals.length) {
@@ -589,6 +716,31 @@ export class ReviewView {
     }
     return c;
   }
+}
+
+/** where each area's evidence is. */
+const SECTION: Record<Finding["area"], string> = { plan: "rv-sec-items", farm: "rv-sec-farm", deaths: "rv-sec-deaths", execution: "rv-sec-deaths", battles: "rv-sec-battles", map: "rv-sec-map" };
+
+/** one line: the point, its first sentence, a link to the evidence. */
+function pointRow(f: Finding, n?: number): HTMLElement {
+  const r = el("div", `rv-p${f.good ? " good" : ""}`, "");
+  r.append(el("span", "rv-n", n ? String(n) : "+"));
+  const t = el("span", "rv-pt", "");
+  t.append(el("b", "", f.title));
+  const first = /^(.+?[.!?])(\s|$)/.exec(f.detail)?.[1] ?? f.detail;
+  if (!f.good) t.append(el("span", "rv-det", ` - ${first}`));
+  r.append(t);
+  const go = el("button", "rv-go", "details ↓") as HTMLButtonElement;
+  go.type = "button";
+  go.title = AREA_LABEL[f.area];
+  go.addEventListener("click", () => {
+    const sec = document.getElementById(SECTION[f.area]);
+    sec?.scrollIntoView({ behavior: "smooth", block: "start" });
+    sec?.classList.add("flash");
+    setTimeout(() => sec?.classList.remove("flash"), 1200);
+  });
+  r.append(go);
+  return r;
 }
 
 function findingRow(f: Finding, area = true, n?: number): HTMLElement {

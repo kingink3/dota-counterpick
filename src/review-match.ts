@@ -213,11 +213,20 @@ export function adviceText(r: MatchReview, label: (hero: string) => string, opts
     const windows = r.battles.totals.reduce((a, u) => a + u.windows, 0);
     lines.push(`Battles: ${r.battles.battles.length}, spell / item chances used ${used} of ${windows}`);
   }
-  lines.push("", "**Work on:**");
   const growth = r.growth.slice(0, opts.top ?? 6);
-  growth.forEach((g, i) => lines.push(`${i + 1}. ${g.title} - ${first(g.detail)}`));
-  if (!growth.length) lines.push("Nothing stood out.");
-  const good = r.findings.filter((f) => f.good).sort((a, b) => b.severity - a.severity).slice(0, 3);
+  const fix = growth.filter((g) => (r.fixFirst ?? []).includes(g));
+  const rest = growth.filter((g) => !fix.includes(g));
+  let n = 0;
+  if (fix.length) {
+    lines.push("", "**Fix first:**");
+    for (const g of fix) lines.push(`${++n}. ${g.title} - ${first(g.detail)}`);
+  }
+  if (rest.length) {
+    lines.push("", fix.length ? "**Also:**" : "**Work on:**");
+    for (const g of rest) lines.push(`${++n}. ${g.title} - ${first(g.detail)}`);
+  }
+  if (!growth.length) lines.push("", "Nothing in the checks cost this game.");
+  const good = r.strengths ?? r.findings.filter((f) => f.good).sort((a, b) => b.severity - a.severity).slice(0, 3);
   if (good.length) {
     lines.push("", "**Good:**");
     for (const g of good) lines.push(`+ ${g.title}`);
