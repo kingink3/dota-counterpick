@@ -176,6 +176,19 @@
       @media (max-width: 960px) { .rv { grid-template-columns: minmax(0, 1fr); } }
       .rv-side { background: var(--deep); border-right: 1px solid var(--line); padding: 16px; display: grid; gap: 14px; align-content: start; min-width: 0; }
       .rv-main { padding: 16px 22px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+      .rv-sw { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; margin-bottom: 12px; }
+      .rv-sw-row { display: grid; grid-template-columns: 9.5rem repeat(5, minmax(0, 1fr)); gap: 6px; align-items: stretch; margin-bottom: 6px; }
+      .rv-sw-side { font: 600 12px/1.3 var(--cond); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; align-self: center; }
+      .rv-sw-p { display: flex; gap: 6px; align-items: center; text-align: left; background: var(--panel2); border: 1px solid var(--line); border-radius: 3px; padding: 4px 6px; color: var(--text); font: inherit; font-size: 12.5px; cursor: pointer; min-width: 0; }
+      .rv-sw-p img { width: 44px; height: 25px; object-fit: cover; border-radius: 2px; flex: none; }
+      .rv-sw-t { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; } .rv-sw-t > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .rv-sw-n { color: var(--text2); font-size: 11.5px; }
+      .rv-sw-p:hover:not(:disabled) { border-color: var(--line2); } .rv-sw-p.on { border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
+      .rv-sw-p.done .rv-sw-n { color: var(--good); } .rv-sw-p.failed .rv-sw-n { color: var(--bad); }
+      .rv-sw-p.private { opacity: .45; cursor: not-allowed; } .rv-sw-p.private img { filter: grayscale(1); }
+      .rv-sw-foot { display: flex; gap: 10px; align-items: center; font-size: 12.5px; margin-top: 2px; }
+      .rv-others { margin-bottom: 12px; }
+      @media (max-width: 900px) { .rv-sw-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } .rv-sw-side { grid-column: 1 / -1; } }
       .rv-in { display: block; width: 100%; margin: 0 0 8px; background: var(--panel2); border: 1px solid var(--line); color: var(--text); border-radius: 3px; padding: 5px 8px; font: inherit; font-size: 13px; }
       .rv-note { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
       .rv-status { margin: 0; padding: 8px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; font-size: 13.5px; }

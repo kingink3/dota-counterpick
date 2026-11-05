@@ -6,6 +6,7 @@ import { loadKB } from "../src/kb.js";
 import type { ItemStats } from "../src/item-plan.js";
 import { GROWTH, reviewMatch, trends, type Benchmarks, type Ids, type MatchData, type MatchReview } from "../src/review.js";
 import { analyseBattles } from "../src/review-battles.js";
+import { openPlayer } from "../src/web/stratz-client.js";
 
 const kb = loadKB();
 const ids = JSON.parse(readFileSync("data/ids.json", "utf8")) as Ids;
@@ -75,6 +76,8 @@ test("review: plan vs fact, farm, deaths and execution checks", () => {
   assert.equal(r.hero, "anti_mage");
   assert.equal(r.position, 1);
   assert.equal(r.mode, "ranked");
+  assert.equal(r.account, ACC);
+  assert.equal(r.slot, 0);
   const ids = r.findings.map((f) => f.id);
   const bf = r.checks.find((c) => c.key === "bfury")!;
   assert.equal(bf.actual, 1260);
@@ -205,4 +208,20 @@ test("battles: no enemy in range -> not a missed chance", () => {
   const u = b.battles[0]!.uses.find((x) => x.name === "Shackleshot")!;
   assert.equal(u.missed, 0);
   assert.ok(u.ready >= 3, "it was off cooldown, just with nobody to cast it on");
+});
+
+test("players: open = an id and not anonymous; any open player can be reviewed", () => {
+  assert.equal(openPlayer({ steamAccountId: 5, steamAccount: { isAnonymous: false } }), true);
+  assert.equal(openPlayer({ steamAccountId: 5 }), true);
+  assert.equal(openPlayer({ steamAccountId: 5, steamAccount: { isAnonymous: true } }), false);
+  assert.equal(openPlayer({ steamAccountId: null }), false);
+  // an opponent of the synthetic match, with "his" events
+  const m = match();
+  const opp = m.summary.players.find((p) => p.playerSlot === 128)!;
+  m.me = { ...m.me, playerSlot: 128, heroId: opp.heroId, position: "POSITION_1", isRadiant: false };
+  const r = reviewMatch(m, opp.steamAccountId!, ctx);
+  assert.equal(r.hero, "phantom_assassin");
+  assert.equal(r.account, opp.steamAccountId);
+  assert.equal(r.slot, 128);
+  assert.equal(r.won, true);
 });

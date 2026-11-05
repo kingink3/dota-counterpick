@@ -109,28 +109,15 @@ export class StratzClient {
     return this.q<{ player: { matches: RecentMatch[] } }>(recentMatchesQuery(acc, take)).then((d) => d.player?.matches ?? []);
   }
 
-  /** a match in parts (STRATZ's complexity limit); positions and allies' HP are optional. */
-  async match(id: number): Promise<MatchData> {
-    const acc = this.s.account!;
+  /** what every player's review shares: summary, positions and HP of all ten (3 requests). */
+  async base(id: number): Promise<MatchBase> {
     const sum = await this.q<{ match: StratzSummary }>(matchSummaryQuery(id));
-    if (!sum.match) throw new StratzError("match not found", "query");
-    const me: StratzMe = { playerSlot: -1, heroId: 0, isRadiant: true, playbackData: {} };
-    for (const part of Object.keys(ME_PARTS) as Array<keyof typeof ME_PARTS>) {
-      const r = await this.q<{ match: { players: StratzMe[] } }>(matchMeQuery(id, acc, part));
-      const p = r.match?.players?.[0];
-      if (!p) throw new StratzError("you are not in this match (or it is not parsed yet)", "query");
-      const { playbackData, ...rest } = p;
-      Object.assign(me, rest);
-      if (playbackData) Object.assign(me.playbackData!, playbackData);
-    }
-    if (!me.playbackData?.deathEvents && !me.playbackData?.inventoryEvents) {
-      throw new StratzError("STRATZ has no event data for this match (old or not parsed yet)", "query");
-    }
+    if (!sum.match) throw new StratzError(`match ${id} not found`, "query");
     let positions: StratzPositions | undefined;
     try {
       positions = (await this.q<{ match: StratzPositions }>(matchPositionsQuery(id))).match;
     } catch {
-      positions = undefined; // the "alone" check is skipped
+      positions = undefined; // the "alone" / battle checks are reduced
     }
     let health: StratzHealth | undefined;
     try {
@@ -138,8 +125,38 @@ export class StratzClient {
     } catch {
       health = undefined; // saves on allied cores are not judged
     }
-    return { summary: sum.match, me, ...(positions ? { positions } : {}), ...(health ? { health } : {}) };
+    return { summary: sum.match, ...(positions ? { positions } : {}), ...(health ? { health } : {}) };
   }
+
+  /** one player's events, in 4 parts (STRATZ's complexity limit). Needs an open profile. */
+  async player(id: number, account: number): Promise<StratzMe> {
+    const me: StratzMe = { playerSlot: -1, heroId: 0, isRadiant: true, playbackData: {} };
+    for (const part of Object.keys(ME_PARTS) as Array<keyof typeof ME_PARTS>) {
+      const r = await this.q<{ match: { players: StratzMe[] } }>(matchMeQuery(id, account, part));
+      const p = r.match?.players?.[0];
+      if (!p) throw new StratzError("this player is not in the match (or it is not parsed yet)", "query");
+      const { playbackData, ...rest } = p;
+      Object.assign(me, rest);
+      if (playbackData) Object.assign(me.playbackData!, playbackData);
+    }
+    if (!me.playbackData?.deathEvents && !me.playbackData?.inventoryEvents) {
+      throw new StratzError("STRATZ has no event data for this player (private profile, old match or not parsed yet)", "query");
+    }
+    return me;
+  }
+
+  /** a match for one player: base + that player (7 requests). */
+  async match(id: number, account = this.s.account!): Promise<MatchData> {
+    const b = await this.base(id);
+    return { ...b, me: await this.player(id, account) };
+  }
+}
+
+export type MatchBase = Omit<MatchData, "me">;
+
+/** players whose events STRATZ gives out: an id and "Expose Public Match Data" on. */
+export function openPlayer(p: { steamAccountId?: number | null; steamAccount?: { isAnonymous?: boolean | null } | null }): boolean {
+  return !!p.steamAccountId && !p.steamAccount?.isAnonymous;
 }
 
 export interface RecentMatch {
@@ -163,7 +180,7 @@ export function loadHistory(): MatchReview[] {
   }
 }
 export function saveReview(r: MatchReview): MatchReview[] {
-  const rest = loadHistory().filter((x) => x.matchId !== r.matchId);
+  const rest = loadHistory().filter((x) => !(x.matchId === r.matchId && (x.account ?? r.account) === r.account));
   // keep the plan out of storage: it is rebuilt on demand and is the bulk of a review
   const { plan: _plan, ...slim } = r;
   const all = [slim as MatchReview, ...rest].sort((a, b) => (b.at ?? 0) - (a.at ?? 0)).slice(0, HISTORY_MAX);

@@ -188,6 +188,11 @@ export interface DeathRow {
 }
 export interface MatchReview {
   matchId: number;
+  /** whose review: the player's Steam account id and slot. */
+  account?: number;
+  slot?: number;
+  /** STRATZ profile name, when open. */
+  player?: string;
   at?: number;
   hero: string;
   position?: number;
@@ -596,6 +601,9 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
   const growth = findings.filter((f) => !f.good).sort((a, b) => b.severity - a.severity).slice(0, GROWTH);
   return {
     matchId: s.id,
+    account,
+    slot: mine.playerSlot,
+    ...(mine.steamAccount?.name ? { player: mine.steamAccount.name } : {}),
     ...(s.startDateTime ? { at: s.startDateTime } : {}),
     hero,
     ...(position ? { position } : {}),
