@@ -30,6 +30,11 @@ export function matchPositionsQuery(id: number): string {
   return `{ match(id: ${id}) { players { playerSlot isRadiant playbackData { playerUpdatePositionEvents { time x y } } } } }`;
 }
 
+/** HP of all ten heroes (the battle review checks saves on your cores). */
+export function matchHealthQuery(id: number): string {
+  return `{ match(id: ${id}) { players { playerSlot playbackData { playerUpdateHealthEvents { time hp maxHp } } } } }`;
+}
+
 export function leaderboardQuery(take = 10): string {
   return `{ leaderboard { season(request: {take: ${take}}) { players { steamAccountId lastUpdateDateTime } } } }`;
 }

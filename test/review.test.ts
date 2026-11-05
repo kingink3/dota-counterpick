@@ -130,47 +130,78 @@ test("review on the real STRATZ sample match (when present)", () => {
   }
 });
 
-test("battles: 2+ heroes a side; idle seconds, casts, targets, positioning", () => {
-  const SHACKLE = 5130; // Windranger Shackleshot: unit target, enemy, cd 16/14/12/10
-  assert.ok(ids.abilities?.[String(SHACKLE)]?.f.includes("u"), "ids.json has hero abilities");
+function battleMatch(paFarAfter = Infinity) {
+  const SHACKLE = 5130; // Windranger Shackleshot: unit target, enemy, cd 16/14/12/10, range 800
   const heroes = ["windranger", "anti_mage", "mars", "pudge", "invoker", "phantom_assassin", "lion", "zeus", "axe", "necrophos"];
   const players = heroes.map((h, i) => ({
     playerSlot: i < 5 ? i : 128 + i - 5, steamAccountId: i === 0 ? ACC : 1000 + i, isRadiant: i < 5, heroId: H(h),
     position: `POSITION_${(i % 5) + 1}`, isVictory: i >= 5, kills: 0, deaths: 0, assists: 0,
   }));
   const pa = H("phantom_assassin");
-  // t < 700: you (slot 0) alone vs PA; t >= 700: you + Anti-Mage vs PA + Lion; the rest far away
+  // t < 700: you (slot 0) alone vs PA; t >= 700: you + Anti-Mage (pos 2) vs PA + Lion; the rest far away
   const at = (slot: number, t: number) => {
     if (slot === 0) return { x: 100, y: 100 };
-    if (slot === 128) return { x: 104, y: 104 };
+    if (slot === 128) return t >= paFarAfter ? { x: 125, y: 125 } : { x: 104, y: 104 };
     if (t >= 700 && slot === 1) return { x: 95, y: 95 };
-    if (t >= 700 && slot === 129) return { x: 106, y: 106 };
+    if (t >= 700 && slot === 129) return t >= paFarAfter ? { x: 126, y: 126 } : { x: 106, y: 106 };
     return { x: 200, y: 40 };
   };
-  const d = {
-    summary: { id: 1, durationSeconds: 1800, didRadiantWin: false, players },
-    me: {
-      playerSlot: 0, heroId: H("windranger"), position: "POSITION_4", isRadiant: true,
-      playbackData: {
-        abilityLearnEvents: [{ time: 60, abilityId: SHACKLE, level: 0 }],
-        abilityUsedEvents: [{ time: 1000, abilityId: SHACKLE, target: pa }],
-        assistEvents: [{ time: 1005, target: pa }],
-        deathEvents: [{ time: 600, positionX: 100, positionY: 100 }, { time: 1020, positionX: 100, positionY: 100 }],
+  // Anti-Mage loses 300 of 1000 HP at 1004-1006: a core in trouble 5 cells from you
+  const amHp = Array.from({ length: 400 }, (_, k) => ({ time: k * 5, hp: 1000, maxHp: 1000 }))
+    .filter((e) => e.time < 1000 || e.time > 1010)
+    .concat([1000, 1002, 1004, 1006, 1008, 1010].map((t) => ({ time: t, hp: t <= 1002 ? 1000 : 700, maxHp: 1000 })))
+    .sort((a, b) => a.time - b.time);
+  return {
+    SHACKLE,
+    d: {
+      summary: { id: 1, durationSeconds: 1800, didRadiantWin: false, players },
+      me: {
+        playerSlot: 0, heroId: H("windranger"), position: "POSITION_4", isRadiant: true,
+        playbackData: {
+          abilityLearnEvents: [{ time: 60, abilityId: SHACKLE, level: 0 }],
+          abilityUsedEvents: [{ time: 1000, abilityId: SHACKLE, target: pa }],
+          assistEvents: [{ time: 1005, target: pa }],
+          inventoryEvents: [{ time: 900, item0: { itemId: I("glimmer_cape") } }],
+          deathEvents: [{ time: 600, positionX: 100, positionY: 100 }, { time: 1020, positionX: 100, positionY: 100 }],
+        },
       },
-    },
-    positions: { players: players.map((p) => ({ playerSlot: p.playerSlot, playbackData: { playerUpdatePositionEvents: Array.from({ length: 300 }, (_, k) => ({ time: k * 5, ...at(p.playerSlot, k * 5) })) } })) },
-  } as unknown as MatchData;
-  const b = analyseBattles(d.summary, d.me, d.positions, ids as never, (k) => k)!;
+      positions: { players: players.map((p) => ({ playerSlot: p.playerSlot, playbackData: { playerUpdatePositionEvents: Array.from({ length: 300 }, (_, k) => ({ time: k * 5, ...at(p.playerSlot, k * 5) })) } })) },
+      health: { players: [{ playerSlot: 1, playbackData: { playerUpdateHealthEvents: amHp } }] },
+    } as unknown as MatchData,
+  };
+}
+
+test("battles: 2+ heroes a side; chances need a target in range; targets, positioning", () => {
+  const { SHACKLE, d } = battleMatch();
+  assert.equal(ids.abilities?.[String(SHACKLE)]?.r, 800, "ids.json has cast ranges");
+  const b = analyseBattles(d.summary, d.me, d.positions, ids as never, (k) => k, new Set(), d.health)!;
   assert.equal(b.battles.length, 1, "the 1v1 death at 10:00 is not a battle");
+  assert.ok(b.allyHealth);
   const f = b.battles[0]!;
   assert.ok(f.died && f.assists === 1);
   assert.equal(f.allies, 2);
   assert.equal(f.enemies, 2);
   const u = f.uses.find((x) => x.name === "Shackleshot")!;
+  assert.equal(u.use, "enemy");
+  // chance 1: 995-1000, ended by the cast (used); chance 2: 1016-1020 after the 16 s cooldown, PA in range (missed)
   assert.equal(u.casts, 1);
-  // ready 995-1000 (before the cast) and 1016-1020 (cooldown 16 s at level 1)
-  assert.ok(Math.abs(u.ready - 9) <= 1, `ready ${u.ready}`);
-  assert.ok(u.longest >= 4 && u.longest <= 5.5);
+  assert.equal(u.windows, 2);
+  assert.equal(u.used, 1);
+  assert.equal(u.missed, 1);
+  assert.ok(Math.abs(u.idle - 3) <= 0.5, `idle ${u.idle}`);
+  // Glimmer: Anti-Mage losing HP next to you at 1004-1008, and your last 5 s - never pressed
+  const g = f.uses.find((x) => x.name === "glimmer_cape")!;
+  assert.equal(g.use, "ally");
+  assert.ok(g.missed >= 2 && g.used === 0, `glimmer ${g.missed}/${g.windows}`);
   assert.deepEqual(b.targets[0], { name: "Shackleshot", casts: 1, onCores: 1, onSupports: 0, converted: 1 });
   assert.equal(f.frontmost, true, "you were closer to PA than Anti-Mage");
+});
+
+test("battles: no enemy in range -> not a missed chance", () => {
+  // PA and Lion step 25+ cells away (1600+ units, beyond 800 + 300) once Shackleshot is back
+  const { d } = battleMatch(1010);
+  const b = analyseBattles(d.summary, d.me, d.positions, ids as never, (k) => k, new Set(), d.health)!;
+  const u = b.battles[0]!.uses.find((x) => x.name === "Shackleshot")!;
+  assert.equal(u.missed, 0);
+  assert.ok(u.ready >= 3, "it was off cooldown, just with nobody to cast it on");
 });

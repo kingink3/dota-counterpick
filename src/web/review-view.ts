@@ -6,7 +6,7 @@
 
 import { mmss } from "../item-plan.js";
 import { reviewMatch, trends, type Finding, type MatchReview, type ReviewContext } from "../review.js";
-import type { BattleReport } from "../review-battles.js";
+import type { BattleReport, UseStat } from "../review-battles.js";
 import {
   accountFromToken,
   loadHistory,
@@ -76,7 +76,7 @@ export class ReviewView {
     const ctx = this.d.ctx();
     if (!ctx || !this.settings.account) return;
     this.busy = true;
-    this.status = `Reading match ${id} from STRATZ (3-4 requests)…`;
+    this.status = `Reading match ${id} from STRATZ (up to 8 requests)…`;
     this.render();
     try {
       const data = await this.client().match(id);
@@ -274,13 +274,24 @@ export class ReviewView {
   private battlesCard(b: BattleReport): HTMLElement {
     const c = card(`Battles (${b.battles.length}) · 2+ heroes a side`);
     const sec = (x: number) => `${Math.round(x)} s`;
+    const USE: Record<UseStat["use"], string> = { enemy: "enemy in range", ally: "core in trouble", save: "last 5 s alive" };
     if (b.totals.length) {
       const tb = el("table", "rv-t rv-bt");
-      tb.append(rowEl(["Spell / item", "Battles", "Casts", "Ready, unused", "of time alive", "Longest gap", "No mana"], true));
+      tb.append(rowEl(["Spell / item", "Chance when", "Battles", "Casts", "Chances", "Used", "Missed", "Idle", "Longest", "No mana"], true));
       for (const u of b.totals) {
-        const share = u.ready / Math.max(1, u.alive);
-        const tr = rowEl([`${u.name}${u.ult ? " (ult)" : ""}`, String(u.battles), String(u.casts), sec(u.ready), `${Math.round(share * 100)}%`, sec(u.longest), u.manaShort ? sec(u.manaShort) : "-"]);
-        if (share >= 0.5 && u.ready >= 20) tr.classList.add("v-slow");
+        const tr = rowEl([
+          `${u.name}${u.ult ? " (ult)" : ""}`,
+          u.use === "enemy" && u.reach ? `${USE.enemy} (${u.reach})` : USE[u.use],
+          String(u.battles),
+          String(u.casts),
+          String(u.windows),
+          String(u.used),
+          String(u.missed),
+          u.idle ? sec(u.idle) : "-",
+          u.longest ? sec(u.longest) : "-",
+          u.manaShort ? sec(u.manaShort) : "-",
+        ]);
+        if (u.missed >= 2 && u.missed / Math.max(1, u.windows) >= 0.4) tr.classList.add("v-slow");
         tb.append(tr);
       }
       c.append(tb);
@@ -299,7 +310,7 @@ export class ReviewView {
       if (f.silentDeath) chips.append(el("i", "bad", "nothing cast last 10 s"));
       const cast = f.uses.reduce((a, u) => a + u.casts, 0);
       if (!cast) chips.append(el("i", "bad", "no casts"));
-      for (const u of f.uses.filter((u) => u.ready >= 5).slice(0, 3)) chips.append(el("i", "warn", `${u.name} idle ${sec(u.ready)}`));
+      for (const u of f.uses.filter((u) => u.missed > 0).slice(0, 4)) chips.append(el("i", "warn", `${u.name} missed${u.missed > 1 ? ` ×${u.missed}` : ""} · ${sec(u.idle)}`));
       li.append(chips);
       ul.append(li);
     }
@@ -310,7 +321,15 @@ export class ReviewView {
         c.append(el("p", "rv-det", `${t.name}: ${t.casts} in battles · ${t.onCores} on cores, ${t.onSupports} on supports · ${t.converted} of them died within 8 s`));
       }
     }
-    c.append(el("p", "rv-note", "Ready = off cooldown at your level, with the mana, while alive. Cooldown reduction and stuns on you are not seen in the data, so treat the seconds as approximate. Wand / Stick count only under 70% HP with 2+ charges."));
+    c.append(
+      el(
+        "p",
+        "rv-note",
+        "A chance = off cooldown at your level, with the mana, alive, and usable: an enemy hero within cast range + radius (+300 you can walk) for spells on enemies; " +
+          `an allied core in range losing HP for spells on allies${b.allyHealth ? "" : " (allies' HP not loaded - only your last 5 s)"}; your last 5 s before dying for saves on yourself. ` +
+          "Used = cast during it; missed = 2+ s without a cast (1 s to react not counted). Cooldown reduction, stuns on you and vision are not in the data.",
+      ),
+    );
     return c;
   }
 

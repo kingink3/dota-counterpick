@@ -53,22 +53,37 @@ interface DcAbility {
   cd?: string | string[] | number;
   mc?: string | string[] | number;
   target_team?: string | string[];
+  attrib?: Array<{ key: string; value: string | string[] }>;
 }
 const abilities = JSON.parse(readFileSync(join(constants, "abilities.json"), "utf8")) as Record<string, DcAbility>;
 const abilityIds = JSON.parse(readFileSync(join(constants, "ability_ids.json"), "utf8")) as Record<string, string>;
 const heroAbilities = JSON.parse(readFileSync(join(constants, "hero_abilities.json"), "utf8")) as Record<string, { abilities: string[] }>;
 const heroKeys = new Set(Object.values(heroAbilities).flatMap((h) => h.abilities));
 const nums = (x: DcAbility["cd"]): number[] => (Array.isArray(x) ? x.map(Number) : x === undefined || x === null ? [] : [Number(x)]).filter((n) => Number.isFinite(n));
-const ab: Record<string, { k: string; n: string; cd: number[]; mc: number[]; f: string }> = {};
+const ab: Record<string, { k: string; n: string; cd: number[]; mc: number[]; f: string; r?: number; ra?: number }> = {};
+const maxOf = (v: string | string[] | undefined): number | undefined => {
+  const xs = nums(v as DcAbility["cd"]);
+  return xs.length ? Math.max(...xs) : undefined;
+};
 for (const [id, key] of Object.entries(abilityIds)) {
   if (!heroKeys.has(key)) continue;
   const a = abilities[key];
   if (!a) continue;
   const beh = ([] as string[]).concat(a.behavior ?? []);
   const team = ([] as string[]).concat(a.target_team ?? []);
-  // flags: p passive, h hidden (granted by shard / scepter / sub-ability), u unit target, e enemy target, c channelled
-  const f = [beh.includes("Passive") && "p", beh.includes("Hidden") && "h", beh.includes("Unit Target") && "u", team.includes("Enemy") && "e", beh.includes("Channeled") && "c"].filter(Boolean).join("");
-  ab[id] = { k: key, n: a.dname ?? key, cd: nums(a.cd), mc: nums(a.mc), f };
+  // flags: p passive, h hidden (granted by shard / scepter / sub-ability), u unit target, t point target,
+  // n no target, e enemy target, a ally target, c channelled
+  const both = team.includes("Both");
+  const f = [
+    beh.includes("Passive") && "p", beh.includes("Hidden") && "h", beh.includes("Unit Target") && "u", beh.includes("Point Target") && "t",
+    beh.includes("No Target") && "n", (team.includes("Enemy") || both) && "e", (team.includes("Friendly") || both) && "a", beh.includes("Channeled") && "c",
+  ].filter(Boolean).join("");
+  // cast range (max over levels) and effect radius, for "was an enemy in range"
+  const at = a.attrib ?? [];
+  const r = maxOf(at.find((x) => x.key === "abilitycastrange")?.value);
+  const rad = at.find((x) => x.key === "radius") ?? at.find((x) => /radius/.test(x.key) && !/vision/.test(x.key));
+  const ra = maxOf(rad?.value);
+  ab[id] = { k: key, n: a.dname ?? key, cd: nums(a.cd), mc: nums(a.mc), f, ...(r ? { r } : {}), ...(ra ? { ra } : {}) };
 }
 writeFileSync(join(ROOT, "data", "ids.json"), JSON.stringify({ heroes, items, cd, mc, names, abilities: ab }));
 console.log(`ids.json: ${Object.keys(heroes).length} heroes, ${Object.keys(items).length} items, ${Object.keys(cd).length} cooldowns, ${Object.keys(ab).length} hero abilities`);

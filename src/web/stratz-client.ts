@@ -10,11 +10,12 @@
 import {
   ME_PARTS,
   matchMeQuery,
+  matchHealthQuery,
   matchPositionsQuery,
   matchSummaryQuery,
   recentMatchesQuery,
 } from "../stratz-queries.js";
-import type { MatchData, MatchReview, StratzMe, StratzPositions, StratzSummary } from "../review.js";
+import type { MatchData, MatchReview, StratzHealth, StratzMe, StratzPositions, StratzSummary } from "../review.js";
 
 const KEY = "dotaapp.stratz.v1";
 const HISTORY = "dotaapp.reviews.v1";
@@ -108,7 +109,7 @@ export class StratzClient {
     return this.q<{ player: { matches: RecentMatch[] } }>(recentMatchesQuery(acc, take)).then((d) => d.player?.matches ?? []);
   }
 
-  /** a match in parts (STRATZ's complexity limit); positions are optional. */
+  /** a match in parts (STRATZ's complexity limit); positions and allies' HP are optional. */
   async match(id: number): Promise<MatchData> {
     const acc = this.s.account!;
     const sum = await this.q<{ match: StratzSummary }>(matchSummaryQuery(id));
@@ -131,7 +132,13 @@ export class StratzClient {
     } catch {
       positions = undefined; // the "alone" check is skipped
     }
-    return { summary: sum.match, me, ...(positions ? { positions } : {}) };
+    let health: StratzHealth | undefined;
+    try {
+      health = (await this.q<{ match: StratzHealth }>(matchHealthQuery(id))).match;
+    } catch {
+      health = undefined; // saves on allied cores are not judged
+    }
+    return { summary: sum.match, me, ...(positions ? { positions } : {}), ...(health ? { health } : {}) };
   }
 }
 

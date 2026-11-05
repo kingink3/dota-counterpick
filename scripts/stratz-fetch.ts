@@ -11,7 +11,7 @@
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { leaderboardQuery, matchMeQuery, matchPositionsQuery, matchSummaryQuery, ME_PARTS, recentMatchesQuery } from "../src/stratz-queries.js";
+import { leaderboardQuery, matchMeQuery, matchPositionsQuery, matchHealthQuery, matchSummaryQuery, ME_PARTS, recentMatchesQuery } from "../src/stratz-queries.js";
 
 const API = "https://api.stratz.com/graphql";
 const MIN_GAP_MS = 800;
@@ -68,7 +68,7 @@ function ownerOf(token: string): number | undefined {
 }
 
 /** players -> 1..10 (the owner -> 1), match id -> 1, no start time. */
-function anonymise(d: { account: number; summary: unknown; me: unknown; positions: unknown }): void {
+function anonymise(d: { account: number; summary: unknown; me: unknown; positions: unknown; health?: unknown }): void {
   const map = new Map<number, number>([[d.account, 1]]);
   const walk = (x: unknown): void => {
     if (Array.isArray(x)) x.forEach(walk);
@@ -87,6 +87,7 @@ function anonymise(d: { account: number; summary: unknown; me: unknown; position
   walk(d.summary);
   walk(d.me);
   walk(d.positions);
+  walk(d.health);
   d.account = 1;
 }
 
@@ -187,7 +188,13 @@ async function main(): Promise<void> {
     } catch (e) {
       console.log(`positions failed: ${String(e).slice(0, 200)}`);
     }
-    const data = { account: found.acc, summary: summary.match, me, positions };
+    let health: unknown;
+    try {
+      health = (await gql<{ match: unknown }>(matchHealthQuery(found.id))).match;
+    } catch (e) {
+      console.log(`health failed: ${String(e).slice(0, 200)}`);
+    }
+    const data = { account: found.acc, summary: summary.match, me, positions, health };
     if (mode === "own") anonymise(data);
     writeFileSync(join(out, "match.json"), JSON.stringify(data));
     console.log(mode === "own" ? "own latest match fetched (anonymised)" : `sample match ${found.id}`);

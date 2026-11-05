@@ -108,10 +108,15 @@ export interface StratzMe {
 export interface StratzPositions {
   players: Array<{ playerSlot: number; playbackData?: { playerUpdatePositionEvents?: Array<TimeEvt & { x: number; y: number }> | null } | null }>;
 }
+export interface StratzHealth {
+  players: Array<{ playerSlot: number; playbackData?: { playerUpdateHealthEvents?: Array<TimeEvt & { hp: number; maxHp: number }> | null } | null }>;
+}
 export interface MatchData {
   summary: StratzSummary;
   me: StratzMe;
   positions?: StratzPositions;
+  /** every hero's HP (optional: saves on allied cores need it). */
+  health?: StratzHealth;
 }
 
 export interface Ids {
@@ -583,7 +588,7 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
   }
 
   // ---- battles: idle spells / items, mana, targets, positioning ---------------
-  const battles = analyseBattles(s, me, d.positions, ids, name, ultIds);
+  const battles = analyseBattles(s, me, d.positions, ids, name, ultIds, d.health);
   if (battles?.battles.length) findings.push(...battleFindings(battles, position));
 
   const growth = findings.filter((f) => !f.good).sort((a, b) => b.severity - a.severity).slice(0, GROWTH);
@@ -612,20 +617,24 @@ function battleFindings(b: BattleReport, position?: number): Finding[] {
   const n = b.battles.length;
   const s = (x: number) => `${Math.round(x)} s`;
   const pct = (a: number, z: number) => `${Math.round((a / Math.max(1, z)) * 100)}%`;
-  // spells / items that sat ready: one finding each, the 4 worst
-  const idle = b.totals.filter((u) => u.ready >= 20 && u.ready / Math.max(1, u.alive) >= 0.35).slice(0, 4);
+  // chances not taken: one finding each, the 4 worst (2+ missed, 40%+ of the chances)
+  const idle = b.totals.filter((u) => u.missed >= 2 && u.missed / Math.max(1, u.windows) >= 0.4).slice(0, 4);
   for (const u of idle) {
-    const share = u.ready / u.alive;
+    const share = u.missed / u.windows;
     const cd = u.cd ? (u.cd[0] === u.cd[1] ? `${u.cd[0]} s` : `${u.cd[1]}-${u.cd[0]} s`) : "?";
+    const what =
+      u.use === "enemy" ? `with an enemy hero within ${u.reach} range` : u.use === "ally" ? "with an allied core in range losing HP (or in your last 5 s)" : "in your last 5 s before dying";
     out.push({
       id: `idle:${u.name}`,
       area: "battles",
-      severity: clamp(0.1 + 0.3 * share + (u.ult ? 0.08 : 0), 0.15, 0.45),
-      title: `${u.name}${u.ult ? " (ultimate)" : ""} ready and unused ${s(u.ready)} in ${u.battles} battles`,
+      severity: clamp(0.1 + 0.25 * share + 0.02 * u.missed + (u.ult ? 0.08 : 0) + (u.use === "save" ? 0.05 : 0), 0.15, 0.45),
+      title:
+        u.use === "save"
+          ? `${u.name} ready and not used before ${u.missed} death${u.missed > 1 ? "s" : ""}`
+          : `${u.name}${u.ult ? " (ultimate)" : ""}: ${u.used} of ${u.windows} chances used`,
       detail:
-        `Cast ${u.casts} time${u.casts === 1 ? "" : "s"}; ready ${pct(u.ready, u.alive)} of the time you were alive in them, longest gap ${s(u.longest)} ` +
-        `(cooldown ${cd}). ${u.kind === "item" && /wand|stick/i.test(u.name) ? "Counted only under 70% HP with 2+ charges. " : ""}` +
-        "Mana is accounted for; cooldown reduction and stuns on you are not.",
+        `Ready (cooldown ${cd}, mana) ${what}: ${u.missed} time${u.missed > 1 ? "s" : ""} not cast, ${s(u.idle)} in total, longest ${s(u.longest)}. ` +
+        "1 s to react is not counted; cooldown reduction, stuns on you and vision are not in the data.",
     });
   }
   const mana = b.totals.filter((u) => u.manaShort >= 15);
