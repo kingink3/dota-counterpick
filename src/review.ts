@@ -477,12 +477,17 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
   const firstAt = new Map<number, number>();
   const maxLevel = new Map<number, number>();
   learns.forEach((a, i) => {
-    if (a.abilityId == null || a.isTalent) return;
+    // id 0 / unknown ids are attribute bonuses and talents STRATZ does not flag
+    if (!a.abilityId || a.isTalent || (ids.abilities && !ids.abilities[String(a.abilityId)])) return;
     if (!firstAt.has(a.abilityId)) firstAt.set(a.abilityId, i + 1);
     maxLevel.set(a.abilityId, Math.max(maxLevel.get(a.abilityId) ?? 0, a.level ?? 0));
   });
+  // a passive ultimate (Riki's Cloak and Dagger, ...) cannot be "not cast"
+  const passive = (id: number) => !!ids.abilities?.[String(id)]?.f.includes("p");
   const ultIds = new Set(
-    [...firstAt].filter(([id, lvl]) => learns.some((a) => a.abilityId === id && a.isUltimate) || (lvl >= 6 && (maxLevel.get(id) ?? 0) <= 2)).map(([id]) => id),
+    [...firstAt]
+      .filter(([id, lvl]) => !passive(id) && (learns.some((a) => a.abilityId === id && a.isUltimate) || (lvl >= 6 && (maxLevel.get(id) ?? 0) <= 2)))
+      .map(([id]) => id),
   );
   const ultCasts = (pb.abilityUsedEvents ?? []).filter((a) => a.abilityId != null && ultIds.has(a.abilityId)).map((a) => a.time);
   const allySlots = new Set(s.players.filter((p) => p.isRadiant === mine.isRadiant && p.playerSlot !== mine.playerSlot).map((p) => p.playerSlot));

@@ -302,12 +302,12 @@ export class ReviewView {
     if (!ov) return c;
     const me = this.settings.account;
     const tb = el("table", "rv-t rv-ov");
-    tb.append(rowEl(["", "Player", "Pos", "K/D/A", "IMP", "Networth", "Deaths", "KP", "Vision · stacks", "Battles", "Items", "Overall", "Work on / good at"], true));
+    tb.append(rowEl(["", "Player", "Pos", "K/D/A", "IMP", "Networth", "Deaths", "KP", "Vision · stacks", "Battles", "Items", "Overall"], true));
     for (const radiant of [true, false]) {
       const rows = ov.rows.filter((x) => x.isRadiant === radiant).sort((a, b) => b.score - a.score);
       const side = rowEl([`${radiant ? "Radiant" : "Dire"}${rows[0]?.won ? " · won" : ""}`], true);
       side.classList.add("rv-ov-side");
-      (side.firstChild as HTMLTableCellElement).colSpan = 13;
+      (side.firstChild as HTMLTableCellElement).colSpan = 12;
       tb.append(side);
       for (const x of rows) tb.append(this.overviewRow(o, x, me));
     }
@@ -342,7 +342,6 @@ export class ReviewView {
       x.battles ? `${x.battles.used}/${x.battles.windows}` : x.reviewed ? "-" : "…",
       x.timing ? `${x.timing.fast + x.timing.typical} ok · ${x.timing.slow + x.timing.missing} late` : x.reviewed ? "-" : "…",
       GRADE_LABEL[x.grade],
-      "",
     ]);
     tr.classList.add("rv-ov-r", `g-${x.grade}`);
     if (this.current?.matchId === o.id && this.current.slot === x.slot) tr.classList.add("on");
@@ -350,9 +349,6 @@ export class ReviewView {
     img.src = this.d.heroImg(x.hero);
     img.alt = "";
     tr.firstElementChild!.append(img);
-    const last = tr.lastElementChild as HTMLElement;
-    if (x.workOn) last.append(el("span", "rv-ov-bad", x.workOn));
-    if (x.goodAt) last.append(el("span", "rv-ov-good", x.goodAt));
     tr.title = x.parts.map((q) => `${q.label}: ${q.text}`).join("\n");
     if (x.account) tr.addEventListener("click", () => void this.selectPlayer(x.account!));
     return tr;

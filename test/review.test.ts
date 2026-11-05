@@ -48,8 +48,9 @@ function match(over: Partial<{ deaths: MatchData["me"]["playbackData"] }> = {}):
       playbackData: {
         inventoryEvents: [inv(150, ["wraith_band"]), inv(500, ["wraith_band", "power_treads"]), inv(1260, ["power_treads", "bfury"]), inv(1700, ["power_treads", "bfury", "black_king_bar"])],
         itemUsedEvents: [{ time: 1800, itemId: I("black_king_bar") }],
-        abilityLearnEvents: [1, 2, 3, 4, 5].map((i) => ({ time: i * 60, abilityId: 100 + (i % 3), level: 0 })).concat([{ time: 400, abilityId: 999, level: 0 }]),
-        abilityUsedEvents: [{ time: 1000, abilityId: 999 }],
+        // Blink / Counterspell / Mana Break in levels 1-5, Mana Void (the ultimate) at 6
+        abilityLearnEvents: [5004, 7314, 5003, 5004, 7314].map((id, i) => ({ time: (i + 1) * 60, abilityId: id, level: 0 })).concat([{ time: 400, abilityId: 5006, level: 0 }]),
+        abilityUsedEvents: [{ time: 1000, abilityId: 5006 }],
         deathEvents: [
           // BKB ready (used 300 s earlier, cooldown 95) and not pressed; ultimate not cast for 90+ s
           { time: 2100, positionX: 100, positionY: 100, isEngagedOnDeath: true, reliableGold: 2500, unreliableGold: 100 },
@@ -86,6 +87,11 @@ test("review: plan vs fact, farm, deaths and execution checks", () => {
   const d2100 = r.deaths.find((d) => d.time === 2100)!;
   assert.deepEqual(d2100.unused, ["black_king_bar"], "BKB ready and unused");
   assert.ok(d2100.flags.includes("ultimate not used"));
+  // a passive ultimate is never "not used"
+  const m2 = match();
+  m2.me.playbackData!.abilityLearnEvents = [5004, 7314, 5004, 7314, 5004].map((id, i) => ({ time: (i + 1) * 60, abilityId: id, level: 0 })).concat([{ time: 400, abilityId: 1447, level: 0 }, { time: 500, abilityId: 0, level: 0 }]);
+  m2.me.playbackData!.abilityUsedEvents = [];
+  assert.ok(!reviewMatch(m2, ACC, ctx).deaths.some((x) => x.flags.includes("ultimate not used")), "passive / id 0 are not an ultimate");
   assert.equal(d2100.alone, false, "Crystal Maiden is next to him");
   assert.deepEqual(r.deaths.find((d) => d.time === 1805)!.unused, [], "BKB was just used");
   assert.ok(r.deaths.find((d) => d.time === 900)!.alone, "nobody within range");
