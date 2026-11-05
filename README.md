@@ -281,7 +281,6 @@ The report shows:
   for spells on allies, your last 5 s for saves on yourself), how many were used / missed,
   idle seconds; who your disables went on and whether the target died; front-most /
   outnumbered / deep deaths (ADR-029b);
-- trends across the reviewed matches.
 
 Any player of the match can be reviewed - your allies and the opponents, private profiles
 included: use the player switcher above the report, or **Match by ID** for any parsed match

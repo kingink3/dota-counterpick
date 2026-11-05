@@ -6,7 +6,7 @@
 // =============================================================================
 
 import { mmss } from "../item-plan.js";
-import { reviewMatch, trends, type Finding, type MatchReview, type ReviewContext } from "../review.js";
+import { reviewMatch, type Finding, type MatchReview, type ReviewContext } from "../review.js";
 import type { BattleReport, UseStat } from "../review-battles.js";
 import { adviceText, GRADE_LABEL, matchOverview, matchStory, type MatchOverview, type OverviewRow } from "../review-match.js";
 import { resolve } from "../resolver.js";
@@ -175,8 +175,8 @@ export class ReviewView {
     else if (this.current) main.append(this.otherPlayersButton(this.current));
     if (this.current) main.append(this.report(this.current));
     else if (this.open) main.append(el("p", "muted", "Pick a player above."));
-    else main.append(this.trendsCard() ?? el("p", "muted", "Pick a match on the left and press Analyse, or open any match by its ID."));
-    if (this.current && (this.current.account === undefined || this.current.account === this.settings.account) && this.mine().length >= 3) main.append(this.trendsCard()!);
+    // trends are off (the user plays several roles: cross-match trends said little, 2026-11-05)
+    else main.append(el("p", "muted", "Pick a match on the left, open one from GitHub, or open any match by its ID."));
     wrap.append(left, main);
     root.append(wrap);
   }
@@ -887,27 +887,7 @@ export class ReviewView {
     return c;
   }
 
-  private trendsCard(): HTMLElement | undefined {
-    const mine = this.mine();
-    if (mine.length < 3) return undefined;
-    const t = trends(mine);
-    const c = card(`Trends · last ${t.n} reviewed matches`);
-    if (!t.recurring.length) c.append(el("p", "muted", "No problem recurs in 30%+ of the reviewed matches."));
-    for (const x of t.recurring) {
-      const row = el("div", "rv-trend", "");
-      const bar = el("span", "rv-bar", "");
-      const fill = el("i", "", "");
-      fill.style.width = `${Math.round(x.share * 100)}%`;
-      bar.append(fill);
-      row.append(el("b", "", x.title), bar, el("span", "muted", `${x.matches} of ${t.n} · e.g. ${x.example}`));
-      c.append(row);
-    }
-    if (t.strengths.length) {
-      c.append(el("div", "plan-ph", "Strengths"));
-      for (const x of t.strengths) c.append(el("p", "rv-good", `${x.title} - ${x.matches} of ${t.n}`));
-    }
-    return c;
-  }
+
 }
 
 /** where each area's evidence is. */
