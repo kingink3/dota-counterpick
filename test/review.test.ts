@@ -47,15 +47,15 @@ function match(over: Partial<{ deaths: MatchData["me"]["playbackData"] }> = {}):
       playbackData: {
         inventoryEvents: [inv(150, ["wraith_band"]), inv(500, ["wraith_band", "power_treads"]), inv(1260, ["power_treads", "bfury"]), inv(1700, ["power_treads", "bfury", "black_king_bar"])],
         itemUsedEvents: [{ time: 1800, itemId: I("black_king_bar") }],
-        abilityLearnEvents: [{ time: 400, abilityId: 999, isUltimate: true }],
+        abilityLearnEvents: [1, 2, 3, 4, 5].map((i) => ({ time: i * 60, abilityId: 100 + (i % 3), level: 0 })).concat([{ time: 400, abilityId: 999, level: 0 }]),
         abilityUsedEvents: [{ time: 1000, abilityId: 999 }],
         deathEvents: [
           // BKB ready (used 300 s earlier, cooldown 95) and not pressed; ultimate not cast for 90+ s
           { time: 2100, positionX: 100, positionY: 100, isEngagedOnDeath: true, reliableGold: 2500, unreliableGold: 100 },
           // BKB used 5 s before: not "ready and unused"
-          { time: 1805, positionX: 5000, positionY: 5000, hasHealAvailable: true },
-          { time: 900, positionX: 9000, positionY: 9000, hasHealAvailable: true, reliableGold: 2200 },
-          { time: 600, positionX: 9100, positionY: 9100 },
+          { time: 1805, positionX: 150, positionY: 150, hasHealAvailable: true },
+          { time: 900, positionX: 70, positionY: 70, hasHealAvailable: true, reliableGold: 2200 },
+          { time: 600, positionX: 72, positionY: 72, hasHealAvailable: true },
         ],
         ...over.deaths,
       },
@@ -63,7 +63,7 @@ function match(over: Partial<{ deaths: MatchData["me"]["playbackData"] }> = {}):
     positions: {
       players: players.map((p) => ({
         playerSlot: p.playerSlot,
-        playbackData: { playerUpdatePositionEvents: [0, 590, 895, 1800, 2095].map((t) => ({ time: t, x: p.playerSlot === 1 ? 150 : 20000, y: p.playerSlot === 1 ? 150 : 20000 })) },
+        playbackData: { playerUpdatePositionEvents: [0, 590, 895, 1800, 2095].map((t) => ({ time: t, x: p.playerSlot === 1 ? 105 : 200, y: p.playerSlot === 1 ? 105 : 200 })) },
       })),
     },
   };

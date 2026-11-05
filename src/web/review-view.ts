@@ -302,9 +302,10 @@ function findingRow(f: Finding, area = true): HTMLElement {
 
 function modeLabel(m: RecentMatch): string {
   const g = (m.gameMode ?? "").toUpperCase();
+  const l = (m.lobbyType ?? "").toUpperCase();
   if (g.includes("TURBO")) return "turbo";
-  if ((m.lobbyType ?? "").toUpperCase().includes("RANKED")) return "ranked";
-  return "normal";
+  if (l.includes("UNRANKED")) return "normal"; // contains "RANKED"
+  return l.includes("RANKED") ? "ranked" : "normal";
 }
 function pctDelta(v: number, b: number): string {
   const d = Math.round((v / b - 1) * 100);

@@ -200,8 +200,10 @@ export const SAVE_ITEMS = new Set([
   "force_staff", "hurricane_pike", "cyclone", "wind_waker", "ghost", "ethereal_blade", "lotus_orb", "satanic",
   "invis_sword", "silver_edge", "pipe", "crimson_guard", "blade_mail", "sheepstick", "abyssal_blade", "aeon_disk",
 ]);
-/** a death counts as "alone" when no ally hero is within this distance (STRATZ map units). */
-export const ALONE_DIST = 1800;
+/** a death counts as "alone" when no ally hero is within this distance. STRATZ
+ *  positions are map cells (~64 world units each; the map spans ~62..194): 28 cells
+ *  ~ 1800 world units, about two screens. */
+export const ALONE_DIST = 28;
 
 const posNum = (p?: string | null) => {
   const m = /POSITION_(\d)/.exec(p ?? "");
@@ -212,8 +214,10 @@ function modeOf(s: StratzSummary): MatchReview["mode"] {
   const g = (s.gameMode ?? "").toUpperCase();
   const l = (s.lobbyType ?? "").toUpperCase();
   if (g.includes("TURBO")) return "turbo";
+  // "UNRANKED" contains "RANKED": check it first
+  if (l.includes("UNRANKED")) return "normal";
   if (l.includes("RANKED")) return "ranked";
-  if (l.includes("UNRANKED") || g.includes("ALL_PICK")) return "normal";
+  if (g.includes("ALL_PICK")) return "normal";
   return "other";
 }
 
@@ -295,12 +299,23 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
     }
     if (c.phase === "situational") {
       const after = done.get(core1?.key ?? "") ?? core1?.at;
-      if (c.actual === undefined) {
-        findings.push({ id: "counter_missing", area: "plan", severity: 0.3, title: `No ${c.label}`, detail: `The draft called for it${after ? ` after ${core1?.label} (~${mmss(after)})` : ""}.` });
-      } else if (after !== undefined && c.actual > after + 600) {
+      if (after !== undefined && c.actual !== undefined && c.actual > after + 600) {
         findings.push({ id: "counter_late", area: "plan", severity: 0.2, title: `${c.label} late: ${mmss(c.actual)}`, detail: `${Math.round((c.actual - after) / 60)} min after ${core1?.label}; the draft called for it right after.`, times: [c.actual] });
       }
     }
+  }
+
+  const answers = checks.filter((c) => c.phase === "situational");
+  const missing = answers.filter((c) => c.actual === undefined);
+  if (answers.length && missing.length === answers.length) {
+    const after = done.get(core1?.key ?? "") ?? core1?.at;
+    findings.push({
+      id: "counter_missing",
+      area: "plan",
+      severity: 0.35,
+      title: `None of the draft's answers bought (${missing.map((c) => c.label).join(", ")})`,
+      detail: `The enemy draft called for at least one of them${after ? ` after ${core1?.label} (~${mmss(after)})` : ""}.`,
+    });
   }
 
   // --- farm and lane vs Crusader-Ancient averages --------------------------------
@@ -335,6 +350,36 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
   const at20 = farm.find((f) => f.minute === 20);
   if (comparable && at20?.nw !== undefined && at20.nwBench && at20.nw < 0.8 * at20.nwBench) {
     findings.push({ id: "low_nw20", area: "farm", severity: 0.35, title: `Networth at 20:00: ${Math.round(at20.nw)} (avg ${Math.round(at20.nwBench)})`, detail: `${Math.round((1 - at20.nw / at20.nwBench) * 100)}% below the average for this hero and position.` });
+  }
+
+  // falling behind later: networth / XP at 30:00 (or the last full 5 minutes)
+  const late = [...farm].reverse().find((f) => f.minute <= 30 && f.minute >= 20);
+  if (comparable && late?.nw !== undefined && late.nwBench && late.nw < 0.85 * late.nwBench && !findings.some((f) => f.id === "low_nw20" && late.minute === 20)) {
+    const xpPart = late.xp !== undefined && late.xpBench ? `, XP ${pctD(late.xp, late.xpBench)}` : "";
+    findings.push({
+      id: "behind_late",
+      area: "farm",
+      severity: clamp((1 - late.nw / late.nwBench) * 1.2, 0.2, 0.5),
+      title: `Behind at ${late.minute}:00: networth ${pctD(late.nw, late.nwBench)}${xpPart}`,
+      detail: `${Math.round(late.nw)} vs ${Math.round(late.nwBench)} on average for ${ctx.label(hero)} on position ${position}.`,
+    });
+  }
+
+  // lane outcome (STRATZ): your lane by side
+  const side = mine.isRadiant ? "RADIANT" : "DIRE";
+  const laneKey = mine.lane === "MID_LANE" ? "midLaneOutcome" : mine.lane === "SAFE_LANE" ? (mine.isRadiant ? "bottomLaneOutcome" : "topLaneOutcome") : mine.lane === "OFF_LANE" ? (mine.isRadiant ? "topLaneOutcome" : "bottomLaneOutcome") : undefined;
+  const outcome = laneKey ? (s as unknown as Record<string, string | null | undefined>)[laneKey] : undefined;
+  if (outcome && outcome !== "TIE") {
+    const won = outcome.startsWith(side);
+    const stomp = outcome.includes("STOMP");
+    findings.push({
+      id: won ? "lane_won" : "lane_lost",
+      area: "farm",
+      severity: won ? 0.2 : stomp ? 0.4 : 0.25,
+      ...(won ? { good: true } : {}),
+      title: `Lane ${won ? "won" : "lost"}${stomp ? " hard" : ""} (${(mine.lane ?? "").replace("_LANE", "").toLowerCase()} lane)`,
+      detail: won ? "STRATZ lane outcome for your lane." : "STRATZ lane outcome for your lane: look at the first 10 minutes - trades, pulls, rotations.",
+    });
   }
 
   // farm stalls: >= 4 minutes in a row with under half the average networth growth, while alive
@@ -373,8 +418,20 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
     if (!ev) return [] as string[];
     return (["item0", "item1", "item2", "item3", "item4", "item5"] as const).map((k) => itemOf(ev[k]?.itemId)).filter((k): k is string => !!k);
   };
-  const ultIds = new Set((pb.abilityLearnEvents ?? []).filter((a) => a.isUltimate).map((a) => a.abilityId));
-  const ultCasts = (pb.abilityUsedEvents ?? []).filter((a) => ultIds.has(a.abilityId)).map((a) => a.time);
+  // STRATZ leaves isUltimate false: the ultimate is the non-talent ability first
+  // learned at hero level 6+ (each learn event is one level) with at most 3 levels
+  const learns = (pb.abilityLearnEvents ?? []) as Array<TimeEvt & { abilityId?: number | null; level?: number | null; isUltimate?: boolean | null; isTalent?: boolean | null }>;
+  const firstAt = new Map<number, number>();
+  const maxLevel = new Map<number, number>();
+  learns.forEach((a, i) => {
+    if (a.abilityId == null || a.isTalent) return;
+    if (!firstAt.has(a.abilityId)) firstAt.set(a.abilityId, i + 1);
+    maxLevel.set(a.abilityId, Math.max(maxLevel.get(a.abilityId) ?? 0, a.level ?? 0));
+  });
+  const ultIds = new Set(
+    [...firstAt].filter(([id, lvl]) => learns.some((a) => a.abilityId === id && a.isUltimate) || (lvl >= 6 && (maxLevel.get(id) ?? 0) <= 2)).map(([id]) => id),
+  );
+  const ultCasts = (pb.abilityUsedEvents ?? []).filter((a) => a.abilityId != null && ultIds.has(a.abilityId)).map((a) => a.time);
   const allySlots = new Set(s.players.filter((p) => p.isRadiant === mine.isRadiant && p.playerSlot !== mine.playerSlot).map((p) => p.playerSlot));
   const posOf = (slot: number, t: number) => {
     const evs = d.positions?.players.find((p) => p.playerSlot === slot)?.playbackData?.playerUpdatePositionEvents ?? [];
@@ -424,8 +481,8 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
     findings.push({ id: "ult_unused", area: "execution", severity: clamp(0.15 * ultDeaths.length, 0.2, 0.6), title: `${ultDeaths.length} fights died in without casting the ultimate`, detail: "Engaged on death, ultimate not cast in the 90 s before (likely ready).", times: ultDeaths.map((x) => x.time) });
   }
   const healDeaths = deaths.filter((x) => x.flags.includes("heal available"));
-  if (healDeaths.length >= 2) {
-    findings.push({ id: "heal_unused", area: "execution", severity: 0.2, title: `${healDeaths.length} deaths with a heal available`, detail: "STRATZ marks these deaths as having a heal (item / ability) not used.", times: healDeaths.map((x) => x.time) });
+  if (healDeaths.length >= 3 && healDeaths.length >= deaths.length / 2) {
+    findings.push({ id: "heal_unused", area: "execution", severity: 0.2, title: `${healDeaths.length} of ${deaths.length} deaths with a heal available`, detail: "STRATZ marks a heal (Wand / Stick charges, Salve, Mango, a healing ability) that was not used before dying.", times: healDeaths.map((x) => x.time) });
   }
   const aloneDeaths = deaths.filter((x) => x.alone);
   if (aloneDeaths.length >= 2) {
@@ -439,6 +496,40 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
   if (richDeaths.length >= 2) {
     findings.push({ id: "died_with_gold", area: "deaths", severity: 0.2, title: `${richDeaths.length} deaths holding 2000+ gold`, detail: `Up to ${Math.max(...richDeaths.map((x) => x.unspent))} gold unspent: buy before you fight.`, times: richDeaths.map((x) => x.time) });
   }
+  const walkDeaths = deaths.filter((x) => x.flags.includes("walked into enemy vision"));
+  if (walkDeaths.length >= 2) {
+    findings.push({ id: "ward_walk", area: "execution", severity: clamp(0.12 * walkDeaths.length, 0.2, 0.5), title: `${walkDeaths.length} deaths right after walking into enemy vision`, detail: "STRATZ: you walked through an enemy ward before the kill - check the minimap / sentry the path.", times: walkDeaths.map((x) => x.time) });
+  }
+  const dead = deathsList.reduce((a, x) => a + (x.timeDead ?? 0), 0);
+  if (dead > 0.08 * duration && deaths.length >= 4) {
+    findings.push({ id: "time_dead", area: "deaths", severity: 0.2, title: `Dead for ${mmss(dead)} (${Math.round((dead / duration) * 100)}% of the game)`, detail: "Respawn time is lost farm, XP and map presence." });
+  }
+  // kill participation
+  const teamKills = s.players.filter((p) => p.isRadiant === mine.isRadiant).reduce((a, p) => a + p.kills, 0);
+  if (teamKills >= 10) {
+    const kp = (mine.kills + mine.assists) / teamKills;
+    if (kp < 0.4) findings.push({ id: "low_kp", area: "deaths", severity: 0.25, title: `Kill participation ${Math.round(kp * 100)}%`, detail: `In ${mine.kills + mine.assists} of your team's ${teamKills} kills: too far from the fights.` });
+    else if (kp > 0.7) findings.push({ id: "high_kp", area: "deaths", severity: 0.15, good: true, title: `Kill participation ${Math.round(kp * 100)}%`, detail: `In ${mine.kills + mine.assists} of ${teamKills} kills.` });
+  }
+  // STRATZ IMP: overall and the weakest 5 minutes
+  const imp = mine.imp ?? undefined;
+  if (imp !== undefined && imp !== null && imp <= -10) {
+    const per = me.stats?.impPerMinute ?? [];
+    let worst: { at: number; v: number } | undefined;
+    for (let m = 0; m + 5 <= per.length; m++) {
+      const v = per.slice(m, m + 5).reduce((a, b) => a + b, 0) / 5;
+      if (!worst || v < worst.v) worst = { at: m, v };
+    }
+    findings.push({
+      id: "low_imp",
+      area: "execution",
+      severity: clamp(-imp / 80, 0.15, 0.35),
+      title: `STRATZ performance (IMP) ${imp}`,
+      detail: `0 is an average game for this hero and position${worst ? `; the weakest stretch was ${worst.at}:00-${worst.at + 5}:00` : ""}.`,
+      ...(worst ? { times: [worst.at * 60] } : {}),
+    });
+  }
+
   const deathsBench = bench?.deaths;
   const benchAt = (arr: number[] | undefined, t: number) => {
     const xs = ctx.bench?.minutes ?? [];
@@ -461,9 +552,11 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
     }
   }
   const wards = me.stats?.wards ?? [];
-  const stacks = (me.stats?.campStack ?? []).reduce((a, b) => a + b, 0);
+  // campStack is cumulative per minute
+  const stacks = Math.max(0, ...(me.stats?.campStack ?? [0]));
   if (position && position >= 4) {
     const per10 = (n: number) => (n / Math.max(1, duration / 600)).toFixed(1);
+    // type 0 = observer, 1 = sentry (checked against purchases: a sentry used at 0:22 -> type 1)
     const obs = wards.filter((w) => w.type === 0).length;
     if (obs / Math.max(1, duration / 600) < 1.5) {
       findings.push({ id: "few_wards", area: "map", severity: 0.25, title: `${obs} observer wards (${per10(obs)} per 10 min)`, detail: "A support usually keeps 2+ observers up per 10 minutes." });
@@ -541,7 +634,15 @@ export function trends(reviews: MatchReview[]): { n: number; recurring: Trend[];
 
 const TREND_TITLES: Record<string, string> = {
   slow_core: "Core items later than typical",
-  counter_missing: "Skipping the item the draft calls for",
+  counter_missing: "Skipping the items the draft calls for",
+  behind_late: "Falling behind in networth by 20-30 min",
+  lane_lost: "Losing the lane",
+  lane_won: "Winning the lane",
+  ward_walk: "Walking into enemy vision before deaths",
+  time_dead: "Long time dead",
+  low_kp: "Low kill participation",
+  high_kp: "High kill participation",
+  low_imp: "Low STRATZ performance (IMP)",
   counter_late: "Counter items bought late",
   low_cs10: "Low last hits at 10:00",
   low_nw20: "Low networth at 20:00",
@@ -561,6 +662,10 @@ const TREND_TITLES: Record<string, string> = {
   good_cs10: "Strong laning last hits",
 };
 
+function pctD(v: number, b: number): string {
+  const d = Math.round((v / b - 1) * 100);
+  return `${d >= 0 ? "+" : ""}${d}%`;
+}
 function clamp(x: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, x));
 }
