@@ -1,6 +1,6 @@
 {
   "note": "item constants (ADR-033): shop stock (observer wards restock) and cast ranges",
   "batches": [
-    { "name": "items", "query": "{ constants { items { id shortName stat { castRange stockMax initialStock stockTime initialStockTime cooldown } } } }" }
+    { "name": "items", "query": "{ constants { items { id shortName stat { castRange stockMax initialStock stockTime initialStockTime } } } }" }
   ]
 }
