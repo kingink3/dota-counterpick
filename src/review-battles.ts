@@ -2,7 +2,8 @@
 //  Battle analysis for the match review (ADR-029b). Pure.
 //
 //  A battle = your deaths / kills / assists, sharp HP drops and spells on enemy heroes,
-//  clustered (gap <= 20 s), with at least 2 heroes of each side near you at some
+//  clustered (gap <= 20 s), with 5+ heroes near you at some moment, 2+ of each side
+//  (2v3 / 3v2 or bigger: a 2v2 is any side lane - ADR-029i), at some
 //  moment (you count). 1-on-1 pick-offs are left to the death checks.
 //  Inside a battle, every 0.5 s while you are alive, each active ability / combat item
 //  is "ready" when its cooldown (at its current level) is over and you have the mana.
@@ -283,7 +284,7 @@ export function analyseBattles(
     });
   };
 
-  // 2+ heroes of each side within BATTLE_R of you (you count) at one of the moments
+  // 5+ heroes, 2+ of each side, within BATTLE_R of you (you count) at one of the moments
   const sidesAt = (t: number): { allies: number; enemies: number } | undefined => {
     if (!mine) return undefined;
     const meP = posAt(mine.playerSlot, t);
@@ -309,7 +310,8 @@ export function analyseBattles(
         if (!s) continue;
         allies = Math.max(allies, s.allies);
         enemies = Math.max(enemies, s.enemies);
-        if (s.allies >= 2 && s.enemies >= 2) both = true;
+        // 2v3 / 3v2 or bigger: a 2v2 is just a side lane (ADR-029i)
+        if (s.allies >= 2 && s.enemies >= 2 && s.allies + s.enemies >= 5) both = true;
       }
     }
     // a kill / assist / death of yours, or a big clash (3+ a side) you were in - lane harass is not a battle

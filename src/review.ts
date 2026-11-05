@@ -245,7 +245,7 @@ export interface MatchReview {
   findings: Finding[];
   /** wards placed / destroyed and stacks: the support metrics, shown for every position. */
   vision?: VisionStats;
-  /** spell / item use in battles (2+ heroes a side), targets, positioning. */
+  /** spell / item use in battles (2v3 / 3v2 or bigger), targets, positioning. */
   battles?: BattleReport;
   /** fixFirst + workOn (kept for the copy text / older code). */
   growth: Finding[];

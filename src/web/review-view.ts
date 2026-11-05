@@ -825,7 +825,7 @@ export class ReviewView {
   }
 
   private battlesCard(b: BattleReport): HTMLElement {
-    const c = card(`Battles (${b.battles.length}) · 2+ heroes a side`);
+    const c = card(`Battles (${b.battles.length}) · 2v3 or bigger`);
     c.id = SECTION.battles;
     const sec = (x: number) => `${Math.round(x)} s`;
     const USE: Record<UseStat["use"], string> = { enemy: "enemy in range", ally: "core in trouble", save: "last 5 s alive" };

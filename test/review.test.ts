@@ -145,7 +145,7 @@ test("review on the real STRATZ sample match (when present)", () => {
   }
 });
 
-function battleMatch(paFarAfter = Infinity) {
+function battleMatch(paFarAfter = Infinity, third = true) {
   const SHACKLE = 5130; // Windranger Shackleshot: unit target, enemy, cd 16/14/12/10, range 800
   const heroes = ["windranger", "anti_mage", "mars", "pudge", "invoker", "phantom_assassin", "lion", "zeus", "axe", "necrophos"];
   const players = heroes.map((h, i) => ({
@@ -159,6 +159,8 @@ function battleMatch(paFarAfter = Infinity) {
     if (slot === 128) return t >= paFarAfter ? { x: 125, y: 125 } : { x: 104, y: 104 };
     if (t >= 700 && slot === 1) return { x: 95, y: 95 };
     if (t >= 700 && slot === 129) return t >= paFarAfter ? { x: 126, y: 126 } : { x: 106, y: 106 };
+    // a third enemy (Zeus) makes it 2v3: a 2v2 is just a side lane
+    if (third && t >= 700 && slot === 130) return t >= paFarAfter ? { x: 127, y: 127 } : { x: 108, y: 104 };
     return { x: 200, y: 40 };
   };
   // Anti-Mage loses 300 of 1000 HP at 1004-1006: a core in trouble 5 cells from you
@@ -195,7 +197,7 @@ test("battles: 2+ heroes a side; chances need a target in range; targets, positi
   const f = b.battles[0]!;
   assert.ok(f.died && f.assists === 1);
   assert.equal(f.allies, 2);
-  assert.equal(f.enemies, 2);
+  assert.equal(f.enemies, 3);
   const u = f.uses.find((x) => x.name === "Shackleshot")!;
   assert.equal(u.use, "enemy");
   assert.equal(u.weight, 2, "Shackleshot is control: counts double");
@@ -303,4 +305,10 @@ test("deaths: the killer is the enemy hero STRATZ names; story finds each team's
   assert.equal(dire.hero, "phantom_assassin");
   assert.equal(dire.killsOn, 3);
   assert.deepEqual(dire.victims, [{ hero: "anti_mage", n: 3 }]);
+});
+
+test("battles: a 2v2 is a side lane, not a battle", () => {
+  const { d } = battleMatch(Infinity, false);
+  const b = analyseBattles(d.summary, d.me, d.positions, ids as never, (k) => k, new Set(), d.health)!;
+  assert.equal(b.battles.length, 0);
 });
