@@ -68,14 +68,15 @@ function ownerOf(token: string): number | undefined {
 }
 
 /** players -> 1..10 (the owner -> 1), match id -> 1, no start time. */
-function anonymise(d: { account: number; summary: unknown; me: unknown; positions: unknown; health?: unknown }): void {
+function anonymise(d: { account: number; summary: unknown; me: unknown; positions: unknown; health?: unknown; others?: Record<string, unknown> }): void {
   const map = new Map<number, number>([[d.account, 1]]);
   const walk = (x: unknown): void => {
     if (Array.isArray(x)) x.forEach(walk);
     else if (x && typeof x === "object") {
       const o = x as Record<string, unknown>;
       for (const [k, v] of Object.entries(o)) {
-        if (k === "steamAccountId" && typeof v === "number") {
+        if (k === "steamAccount" && v && typeof v === "object") delete (v as Record<string, unknown>).name;
+        else if (k === "steamAccountId" && typeof v === "number") {
           if (!map.has(v)) map.set(v, map.size + 1);
           o[k] = map.get(v);
         } else if ((k === "id" || k === "matchId") && typeof v === "number" && v > 1e8) o[k] = 1;
@@ -88,6 +89,16 @@ function anonymise(d: { account: number; summary: unknown; me: unknown; position
   walk(d.me);
   walk(d.positions);
   walk(d.health);
+  if (d.others) {
+    const o: Record<string, unknown> = {};
+    for (const [acc, me] of Object.entries(d.others)) {
+      walk(me);
+      const n = Number(acc);
+      if (!map.has(n)) map.set(n, map.size + 1);
+      o[String(map.get(n))] = me;
+    }
+    d.others = o;
+  }
   d.account = 1;
 }
 
@@ -173,14 +184,37 @@ async function main(): Promise<void> {
       }
     }
     if (!found) throw new Error("no parsed ranked match among the leaderboard players");
-    const summary = await gql<{ match: unknown }>(matchSummaryQuery(found.id));
-    const me: Record<string, unknown> = { playbackData: {} };
-    for (const part of Object.keys(ME_PARTS) as Array<keyof typeof ME_PARTS>) {
-      const r = await gql<{ match: { players: Array<Record<string, unknown>> } }>(matchMeQuery(found.id, found.acc, part));
-      const pl = r.match?.players?.[0] ?? {};
-      const { playbackData, ...rest } = pl as { playbackData?: Record<string, unknown> };
-      Object.assign(me, rest);
-      Object.assign(me.playbackData as Record<string, unknown>, playbackData ?? {});
+    const summary = await gql<{ match: { players?: Array<{ steamAccountId?: number | null; steamAccount?: { isAnonymous?: boolean | null } | null }> } }>(matchSummaryQuery(found.id));
+    const playerOf = async (acc: number) => {
+      const me: Record<string, unknown> = { playbackData: {} };
+      for (const part of Object.keys(ME_PARTS) as Array<keyof typeof ME_PARTS>) {
+        const r = await gql<{ match: { players: Array<Record<string, unknown>> } }>(matchMeQuery(found!.id, acc, part));
+        const pl = r.match?.players?.[0] ?? {};
+        const { playbackData, ...rest } = pl as { playbackData?: Record<string, unknown> };
+        Object.assign(me, rest);
+        Object.assign(me.playbackData as Record<string, unknown>, playbackData ?? {});
+      }
+      return me;
+    };
+    const me = await playerOf(found.acc);
+    // "own": the other players with open data too (the multi-player review); counts only in the log
+    const others: Record<string, unknown> = {};
+    if (mode === "own") {
+      const ps = summary.match?.players ?? [];
+      console.log(`own: ${ps.filter((p) => p.steamAccountId && !p.steamAccount?.isAnonymous).length} of ${ps.length} players open, ${ps.filter((p) => !p.steamAccountId).length} without an id`);
+      for (const p of ps) {
+        if (!p.steamAccountId || p.steamAccountId === found.acc) continue;
+        try {
+          const o = await playerOf(p.steamAccountId);
+          const has = !!((o.playbackData as Record<string, unknown[] | null>)?.deathEvents || (o.playbackData as Record<string, unknown[] | null>)?.inventoryEvents);
+          // a private profile: only whether STRATZ returns its events (logged), never stored
+          if (p.steamAccount?.isAnonymous) console.log(`own: a private player - events ${has ? "returned" : "not returned"}`);
+          else if (has) others[String(p.steamAccountId)] = o;
+        } catch (e) {
+          console.log(`a player failed: ${String(e).slice(0, 120)}`);
+        }
+      }
+      console.log(`own: ${Object.keys(others).length} other players with event data`);
     }
     let positions: unknown;
     try {
@@ -194,7 +228,7 @@ async function main(): Promise<void> {
     } catch (e) {
       console.log(`health failed: ${String(e).slice(0, 200)}`);
     }
-    const data = { account: found.acc, summary: summary.match, me, positions, health };
+    const data = { account: found.acc, summary: summary.match, me, positions, health, ...(mode === "own" ? { others } : {}) };
     if (mode === "own") anonymise(data);
     writeFileSync(join(out, "match.json"), JSON.stringify(data));
     console.log(mode === "own" ? "own latest match fetched (anonymised)" : `sample match ${found.id}`);

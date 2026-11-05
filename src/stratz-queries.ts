@@ -11,7 +11,7 @@ export function recentMatchesQuery(account: number, take = 20): string {
 }
 
 export function matchSummaryQuery(id: number): string {
-  return `{ match(id: ${id}) { id durationSeconds gameMode lobbyType didRadiantWin startDateTime parsedDateTime averageRank bracket firstBloodTime bottomLaneOutcome midLaneOutcome topLaneOutcome players { playerSlot steamAccountId isRadiant heroId position lane role isVictory kills deaths assists networth goldPerMinute experiencePerMinute numLastHits numDenies imp level item0Id item1Id item2Id item3Id item4Id item5Id neutral0Id stats { networthPerMinute lastHitsPerMinute } } } }`;
+  return `{ match(id: ${id}) { id durationSeconds gameMode lobbyType didRadiantWin startDateTime parsedDateTime averageRank bracket firstBloodTime bottomLaneOutcome midLaneOutcome topLaneOutcome players { playerSlot steamAccountId steamAccount { name isAnonymous } isRadiant heroId position lane role isVictory kills deaths assists networth goldPerMinute experiencePerMinute numLastHits numDenies imp level item0Id item1Id item2Id item3Id item4Id item5Id neutral0Id stats { networthPerMinute lastHitsPerMinute } } } }`;
 }
 
 /** your player in parts; each part stays under the complexity limit. */

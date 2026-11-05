@@ -14,6 +14,8 @@ import { analyseBattles, type AbilityInfo, type BattleReport } from "./review-ba
 export interface StratzPlayerLight {
   playerSlot: number;
   steamAccountId?: number | null;
+  /** STRATZ: the profile name; isAnonymous = "Expose Public Match Data" off. */
+  steamAccount?: { name?: string | null; isAnonymous?: boolean | null } | null;
   isRadiant: boolean;
   heroId: number;
   position?: string | null;
