@@ -286,7 +286,12 @@ function itemCandidates(kb: KnowledgeBase): Subject[] {
 interface ItemFit {
   mult(code: string): number;
   info?: { archetype: Archetype; attack?: AttackType };
+  /** tools the hero you play already has (Drow's Gust = silence): an item for the same tool is worth less. */
+  self?: Record<string, number>;
 }
+
+/** the hero's own tool weight at or above this makes an item for the same tool redundant (ADR-027c). */
+const SELF_TOOL = 0.5;
 
 /** Archetype of the hero you play: your selected position wins, else the hero's
  *  first listed position (2 splits into right-click mid vs caster), with curated
@@ -309,13 +314,15 @@ export function archetypeOf(kb: KnowledgeBase, myHero?: string, myRole?: number)
 function itemFitFor(kb: KnowledgeBase, draft: DraftState): ItemFit {
   const table = kb.itemFit;
   const archetype = archetypeOf(kb, draft.myHero, draft.myRole);
-  if (!table || !archetype) return { mult: () => 1 };
+  const self = draft.myHero ? kb.taxonomy.hero_tags[draft.myHero]?.tool : undefined;
+  if (!table || !archetype) return { mult: () => 1, ...(self ? { self } : {}) };
   const attack = draft.myHero ? kb.heroAttack?.[draft.myHero] : undefined;
   const col = ARCHETYPES.indexOf(archetype);
   const meleeOnly = new Set(table.meleeOnly);
   const rangedOnly = new Set(table.rangedOnly);
   return {
     info: { archetype, ...(attack ? { attack } : {}) },
+    ...(self ? { self } : {}),
     mult: (code) => {
       let m = table.fit[code]?.[col] ?? 1;
       if (attack === "ranged" && meleeOnly.has(code)) m = Math.min(m, table.wrongAttack);
@@ -328,7 +335,13 @@ function itemFitFor(kb: KnowledgeBase, draft: DraftState): ItemFit {
 /** finalize an item rec with its fit multiplier applied (and recorded for the UI). */
 function finalizeItem(code: string, label: string, reasons: Reason[], fit: ItemFit): Recommendation {
   const m = fit.mult(code);
-  const rec = finalizeRec("item", code, label, undefined, scaleReasons(reasons, m));
+  // a tool your hero already brings (Drow's Gust silences): the item adds little for it
+  const own = (r: Reason) => (r.tool && r.contribution > 0 ? fit.self?.[r.tool] ?? 0 : 0);
+  const deduped = reasons.map((r) => {
+    const w = own(r);
+    return w >= SELF_TOOL ? { ...r, contribution: r.contribution * Math.max(0.25, 1 - w), selfHas: true } : r;
+  });
+  const rec = finalizeRec("item", code, label, undefined, scaleReasons(deduped, m));
   if (fit.info) rec.fit = { ...fit.info, mult: m };
   return rec;
 }

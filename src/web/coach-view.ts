@@ -174,6 +174,8 @@ export class CoachView {
   private speaker = new Speaker();
   private pip?: Window;
   private lastSaid = "";
+  /** the settings block is folded like Clock; remembered while the page is open. */
+  private settingsOpen = false;
   private role?: number;
 
   constructor(private readonly root: HTMLElement) {
@@ -283,6 +285,17 @@ export class CoachView {
     });
     row.append(voice, ov, test);
     r.append(row);
+    r.append(span(this.lastSaid, "cv-last muted"));
+    // everything else folds away: in a match only the three buttons matter
+    const det = document.createElement("details");
+    det.className = "gz-set cv-set";
+    det.open = this.settingsOpen;
+    det.addEventListener("toggle", () => (this.settingsOpen = det.open));
+    const sum = document.createElement("summary");
+    sum.textContent = "Coach settings";
+    det.append(sum);
+    r.append(det);
+    const box = det;
 
     const vol = document.createElement("input");
     vol.type = "range";
@@ -300,7 +313,7 @@ export class CoachView {
     const vr = document.createElement("label");
     vr.className = "cv-row";
     vr.append(span("Volume"), vol);
-    r.append(vr);
+    box.append(vr);
 
     // voice: any English voice of this system; "Auto" = a natural one when there is one
     const vs = this.speaker.voices();
@@ -329,7 +342,7 @@ export class CoachView {
     const vrow = document.createElement("label");
     vrow.className = "cv-row";
     vrow.append(span("Voice"), vsel);
-    r.append(vrow);
+    box.append(vrow);
 
     const rate = document.createElement("input");
     rate.type = "range";
@@ -348,7 +361,7 @@ export class CoachView {
     const rrow = document.createElement("label");
     rrow.className = "cv-row";
     rrow.append(span("Speed"), rate);
-    r.append(rrow);
+    box.append(rrow);
 
     const modes = this.modes();
     const def = defaultModes(this.role);
@@ -375,7 +388,7 @@ export class CoachView {
       l.append(span(c.label), sel);
       tb.append(l);
     }
-    r.append(tb);
+    box.append(tb);
     const reset = btn("Role defaults", "g-btn cv-reset");
     reset.title = "Back to the defaults for your position";
     reset.addEventListener("click", () => {
@@ -383,13 +396,12 @@ export class CoachView {
       save(this.s);
       this.build();
     });
-    r.append(reset);
-    r.append(span(this.lastSaid, "cv-last muted"));
+    box.append(reset);
     const note = span(
       `Voice: ${this.speaker.voiceName}${this.speaker.voices().length ? "" : " (no English voice found - Windows: Settings - Time & language - Speech - Add voices)"}. Overlay = a small always-on-top window; Dota must run in "borderless window" mode (Settings - Video). Nothing is injected into the game.`,
       "cv-note muted",
     );
-    r.append(note);
+    box.append(note);
   }
 }
 

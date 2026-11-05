@@ -615,3 +615,15 @@ test("taxonomy: every hero has its tools (what it brings to a fight)", () => {
     .map(([h]) => h);
   assert.deepEqual(missing, [], "fill tool: {...} (scripts/audit-tools.ts lists what the abilities suggest)");
 });
+
+test("items: a tool the hero you play already has is worth less (Drow's Gust = silence)", () => {
+  const draft = { enemyHeroes: ["disruptor", "invoker", "pugna", "abaddon", "lone_druid"], allyHeroes: ["dark_seer", "chaos_knight"], myRole: 1 };
+  const drow = engine.recommend({ ...draft, myHero: "drow_ranger" });
+  const sven = engine.recommend({ ...draft, myHero: "sven" });
+  const orchid = (r: EngineResult) => r.items.find((i) => i.code === "orchid");
+  const d = orchid(drow)!;
+  assert.ok(d.reasons.some((x) => x.tool === "silence" && x.selfHas), "silence marked as already yours");
+  assert.ok(!orchid(sven) || orchid(sven)!.reasons.every((x) => !x.selfHas), "Sven has no silence");
+  const sil = (r: EngineResult) => orchid(r)?.reasons.filter((x) => x.tool === "silence").reduce((a, x) => a + x.contribution, 0) ?? 0;
+  assert.ok(sil(drow) < sil(sven) * 0.6, `Drow ${sil(drow).toFixed(2)} vs Sven ${sil(sven).toFixed(2)}`);
+});

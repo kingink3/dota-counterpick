@@ -14,7 +14,7 @@
 import type { ItemPlan, PlanItem, TeamWindow } from "./item-plan.js";
 import type { Upcoming } from "./game-timers.js";
 
-export type CueCat = "runes" | "stacks" | "pulls" | "jungle" | "objectives" | "neutrals" | "items" | "windows" | "daynight";
+export type CueCat = "runes" | "stacks" | "pulls" | "jungle" | "wards" | "objectives" | "neutrals" | "items" | "windows" | "daynight";
 export type CueMode = "voice" | "chime" | "off";
 
 export const CUE_CATS: Array<{ id: CueCat; label: string; hint: string }> = [
@@ -22,6 +22,7 @@ export const CUE_CATS: Array<{ id: CueCat; label: string; hint: string }> = [
   { id: "stacks", label: "Stacks", hint: "every minute at :45 (stack at :53-:55)" },
   { id: "pulls", label: "Pulls", hint: "lane pulls every 30 s" },
   { id: "jungle", label: "Shrines & lotus", hint: "wisdom shrines, healing lotus" },
+  { id: "wards", label: "Observer wards", hint: "a new observer ward in the shop every 2:15 - keep them placed" },
   { id: "objectives", label: "Tormentor", hint: "first spawn at 20:00, a minute ahead" },
   { id: "neutrals", label: "Neutral items", hint: "next tier" },
   { id: "items", label: "Item targets", hint: "next item of the plan and its typical time; late warning (off by default)" },
@@ -37,6 +38,7 @@ const CAT_OF: Record<string, CueCat> = {
   pull: "pulls",
   wisdom_shrine: "jungle",
   lotus: "jungle",
+  observer_restock: "wards",
   tormentor: "objectives",
   neutral_tier: "neutrals",
   night: "daynight",
@@ -52,6 +54,7 @@ const SAY: Record<string, string> = {
   pull: "Pull",
   wisdom_shrine: "Wisdom shrine",
   lotus: "Lotus",
+  observer_restock: "Observer ward restocked",
   tormentor: "Tormentor spawns",
   night: "Night",
   day: "Day",
@@ -66,6 +69,7 @@ const SHORT: Record<string, string> = {
   pull: "Pull",
   wisdom_shrine: "Shrine",
   lotus: "Lotus",
+  observer_restock: "Obs ward",
   tormentor: "Tormentor",
   neutral_tier: "Neutrals",
   night: "Night",
@@ -80,6 +84,7 @@ export function defaultModes(role: number | undefined): Record<CueCat, CueMode> 
     stacks: support ? "chime" : "off",
     pulls: "off",
     jungle: "voice",
+    wards: support ? "voice" : "off",
     objectives: "voice",
     neutrals: "voice",
     items: "off",
@@ -110,7 +115,9 @@ export interface CoachInput {
   window?: TeamWindow;
 }
 
-const PRIORITY: Record<CueCat, number> = { windows: 6, objectives: 5, items: 4, runes: 3, neutrals: 3, jungle: 2, stacks: 2, pulls: 1, daynight: 1 };
+const PRIORITY: Record<CueCat, number> = { windows: 6, objectives: 5, items: 4, runes: 3, neutrals: 3, wards: 3, jungle: 2, stacks: 2, pulls: 1, daynight: 1 };
+/** events said as they happen, without a countdown ("Observer ward restocked"). */
+const NOW_CUES = new Set(["observer_restock"]);
 /** a lead crossing older than this is not said (the clock jumped / the app started late). */
 const FRESH = 4;
 /** power-window bins (minutes) - the same as the Game tab's line. */
@@ -175,7 +182,7 @@ export class Coach {
       // fresh only: the lead started less than FRESH seconds ago
       if (e.lead - e.in > FRESH) continue;
       const name = SAY[e.id] ?? e.label; // neutral tiers carry their own names ("Tier 2 neutrals")
-      push({ key: `${e.id}@${e.at}`, cat, text: `${name} ${spokenIn(lead)}`, at: t, ttl: 3 });
+      push({ key: `${e.id}@${e.at}`, cat, text: NOW_CUES.has(e.id) ? name : `${name} ${spokenIn(lead)}`, at: t, ttl: 4 });
     }
 
     // power windows: at 0:30 (the start) and at each bin edge

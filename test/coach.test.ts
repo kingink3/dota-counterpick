@@ -65,3 +65,10 @@ test("coach: shrines and lotus for every role; only the first Tormentor; item ta
   for (let t = 1500; t <= 2200; t += 0.25) for (const q of c.tick({ t, events: upcoming(tm, t, 1, { roshan_killed: 1500, tormentor_killed: 1500 }), modes: defaultModes(1) })) said.push(q.key);
   assert.ok(!said.some((k) => /roshan|tormentor/.test(k)), said.join(","));
 });
+
+test("coach: supports hear every observer ward restock (2:15); cores do not", () => {
+  const sup = run(5, 0, 600).filter((c) => c.cat === "wards");
+  assert.deepEqual(sup.map((c) => c.text), ["Observer ward restocked", "Observer ward restocked", "Observer ward restocked", "Observer ward restocked"]);
+  assert.ok(Math.abs(sup[0]!.t - 133) <= 0.5, "said as it restocks (2:15)");
+  assert.ok(!run(1, 0, 600).some((c) => c.cat === "wards"));
+});

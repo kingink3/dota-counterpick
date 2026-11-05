@@ -124,6 +124,16 @@ events:
     note: "respawns 8-11 minutes after death"
     source: "7.38: Roshan's respawn takes between 8 to 11 minutes"
 
+  - id: observer_restock
+    label: "Observer ward restocked (shop)"
+    first: 135
+    every: 135
+    roles: [4, 5]
+    lead: 2
+    note: "the shop holds up to 4 (2 at the start, +1 every 2:15): buy and place them so the stock never caps"
+    source: "STRATZ item constants 2026-11-05: ward_observer stockMax 4, initialStock 2, stockTime 135 s"
+    confidence: approx
+
   - id: neutral_tier
     label: "Neutral tier"
     at: [900, 1500, 2100, 3600]

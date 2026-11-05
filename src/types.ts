@@ -302,6 +302,8 @@ export interface Reason {
   reliance?: string;
   /** the human-readable mechanism string (the heart of ADR-012 §4). */
   mechanism: string;
+  /** an item reason for a tool the hero you play already has (scaled down, ADR-027c). */
+  selfHas?: boolean;
   /** score this reason contributed. */
   contribution: number;
   /** transparent factor breakdown for the contribution. */
@@ -352,6 +354,8 @@ export interface Recommendation {
   matchups?: Array<{ enemy: string; wr: number; n: number }>;
   /** item recs only: how well the item suits YOUR hero (score already multiplied). */
   fit?: { archetype: Archetype; attack?: AttackType; mult: number };
+  /** the hero you play buys it in this share of games (< 5%): shown and scored lower. */
+  rareOnHero?: number;
   reasons: Reason[];
 }
 

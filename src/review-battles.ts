@@ -110,19 +110,19 @@ export interface BattleReport {
 }
 
 /**
- * Combat actives: how they are used and their reach (cast range + radius, world units; Dota wiki
- * values as of 7.39-7.40 - dotaconstants has no item cast ranges). Saves count only at your death.
+ * Combat actives: how they are used and their reach (cast range + radius, world units; STRATZ item
+ * constants (stat.castRange, fetched 2026-11-05; Dagon = 640 + its per-level bonus, AoE items + radius)). Saves count only at your death.
  */
 const ITEM_USE: Record<string, [UseKind, number?]> = {
   // on an enemy
   orchid: ["enemy", 900], bloodthorn: ["enemy", 900], sheepstick: ["enemy", 800], rod_of_atos: ["enemy", 1100], gungir: ["enemy", 1375],
-  nullifier: ["enemy", 900], abyssal_blade: ["enemy", 150], heavens_halberd: ["enemy", 650], diffusal_blade: ["enemy", 600],
-  disperser: ["enemy", 600], harpoon: ["enemy", 700], ethereal_blade: ["enemy", 800], spirit_vessel: ["enemy", 950],
-  urn_of_shadows: ["enemy", 950], medallion_of_courage: ["enemy", 1000], dagon: ["enemy", 800], dagon_2: ["enemy", 800],
-  dagon_3: ["enemy", 800], dagon_4: ["enemy", 800], dagon_5: ["enemy", 800], shivas_guard: ["enemy", 900], veil_of_discord: ["enemy", 1200],
+  nullifier: ["enemy", 900], abyssal_blade: ["enemy", 150], heavens_halberd: ["enemy", 750], diffusal_blade: ["enemy", 600],
+  disperser: ["enemy", 600], harpoon: ["enemy", 700], ethereal_blade: ["enemy", 800], spirit_vessel: ["enemy", 750],
+  urn_of_shadows: ["enemy", 750], medallion_of_courage: ["enemy", 1000], dagon: ["enemy", 700], dagon_2: ["enemy", 730],
+  dagon_3: ["enemy", 760], dagon_4: ["enemy", 790], dagon_5: ["enemy", 820], shivas_guard: ["enemy", 900], veil_of_discord: ["enemy", 1200],
   // on an allied core (and yourself at death)
   glimmer_cape: ["ally", 600], lotus_orb: ["ally", 900], solar_crest: ["ally", 1000], force_staff: ["ally", 550], hurricane_pike: ["ally", 650],
-  wind_waker: ["ally", 550], holy_locket: ["ally", 500], mekansm: ["ally", 1200], guardian_greaves: ["ally", 1200], pipe: ["ally", 1200],
+  wind_waker: ["ally", 550], holy_locket: ["ally", 600], mekansm: ["ally", 1200], guardian_greaves: ["ally", 1200], pipe: ["ally", 1200],
   crimson_guard: ["ally", 1200],
   // on yourself
   black_king_bar: ["save"], ghost: ["save"], satanic: ["save"], manta: ["save"], blade_mail: ["save"], invis_sword: ["save"],

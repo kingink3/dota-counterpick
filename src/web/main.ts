@@ -23,7 +23,7 @@ import { ReviewView } from "./review-view.js";
 import type { Benchmarks, Ids } from "../review.js";
 import type { PlanView } from "./plan-view.js";
 import { buildMatchPlan } from "../game-plan.js";
-import { buildPlan, teamWindow, type ItemStats } from "../item-plan.js";
+import { buildPlan, heroBuyFit, teamWindow, type ItemStats } from "../item-plan.js";
 import { identifyPlate, type HudRead, type LearnedPlate } from "../item-match.js";
 import type { Frame, ScreenChange, Side } from "../screen-match.js";
 import type { Archetype, AttackType, Combo, DamageRead, DraftState, Reason, Recommendation, TeamRead } from "../types.js";
@@ -155,6 +155,13 @@ function setMode(m: Mode): void {
   if (m === "review") review?.show();
   for (const b of document.querySelectorAll<HTMLElement>(".mode-btn")) {
     b.classList.toggle("active", b.dataset.mode === m);
+  }
+  // the draft band (both teams, enemy items) is shared by Draft and Game: no tab-hopping in a match
+  const band = document.querySelector<HTMLElement>("#counter-view > .band, #game-view > .band");
+  if (band) {
+    const host = m === "game" ? el("#game-view") : el("#counter-view");
+    if (band.parentElement !== host) host.insertBefore(band, host.firstChild);
+    band.classList.toggle("in-game", m === "game");
   }
   if (m === "game") game?.start();
 }
@@ -499,6 +506,21 @@ function renderInner(): void {
 
   const result = resolveDraft(kb, draft);
   renderGamePlan(result);
+  // the hero you play: items it practically never builds sink (STRATZ purchase shares, ADR-027b)
+  if (state.myHero && itemStats?.heroes[state.myHero]?.buy) {
+    const buy = itemStats.heroes[state.myHero]!.buy;
+    for (const list of [result.items, result.defense]) {
+      for (const r of list) {
+        const key = kb.itemDcKey?.[r.code] ?? r.code;
+        const f = heroBuyFit(buy, key);
+        if (f < 1) {
+          r.score *= f;
+          r.rareOnHero = buy?.[key] ?? 0;
+        }
+      }
+      list.sort((a, b) => b.score - a.score);
+    }
+  }
 
   const tabs: Array<{ id: TabId; label: string; count: number }> = [
     { id: "heroes", label: "Hero picks", count: result.heroes.length },
@@ -601,6 +623,7 @@ function renderStrip(sel: string, set: Set<string>, side: "enemy" | "ally"): voi
       slot.innerHTML = `<span class="p"></span><span class="bar"></span><span class="nm">Open slot</span>`;
       slot.addEventListener("click", () => {
         state.addTarget = side;
+        if (mode === "game") setMode("counter"); // the hero grid is on Draft
         render();
         (el("#hero-search") as HTMLInputElement).focus();
       });
@@ -628,7 +651,8 @@ function renderStrip(sel: string, set: Set<string>, side: "enemy" | "ally"): voi
     x.textContent = "×";
     x.setAttribute("aria-hidden", "true");
     slot.append(p, bar, nm, x);
-    slot.addEventListener("click", () => toggleHero(id));
+    // in a match (Game tab) a click must not drop a hero by accident: removing is on Draft
+    slot.addEventListener("click", () => mode !== "game" && toggleHero(id));
 
     // ally slots get a star: "this is the hero I'm playing"
     if (side === "ally") {
@@ -1092,6 +1116,13 @@ function recCard(rec: Recommendation): HTMLElement {
   if (rec.fit && rec.fit.mult < 0.5) {
     card.classList.add("off-build");
     meta.push(`<span class="off" title="Counters them, but rarely built by this archetype (score x${rec.fit.mult})">unusual for a ${archetypeLabel(rec.fit.archetype, rec.fit.attack)}</span>`);
+  }
+  if (rec.rareOnHero !== undefined && state.myHero) {
+    meta.push(`<span class="off" title="STRATZ: share of ${esc(labelFor(state.myHero))} games with this item - score lowered">rare on ${esc(labelFor(state.myHero))} (${Math.round(rec.rareOnHero * 100)}% of games)</span>`);
+  }
+  const own = rec.reasons.filter((r) => r.selfHas && r.tool).map((r) => toolLabel(r.tool!));
+  if (own.length && state.myHero) {
+    meta.push(`<span class="off" title="The hero you play already brings this - the item adds little for it">${esc(labelFor(state.myHero))} already has ${esc([...new Set(own)].join(", ").toLowerCase())}</span>`);
   }
   const ans = rec.coverage
     .map((c) => `<img title="answers ${esc(labelFor(c))}" alt="${esc(labelFor(c))}" src="${heroImageUrlByValve(byEngineId.get(c)?.valve ?? heroValveName(c))}">`)

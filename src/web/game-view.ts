@@ -5,8 +5,8 @@
 //  (ScreenReader.onClock) -> a manually set clock that runs on its own.
 //  Between reads the display runs on performance.now(); a read that changes the
 //  shown second re-anchors it, a stalled clock (GameClock) freezes it (pause).
-//  Roshan / Tormentor deaths cannot be seen reliably on screen: two buttons mark
-//  them at the current game time.
+//  Roshan / Tormentor kills are not tracked (the game shows them; the user asked to
+//  drop the marks): only the first Tormentor spawn is a timer / cue.
 // =============================================================================
 
 import { ClockConfirm, formatClock, isNight, parseClock, upcoming, type Timings, type Upcoming } from "../game-timers.js";
@@ -137,11 +137,6 @@ export class GameView {
           <div id="game-target" class="gz-target"></div>
           <h3 class="game-h">Power window</h3>
           <div id="game-wline" class="gz-wline"></div>
-          <h3 class="game-h">Marks</h3>
-          <div class="game-row">
-            <button id="mark-rosh" type="button" class="g-btn mark" data-mark="roshan_killed">Roshan killed</button>
-            <button id="mark-torm" type="button" class="g-btn mark" data-mark="tormentor_killed">Tormentor killed</button>
-          </div>
           <h3 class="game-h">Coach · voice &amp; overlay</h3>
           <div id="game-coach" class="gz-coach"></div>
           <details class="gz-set">
@@ -190,15 +185,6 @@ export class GameView {
       this.clock = { ...c, base: t, at: performance.now(), running: !c.running, source: "manual" };
       this.render();
     });
-    for (const b of this.root.querySelectorAll<HTMLElement>(".mark")) {
-      b.addEventListener("click", () => {
-        const id = b.dataset.mark!;
-        const t = this.now();
-        if (this.marks[id] !== undefined) this.marks[id] = undefined;
-        else if (t !== undefined) this.marks[id] = Math.floor(t);
-        this.render();
-      });
-    }
   }
 
   /** the plan data (built by main.ts when the draft / hero / items change). */
@@ -264,14 +250,6 @@ export class GameView {
       b.classList.toggle("active", b.dataset.role === String(this.d.role() ?? ""));
     }
     $("#game-playing").textContent = this.d.playing() ?? "";
-    for (const b of this.root.querySelectorAll<HTMLButtonElement>(".mark")) {
-      const at = this.marks[b.dataset.mark!];
-      const name = b.dataset.mark === "roshan_killed" ? "Roshan" : "Tormentor";
-      b.classList.toggle("on", at !== undefined);
-      b.textContent = at === undefined ? `${name} killed` : `${name} killed ${formatClock(at)} ✕`;
-      b.title = at === undefined ? `Mark ${name}'s death at the current game time` : "Click to clear";
-      b.disabled = t === undefined && at === undefined;
-    }
     const list = $("#game-events");
     const tm = this.d.timings();
     if (!tm || t === undefined) {
