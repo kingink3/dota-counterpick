@@ -237,6 +237,51 @@ async function main(): Promise<void> {
     if (mode === "own") anonymise(data);
     writeFileSync(join(out, "match.json"), JSON.stringify(data));
     console.log(mode === "own" ? "own latest match fetched (anonymised)" : `sample match ${found.id}`);
+  } else if (mode === "match") {
+    // one match, every player (ADR-031): --match <id>, or the token owner's latest parsed match.
+    // Written in the clear to --out; the store step encrypts it before anything is pushed.
+    // The log shows counts only (the repository and its Actions logs are public).
+    let id = Number(arg("match") || 0);
+    const owner = ownerOf(process.env.STRATZ_TOKEN ?? "");
+    if (!id) {
+      if (!owner) throw new Error("no match id and no SteamId in the token");
+      const r = await gql<{ player: { matches: Array<{ id: number; parsedDateTime?: number | null }> | null } | null }>(recentMatchesQuery(owner, 10));
+      const m = (r.player?.matches ?? []).find((x) => x.parsedDateTime);
+      if (!m) throw new Error("STRATZ returned no parsed match for the token owner (its match list may be down - pass a match id)");
+      id = m.id;
+    }
+    const summary = await gql<{ match: { players?: Array<{ steamAccountId?: number | null }>; parsedDateTime?: number | null } | null }>(matchSummaryQuery(id));
+    if (!summary.match) throw new Error("match not found");
+    const shared = async <T>(q: string, what: string): Promise<T | undefined> => {
+      try {
+        return (await gql<{ match: T }>(q)).match;
+      } catch (e) {
+        console.log(`${what} failed: ${String(e).slice(0, 160)}`);
+        return undefined;
+      }
+    };
+    const positions = await shared(matchPositionsQuery(id), "positions");
+    const health = await shared(matchHealthQuery(id), "health");
+    const vision = await shared(matchVisionQuery(id), "vision");
+    const players: Record<string, unknown> = {};
+    for (const p of summary.match.players ?? []) {
+      if (!p.steamAccountId) continue;
+      try {
+        const me: Record<string, unknown> = { playbackData: {} };
+        for (const part of Object.keys(ME_PARTS) as Array<keyof typeof ME_PARTS>) {
+          const r = await gql<{ match: { players: Array<Record<string, unknown>> } }>(matchMeQuery(id, p.steamAccountId, part));
+          const { playbackData, ...rest } = (r.match?.players?.[0] ?? {}) as { playbackData?: Record<string, unknown> };
+          Object.assign(me, rest);
+          Object.assign(me.playbackData as Record<string, unknown>, playbackData ?? {});
+        }
+        players[String(p.steamAccountId)] = me;
+      } catch (e) {
+        console.log(`a player failed: ${String(e).slice(0, 120)}`);
+      }
+    }
+    const data = { id, owner: owner ?? null, fetchedAt: Math.floor(Date.now() / 1000), summary: summary.match, positions, health, vision, players };
+    writeFileSync(join(out, "match.json"), JSON.stringify(data));
+    console.log(`match: ${Object.keys(players).length} of ${summary.match.players?.length ?? 0} players with events, parsed ${summary.match.parsedDateTime ? "yes" : "no"}`);
   } else {
     throw new Error(`unknown mode ${mode}`);
   }

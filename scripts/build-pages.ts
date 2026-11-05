@@ -22,15 +22,12 @@ import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } fr
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
+import { ITERATIONS, MIN_PASSWORD, SALT } from "./seal.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const WEB = join(ROOT, "web");
 const DIST = join(ROOT, "dist");
 
-/** constant per-site salt: lets "remember on this device" survive redeploys. */
-const SALT = "dota-counterpick/pages/v1";
-const ITERATIONS = 600_000;
-const MIN_PASSWORD = 12;
 
 async function main(): Promise<void> {
   const password = process.env.APP_PASSWORD ?? "";
@@ -89,8 +86,8 @@ async function main(): Promise<void> {
     "style-src 'unsafe-inline'",
     "img-src 'self' blob:",
     "font-src 'self'",
-    // the local companion (match review proxy, ADR-029) on this PC
-    "connect-src 'self' http://127.0.0.1:5174",
+    // the local companion (match review proxy, ADR-029) on this PC; GitHub raw: encrypted matches (ADR-031)
+    "connect-src 'self' http://127.0.0.1:5174 https://raw.githubusercontent.com",
     "base-uri 'none'",
     "form-action 'none'",
   ].join("; ");
@@ -165,6 +162,8 @@ function gateScript(): string {
     const text = await new Response(new Blob([plain]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
     const p = JSON.parse(text);
     window.__DOTA_BUNDLE = p.data;
+    // the same key opens the matches the "Review a match" workflow stores (ADR-031)
+    window.__DOTA_KEY = key;
     document.documentElement.classList.remove("locked");
     await import(URL.createObjectURL(new Blob([p.js], { type: "text/javascript" })));
   }

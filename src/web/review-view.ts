@@ -22,6 +22,7 @@ import {
   type RecentMatch,
   type StratzSettings,
 } from "./stratz-client.js";
+import { loadIndex, loadMatch, storeAvailable, workflowUrl, type StoreEntry } from "./github-store.js";
 
 const posOf = (p?: string | null) => Number(/(\d)/.exec(p ?? "")?.[1] ?? 0);
 
@@ -50,6 +51,10 @@ export class ReviewView {
   /** the match open in the player switcher: shared data + every player's review so far. */
   private open?: { id: number; base: MatchBase; reviews: Map<number, MatchReview>; loading: Set<number>; failed: Map<number, string>; expanded: Set<number> };
   private matchInput = "";
+  /** matches the "Review a match" workflow stored (ADR-031). */
+  private store?: StoreEntry[];
+  private storeMsg = "";
+  private storePoll?: number;
   private status = "";
   private busy = false;
 
@@ -163,7 +168,7 @@ export class ReviewView {
     const wrap = el("section", "rv");
     const left = el("aside", "rv-side");
     const main = el("main", "rv-main");
-    left.append(this.settingsCard(), this.byIdCard(), this.matchList());
+    left.append(this.githubCard(), this.settingsCard(), this.byIdCard(), this.matchList());
     if (this.status) main.append(el("p", "rv-status", this.status));
     if (this.open) main.append(this.switcher(this.open), this.overviewCard(this.open));
     else if (this.current) main.append(this.otherPlayersButton(this.current));
@@ -209,6 +214,121 @@ export class ReviewView {
     c.append(tok, acc, save);
     c.append(el("p", "rv-note", "Needs the local companion running (npm run companion): STRATZ does not accept calls from a web page. Token and history stay in this browser; get a token at stratz.com/api."));
     return c;
+  }
+
+  /** matches fetched on GitHub (no companion): run the workflow, then open them here. */
+  private githubCard(): HTMLElement {
+    const c = card("From GitHub");
+    const run = document.createElement("a");
+    run.className = "g-btn";
+    run.href = workflowUrl();
+    run.target = "_blank";
+    run.rel = "noopener";
+    run.textContent = "Run on GitHub ↗";
+    run.title = 'Actions -> "Review a match" -> Run workflow (Match ID, or empty = your latest). Takes ~1-1.5 min.';
+    run.addEventListener("click", () => this.pollStore());
+    const ref = el("button", "g-btn", "Refresh") as HTMLButtonElement;
+    ref.type = "button";
+    ref.addEventListener("click", () => void this.loadStore());
+    const row = el("div", "game-row", "");
+    row.append(run, ref);
+    c.append(row);
+    if (!storeAvailable()) {
+      c.append(el("p", "rv-note", "Works in the published site (it opens the stored matches with the site password)."));
+      return c;
+    }
+    if (this.store === undefined && !this.storeMsg) void this.loadStore();
+    if (this.storeMsg) c.append(el("p", "rv-note", this.storeMsg));
+    const ul = el("ul", "rv-list");
+    for (const e of this.store ?? []) {
+      const li = el("li", `rv-m${this.open?.id === e.id ? " on" : ""}`);
+      const info = el("span", "rv-mi", "");
+      const when = new Date((e.start ?? e.at) * 1000);
+      info.append(el("b", "", `${when.toLocaleDateString(undefined, { day: "numeric", month: "short" })} ${when.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}`), el("span", "muted", ` · ${e.duration ? mmss(e.duration) : ""} · ${e.id}`));
+      li.append(info);
+      const b = el("button", "g-btn", "Open") as HTMLButtonElement;
+      b.type = "button";
+      b.disabled = this.busy;
+      b.addEventListener("click", () => void this.openStored(e));
+      li.append(b);
+      ul.append(li);
+    }
+    c.append(ul);
+    c.append(el("p", "rv-note", "Run the workflow with a Match ID (or empty for your latest); it fetches all ten players in ~1-1.5 min and stores them encrypted. No companion needed."));
+    return c;
+  }
+
+  private async loadStore(): Promise<void> {
+    if (!storeAvailable()) return;
+    this.storeMsg = "Loading…";
+    this.render();
+    try {
+      this.store = await loadIndex();
+      this.storeMsg = this.store.length ? "" : "Nothing fetched yet.";
+    } catch (e) {
+      this.store = [];
+      this.storeMsg = String((e as Error).message ?? e);
+    }
+    this.render();
+  }
+
+  /** after "Run on GitHub": look for the new match every 20 s for 4 minutes. */
+  private pollStore(): void {
+    if (!storeAvailable()) return;
+    window.clearInterval(this.storePoll);
+    const before = new Set((this.store ?? []).map((e) => `${e.id}@${e.at}`));
+    let n = 0;
+    this.storePoll = window.setInterval(async () => {
+      n++;
+      try {
+        const idx = await loadIndex();
+        const fresh = idx.some((e) => !before.has(`${e.id}@${e.at}`));
+        this.store = idx;
+        this.storeMsg = fresh ? "New match fetched ✓" : `Waiting for the workflow… (${n * 20} s)`;
+        if (fresh || n >= 12) window.clearInterval(this.storePoll);
+        if (!fresh && n >= 12) this.storeMsg = "No new match yet - check the run on GitHub, then Refresh.";
+      } catch {
+        this.storeMsg = `Waiting for the workflow… (${n * 20} s)`;
+      }
+      this.render();
+    }, 20_000);
+    this.storeMsg = "Waiting for the workflow…";
+    this.render();
+  }
+
+  /** a stored match: every player is in it, so all ten reviews are computed right away. */
+  private async openStored(e: StoreEntry): Promise<void> {
+    const ctx = this.d.ctx();
+    if (!ctx) return;
+    this.busy = true;
+    this.status = "Opening the stored match…";
+    this.render();
+    try {
+      const m = await loadMatch(e);
+      if (!this.settings.account && m.owner) {
+        // the token owner is you: name "you" in the switcher and keep your trends
+        this.settings = { ...this.settings, account: m.owner };
+        saveSettings(this.settings);
+      }
+      const base: MatchBase = { summary: m.summary, ...(m.positions ? { positions: m.positions } : {}), ...(m.health ? { health: m.health } : {}), ...(m.vision ? { vision: m.vision } : {}) };
+      const o = { id: m.id, base, reviews: new Map<number, MatchReview>(), loading: new Set<number>(), failed: new Map<number, string>(), expanded: new Set<number>() };
+      for (const [acc, me] of Object.entries(m.players)) {
+        try {
+          const r = reviewMatch({ ...base, me }, Number(acc), ctx);
+          o.reviews.set(Number(acc), r);
+          if (Number(acc) === this.settings.account) this.history = saveReview(r);
+        } catch (err) {
+          o.failed.set(Number(acc), String(err));
+        }
+      }
+      this.open = o;
+      this.current = this.settings.account ? o.reviews.get(this.settings.account) : undefined;
+      this.status = "";
+    } catch (err) {
+      this.status = String((err as Error).message ?? err);
+    }
+    this.busy = false;
+    this.render();
   }
 
   private byIdCard(): HTMLElement {

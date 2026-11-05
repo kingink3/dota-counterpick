@@ -289,6 +289,11 @@ included: use the player switcher above the report, or **Match by ID** for any p
 work to do); **Copy for Discord / Telegram** turns a review into a short message for a
 friend. Supports get observers / sentries / enemy wards destroyed / stacks (ADR-029d).
 
+**Without the companion (ADR-031):** on GitHub, Actions -> **Review a match** -> Run workflow
+(a Match ID, or empty for your latest). In ~1-1.5 min it fetches all ten players and stores
+them encrypted with the site password on the `review-data` branch; open them in Review ->
+**From GitHub**. Note: the run and its Match ID are visible in the public repository.
+
 STRATZ does not accept calls from a web page, so the companion forwards them. The token
 and the history stay in your browser.
 

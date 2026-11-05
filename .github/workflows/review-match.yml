@@ -1,0 +1,57 @@
+# Review a match (ADR-031): fetches one match with every player from STRATZ and adds
+# it, encrypted with the site password (APP_PASSWORD), to the `review-data` branch.
+# The site (Review -> From GitHub) lists and opens it - no local companion needed.
+# Run it by hand: Actions -> "Review a match" -> Run workflow.
+#   match_id empty = the token owner's latest parsed match.
+# Note: in a public repository the run and its inputs are public (the match id).
+# STRATZ allows 2 IP addresses per 15 minutes; STRATZ runs share one queue.
+name: Review a match
+
+on:
+  workflow_dispatch:
+    inputs:
+      match_id:
+        description: "Match ID (empty = your latest parsed match)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stratz
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Query STRATZ (one match, all players)
+        env:
+          STRATZ_TOKEN: ${{ secrets.STRATZ_TOKEN }}
+          MATCH_ID: ${{ inputs.match_id }}
+        run: npx tsx scripts/stratz-fetch.ts --mode match --match "$MATCH_ID" --out /tmp/match
+      - name: Add it to the encrypted store (review-data branch)
+        env:
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+        run: |
+          set -e
+          url="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          git clone -q --depth 1 --branch review-data --single-branch "$url" /tmp/store || {
+            mkdir -p /tmp/store && cd /tmp/store && git init -q -b review-data && git remote add origin "$url"; cd -; }
+          npx tsx scripts/review-store.ts --in /tmp/match/match.json --dir /tmp/store
+          cd /tmp/store
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # one commit, no history: the branch holds the newest matches only
+          git checkout -q --orphan fresh
+          git add -A
+          git commit -q -m "review-data $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -q -f origin fresh:review-data

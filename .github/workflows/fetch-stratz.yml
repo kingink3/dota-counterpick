@@ -21,6 +21,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: stratz
+  cancel-in-progress: false
+
 jobs:
   fetch:
     runs-on: ubuntu-latest

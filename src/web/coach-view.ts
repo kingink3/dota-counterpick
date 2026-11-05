@@ -12,6 +12,10 @@ const KEY = "dotaapp.coach.v1";
 interface CoachSettings {
   voice: boolean;
   volume: number;
+  /** a system voice by name; empty = the best English one. */
+  voiceName?: string;
+  /** speech rate, 0.8..1.5. */
+  rate?: number;
   /** per-category overrides of the role defaults. */
   modes: Partial<Record<CueCat, CueMode>>;
 }
@@ -19,7 +23,7 @@ interface CoachSettings {
 function load(): CoachSettings {
   try {
     const s = JSON.parse(localStorage.getItem(KEY) ?? "{}") as Partial<CoachSettings>;
-    return { voice: s.voice ?? false, volume: s.volume ?? 0.8, modes: s.modes ?? {} };
+    return { voice: s.voice ?? false, volume: s.volume ?? 0.8, modes: s.modes ?? {}, ...(s.voiceName ? { voiceName: s.voiceName } : {}), ...(s.rate ? { rate: s.rate } : {}) };
   } catch {
     return { voice: false, volume: 0.8, modes: {} };
   }
@@ -40,11 +44,19 @@ class Speaker {
   private audio?: AudioContext;
   private voice?: SpeechSynthesisVoice;
   volume = 0.8;
+  rate = 1.1;
+  /** the voice asked for by name ("" = auto). */
+  wanted = "";
+  /** called when the system's voice list arrives / changes. */
+  onVoices?: () => void;
 
   constructor() {
     if (typeof speechSynthesis !== "undefined") {
-      const pick = () => (this.voice = pickVoice(speechSynthesis.getVoices()));
-      pick();
+      const pick = () => {
+        this.pick();
+        this.onVoices?.();
+      };
+      this.pick();
       speechSynthesis.addEventListener?.("voiceschanged", pick);
     }
     // Web Audio needs a user gesture once per page
@@ -54,6 +66,21 @@ class Speaker {
 
   get voiceName(): string {
     return this.voice?.name ?? "default voice";
+  }
+
+  /** English voices of this system (Windows: Microsoft ..., Edge: ... Online (Natural), Chrome: Google ...). */
+  voices(): SpeechSynthesisVoice[] {
+    if (typeof speechSynthesis === "undefined") return [];
+    return speechSynthesis
+      .getVoices()
+      .filter((v) => /^en(-|_|$)/i.test(v.lang))
+      .sort((a, b) => Number(/natural/i.test(b.name)) - Number(/natural/i.test(a.name)) || a.lang.localeCompare(b.lang) || a.name.localeCompare(b.name));
+  }
+
+  pick(): void {
+    if (typeof speechSynthesis === "undefined") return;
+    const all = speechSynthesis.getVoices();
+    this.voice = (this.wanted && all.find((v) => v.name === this.wanted)) || pickVoice(all);
   }
 
   private ctx(): AudioContext | undefined {
@@ -99,7 +126,7 @@ class Speaker {
     const u = new SpeechSynthesisUtterance(q.text);
     if (this.voice) u.voice = this.voice;
     u.lang = this.voice?.lang ?? "en-US";
-    u.rate = 1.1;
+    u.rate = this.rate;
     u.volume = this.volume;
     this.busy = true;
     const done = () => {
@@ -151,6 +178,11 @@ export class CoachView {
 
   constructor(private readonly root: HTMLElement) {
     this.speaker.volume = this.s.volume;
+    this.speaker.rate = this.s.rate ?? 1.1;
+    this.speaker.wanted = this.s.voiceName ?? "";
+    this.speaker.pick();
+    // the voice list often arrives after the page: refresh the picker then
+    this.speaker.onVoices = () => this.build();
     this.build();
   }
 
@@ -270,6 +302,54 @@ export class CoachView {
     vr.append(span("Volume"), vol);
     r.append(vr);
 
+    // voice: any English voice of this system; "Auto" = a natural one when there is one
+    const vs = this.speaker.voices();
+    const vsel = document.createElement("select");
+    vsel.className = "cv-voice";
+    vsel.setAttribute("aria-label", "Voice");
+    const auto = document.createElement("option");
+    auto.value = "";
+    auto.textContent = "Auto (best English)";
+    vsel.append(auto);
+    for (const v of vs) {
+      const o = document.createElement("option");
+      o.value = v.name;
+      o.textContent = `${v.name.replace(/^Microsoft /, "").replace(/ - English.*$/, "")} · ${v.lang}${v.localService ? "" : " · online"}`;
+      vsel.append(o);
+    }
+    vsel.value = this.s.voiceName && vs.some((v) => v.name === this.s.voiceName) ? this.s.voiceName : "";
+    vsel.addEventListener("change", () => {
+      if (vsel.value) this.s.voiceName = vsel.value;
+      else delete this.s.voiceName;
+      save(this.s);
+      this.speaker.wanted = vsel.value;
+      this.speaker.pick();
+      this.speaker.say("Power rune in 15", 5);
+    });
+    const vrow = document.createElement("label");
+    vrow.className = "cv-row";
+    vrow.append(span("Voice"), vsel);
+    r.append(vrow);
+
+    const rate = document.createElement("input");
+    rate.type = "range";
+    rate.min = "0.8";
+    rate.max = "1.5";
+    rate.step = "0.05";
+    rate.value = String(this.s.rate ?? 1.1);
+    rate.className = "cv-vol";
+    rate.setAttribute("aria-label", "Speed");
+    rate.addEventListener("change", () => {
+      this.s.rate = Number(rate.value);
+      this.speaker.rate = this.s.rate;
+      save(this.s);
+      this.speaker.say("Stack", 4);
+    });
+    const rrow = document.createElement("label");
+    rrow.className = "cv-row";
+    rrow.append(span("Speed"), rate);
+    r.append(rrow);
+
     const modes = this.modes();
     const def = defaultModes(this.role);
     const tb = document.createElement("div");
@@ -306,7 +386,7 @@ export class CoachView {
     r.append(reset);
     r.append(span(this.lastSaid, "cv-last muted"));
     const note = span(
-      `Voice: ${this.speaker.voiceName}. Overlay = a small always-on-top window; Dota must run in "borderless window" mode (Settings - Video). Nothing is injected into the game.`,
+      `Voice: ${this.speaker.voiceName}${this.speaker.voices().length ? "" : " (no English voice found - Windows: Settings - Time & language - Speech - Add voices)"}. Overlay = a small always-on-top window; Dota must run in "borderless window" mode (Settings - Video). Nothing is injected into the game.`,
       "cv-note muted",
     );
     r.append(note);
