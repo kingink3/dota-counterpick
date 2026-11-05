@@ -260,9 +260,9 @@ sources live in `data/timings.yaml`.
 
 ### Coach: voice and an overlay (ADR-030)
 
-On the Game tab, **Coach** speaks short English cues ("Power rune in 15", "Their power window
-until 25. Avoid even fights.") and chimes for routine ones (stacks for supports), each once,
-on time. **Overlay** opens a small always-on-top window (Chrome / Edge Document
+On the Game tab, **Coach** speaks short English cues ("Power rune in 15", "Tormentor spawns in
+one minute", "Their power window until 25. Avoid even fights.") and chimes for routine ones
+(stacks for supports), each once, on time. **Overlay** opens a small always-on-top window (Chrome / Edge Document
 Picture-in-Picture) with the next two events, the item target and the power window. Run Dota
 in borderless window mode; nothing is injected into the game. Categories are voice / chime /
 off, with defaults per position.

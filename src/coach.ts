@@ -22,9 +22,9 @@ export const CUE_CATS: Array<{ id: CueCat; label: string; hint: string }> = [
   { id: "stacks", label: "Stacks", hint: "every minute at :45 (stack at :53-:55)" },
   { id: "pulls", label: "Pulls", hint: "lane pulls every 30 s" },
   { id: "jungle", label: "Shrines & lotus", hint: "wisdom shrines, healing lotus" },
-  { id: "objectives", label: "Tormentor & Roshan", hint: "Tormentor 20:00 / respawn, Roshan window after you mark him" },
+  { id: "objectives", label: "Tormentor", hint: "first spawn at 20:00, a minute ahead" },
   { id: "neutrals", label: "Neutral items", hint: "next tier" },
-  { id: "items", label: "Item targets", hint: "next item of the plan and its typical time; late warning" },
+  { id: "items", label: "Item targets", hint: "next item of the plan and its typical time; late warning (off by default)" },
   { id: "windows", label: "Power windows", hint: "who is stronger now: take or avoid fights" },
   { id: "daynight", label: "Day / night", hint: "for night heroes" },
 ];
@@ -38,8 +38,6 @@ const CAT_OF: Record<string, CueCat> = {
   wisdom_shrine: "jungle",
   lotus: "jungle",
   tormentor: "objectives",
-  tormentor_respawn: "objectives",
-  roshan_window: "objectives",
   neutral_tier: "neutrals",
   night: "daynight",
   day: "daynight",
@@ -54,9 +52,7 @@ const SAY: Record<string, string> = {
   pull: "Pull",
   wisdom_shrine: "Wisdom shrine",
   lotus: "Lotus",
-  tormentor: "Tormentor",
-  tormentor_respawn: "Tormentor back",
-  roshan_window: "Roshan may be up",
+  tormentor: "Tormentor spawns",
   night: "Night",
   day: "Day",
 };
@@ -71,8 +67,6 @@ const SHORT: Record<string, string> = {
   wisdom_shrine: "Shrine",
   lotus: "Lotus",
   tormentor: "Tormentor",
-  tormentor_respawn: "Tormentor",
-  roshan_window: "Roshan",
   neutral_tier: "Neutrals",
   night: "Night",
   day: "Day",
@@ -85,10 +79,10 @@ export function defaultModes(role: number | undefined): Record<CueCat, CueMode> 
     runes: "voice",
     stacks: support ? "chime" : "off",
     pulls: "off",
-    jungle: support || role === 3 ? "voice" : "off",
+    jungle: "voice",
     objectives: "voice",
     neutrals: "voice",
-    items: "voice",
+    items: "off",
     windows: "voice",
     daynight: "off",
   };
@@ -217,7 +211,7 @@ export function overlayLines(x: Omit<CoachInput, "modes"> & { modes: Record<CueC
     })
     .slice(0, 2)
     .map((e) => `${SHORT[e.id] ?? e.label} ${e.in > 0 ? clock(Math.ceil(e.in)) : "now"}`);
-  const cur = currentTarget(x.plan, x.have, x.t);
+  const cur = x.modes.items !== "off" ? currentTarget(x.plan, x.have, x.t) : undefined;
   const parts: string[] = [];
   if (cur) parts.push(`${cur.label}${cur.at !== undefined ? ` ~${clock(cur.at)}` : ""}`);
   if (x.window && x.t >= 0) {

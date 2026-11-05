@@ -43,7 +43,7 @@ events:
     label: "Wisdom Shrines (offlane jungle)"
     first: 420
     every: 420
-    roles: [3, 4, 5]
+    roles: [1, 2, 3, 4, 5]
     lead: 30
     note: "first 200 XP, then +300 each (200/500/800...); the countdown runs back while an enemy hero stands in it"
     source: "7.38: Wisdom Runes replaced by Shrines, active every 7 minutes; 7.41: XP 200 base +300 per shrine, contested countdown reverses"
@@ -52,7 +52,7 @@ events:
     label: "Healing Lotus (+1 per pool)"
     first: 180
     every: 180
-    roles: [3, 4, 5]
+    roles: [1, 2, 3, 4, 5]
     lead: 15
     note: "pools hold up to 6; Great Lotuses after Tier 4 neutrals, Greater after Tier 5"
     source: "7.33: every 3 minutes each pool spawns 1 Healing Lotus, up to 6; 7.38: Great/Greater Lotus after T4/T5"

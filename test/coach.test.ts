@@ -51,3 +51,17 @@ test("coach: power window at the start and at 25:00; overlay lines are short", (
   assert.equal(spokenIn(28), "in 30");
   assert.equal(spokenIn(8), "in 8");
 });
+
+test("coach: shrines and lotus for every role; only the first Tormentor; item targets off by default", () => {
+  const carry = run(1, 0, 1230);
+  assert.ok(carry.some((c) => c.key.startsWith("lotus@")) && carry.some((c) => c.key.startsWith("wisdom_shrine@")), "a carry hears lotus / shrines");
+  const torm = carry.filter((c) => c.cat === "objectives");
+  assert.deepEqual(torm.map((c) => c.text), ["Tormentor spawns in one minute"]);
+  assert.ok(Math.abs(torm[0]!.t - 1140) <= 0.5, "at 19:00");
+  assert.equal(defaultModes(1).items, "off");
+  // Roshan / Tormentor respawn marks give no cues
+  const c = new Coach();
+  const said = [] as string[];
+  for (let t = 1500; t <= 2200; t += 0.25) for (const q of c.tick({ t, events: upcoming(tm, t, 1, { roshan_killed: 1500, tormentor_killed: 1500 }), modes: defaultModes(1) })) said.push(q.key);
+  assert.ok(!said.some((k) => /roshan|tormentor/.test(k)), said.join(","));
+});
