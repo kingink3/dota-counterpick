@@ -289,3 +289,18 @@ test("casts: the ultimate and control count double", () => {
   assert.equal(castRate([]).rate, undefined);
   assert.ok(ids.abilities!["5130"]!.f.includes("x") && !ids.abilities!["5131"]!.f.includes("x"), "Shackleshot control, Powershot not");
 });
+
+test("deaths: the killer is the enemy hero STRATZ names; story finds each team's carrier", async () => {
+  const { matchStory } = await import("../src/review-match.js");
+  const m = match();
+  const pa = H("phantom_assassin");
+  m.me.playbackData!.deathEvents = m.me.playbackData!.deathEvents!.map((d, i) => ({ ...d, attacker: i < 3 ? pa : H("zeus") }));
+  m.summary.players.find((p) => p.heroId === pa)!.kills = 15;
+  const r = reviewMatch(m, ACC, ctx);
+  assert.equal(r.deaths.filter((d) => d.killer === "phantom_assassin").length, 3);
+  const st = matchStory(m.summary, { heroOf: (id) => ids.heroes[String(id)]! }, new Map([[ACC, r]]));
+  const dire = st.carriers.find((c) => !c.isRadiant)!;
+  assert.equal(dire.hero, "phantom_assassin");
+  assert.equal(dire.killsOn, 3);
+  assert.deepEqual(dire.victims, [{ hero: "anti_mage", n: 3 }]);
+});

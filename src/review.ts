@@ -214,6 +214,8 @@ export interface FarmRow {
 }
 export interface DeathRow {
   time: number;
+  /** the enemy hero that got the kill (STRATZ attacker), when it was a hero. */
+  killer?: string;
   inEnemyWindow: boolean;
   alone?: boolean;
   unspent: number;
@@ -337,6 +339,7 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
       stats: ctx.stats,
       counters: [...r.items, ...r.defense].sort((a, b) => b.score - a.score),
       dcKey: (id) => kb.itemDcKey?.[id],
+      allies: allies.filter((h) => h !== hero),
     });
   }
 
@@ -553,8 +556,10 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
       const near = [...allySlots].map((sl) => posOf(sl, dd.time)).filter((p): p is { x: number; y: number; time: number } => !!p);
       if (near.length) alone = near.every((p) => Math.hypot(p.x - dd.positionX!, p.y - dd.positionY!) > ALONE_DIST);
     }
+    const killer = dd.attacker ? ids.heroes[String(dd.attacker)] : undefined;
     return {
       time: dd.time,
+      ...(killer && enemies.includes(killer) ? { killer } : {}),
       inEnemyWindow: (win?.diff[binOf(dd.time)] ?? 0) < -0.5,
       ...(alone !== undefined ? { alone } : {}),
       unspent: (dd.reliableGold ?? 0) + (dd.unreliableGold ?? 0),
@@ -685,11 +690,27 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
   const kept = findings.filter((f) => !dup.has(f.id));
   findings.length = 0;
   findings.push(...kept);
+  // who killed you: a missed answer matters when it answers one of them (ADR-029g)
+  const killers = new Map<string, number>();
+  for (const x of deaths) if (x.killer) killers.set(x.killer, (killers.get(x.killer) ?? 0) + 1);
+  const threats = new Set([...killers].filter(([, n]) => n >= 2 || n >= 0.3 * deaths.length).map(([h]) => h));
+  const answersFor = (key: string) => new Set((plan?.phases ?? []).flatMap((p) => p.items).find((i) => i.key === key)?.counter?.reasons.map((r) => r.enemy) ?? []);
+  const topKillers = [...killers].sort((a, b) => b[1] - a[1]).slice(0, 2).map(([h, n]) => `${ctx.label(h)} ${n}`).join(", ");
   for (const f of findings) {
     if (f.good) continue;
     if (PLAN_IDS.has(f.id) && !struggling) {
       f.note = true;
       f.detail = `No sign it cost you (${evidence}): an own build that worked. ${f.detail}`;
+    } else if (PLAN_IDS.has(f.id) && threats.size) {
+      const missing = checks.filter((c) => c.phase === "situational" && (f.id === "counter_late" ? f.title.startsWith(`${c.label} late`) : c.actual === undefined));
+      const useful = missing.filter((c) => [...answersFor(c.key)].some((h) => threats.has(h)));
+      if (!useful.length) {
+        f.note = true;
+        f.detail = `They answer heroes that did not kill you (deaths: ${topKillers}). ${f.detail}`;
+      } else {
+        const vs = [...new Set(useful.flatMap((c) => [...answersFor(c.key)].filter((h) => threats.has(h))))].map((h) => `${ctx.label(h)} (killed you ${killers.get(h)}x)`);
+        f.title = `${f.id === "counter_late" ? "Late" : "Not bought"}: ${useful.map((c) => c.label).join(", ")} - the answer to ${vs.join(", ")}`;
+      }
     } else if (f.id === "slow_core" && !farmBehind) {
       f.note = true;
       f.detail = `Farm was on track (${evidence}), so other items came first. ${f.detail}`;

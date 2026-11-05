@@ -241,3 +241,93 @@ export function adviceText(r: MatchReview, label: (hero: string) => string, opts
   }
   return out.length > 1900 ? `${out.slice(0, 1890)}…` : out;
 }
+
+// ------------------------------------------------------------------ story ----
+
+export interface StoryHero {
+  slot: number;
+  hero: string;
+  isRadiant: boolean;
+  kda: [number, number, number];
+  imp?: number;
+  /** kills on the other team, from their death events (needs their reviews). */
+  killsOn: number;
+  /** of those, at night / before 15:00. */
+  atNight: number;
+  early: number;
+  /** who fed them: hero -> deaths. */
+  victims: Array<{ hero: string; n: number }>;
+  /** items that answer this hero (the engine, for a carry and a support of the other team). */
+  answers: Array<{ label: string; why: string; for: "core" | "support" }>;
+}
+
+export interface MatchStory {
+  /** per team: the hero who carried it. */
+  carriers: StoryHero[];
+  /** deaths of each team that we could attribute (players reviewed). */
+  attributed: { radiant: number; dire: number };
+}
+
+/**
+ * Who decided the match: per team the player with the biggest impact (kills, IMP,
+ * deaths caused on the other team), whom they fed on, when (night / early), and what
+ * the engine would buy against that hero. Death events need the players reviewed.
+ */
+export function matchStory(
+  s: StratzSummary,
+  opts: { heroOf: (id: number) => string; answers?: (enemy: string, team: string[], role: "core" | "support") => Array<{ label: string; why: string }> },
+  reviews: ReadonlyMap<number, MatchReview>,
+): MatchStory {
+  const deathsOf = new Map<number, Array<{ time: number; killer: string }>>();
+  for (const r of reviews.values()) if (r.slot !== undefined) deathsOf.set(r.slot, r.deaths.filter((d) => d.killer).map((d) => ({ time: d.time, killer: d.killer! })));
+  const attributed = { radiant: 0, dire: 0 };
+  for (const p of s.players) if (deathsOf.has(p.playerSlot)) attributed[p.isRadiant ? "radiant" : "dire"] += p.deaths;
+  const night = (t: number) => Math.floor(t / 300) % 2 === 1;
+  const carriers: StoryHero[] = [];
+  for (const radiant of [true, false]) {
+    const team = s.players.filter((p) => p.isRadiant === radiant);
+    const other = s.players.filter((p) => p.isRadiant !== radiant);
+    const scored = team.map((p) => {
+      const hero = opts.heroOf(p.heroId);
+      const victims = new Map<string, number>();
+      let killsOn = 0;
+      let atNight = 0;
+      let early = 0;
+      for (const o of other) {
+        for (const d of deathsOf.get(o.playerSlot) ?? []) {
+          if (d.killer !== hero) continue;
+          killsOn++;
+          if (night(d.time)) atNight++;
+          if (d.time < 900) early++;
+          const v = opts.heroOf(o.heroId);
+          victims.set(v, (victims.get(v) ?? 0) + 1);
+        }
+      }
+      // impact: kills (the summary is complete) and IMP; deaths cost
+      const score = p.kills * 1 + p.assists * 0.3 - p.deaths * 0.7 + (p.imp ?? 0) / 10;
+      return { p, hero, killsOn, atNight, early, victims, score };
+    });
+    const best = scored.sort((a, b) => b.score - a.score)[0];
+    if (!best) continue;
+    const otherTeam = other.map((o) => opts.heroOf(o.heroId));
+    const answers = opts.answers
+      ? [
+          ...opts.answers(best.hero, otherTeam, "core").slice(0, 3).map((a) => ({ ...a, for: "core" as const })),
+          ...opts.answers(best.hero, otherTeam, "support").slice(0, 2).map((a) => ({ ...a, for: "support" as const })),
+        ]
+      : [];
+    carriers.push({
+      slot: best.p.playerSlot,
+      hero: best.hero,
+      isRadiant: radiant,
+      kda: [best.p.kills, best.p.deaths, best.p.assists],
+      ...(best.p.imp != null ? { imp: best.p.imp } : {}),
+      killsOn: best.killsOn,
+      atNight: best.atNight,
+      early: best.early,
+      victims: [...best.victims].sort((a, b) => b[1] - a[1]).map(([hero, n]) => ({ hero, n })),
+      answers,
+    });
+  }
+  return { carriers, attributed };
+}

@@ -198,6 +198,7 @@ function renderGamePlan(result: ReturnType<typeof resolveDraft>): void {
           stats: itemStats,
           counters,
           dcKey: (id) => kb.itemDcKey?.[id],
+          allies: [...state.allies].filter((h) => h !== hero),
         })
       : undefined;
   const window = itemStats && state.allies.size && state.enemies.size ? teamWindow(itemStats, [...state.allies], [...state.enemies]) : undefined;

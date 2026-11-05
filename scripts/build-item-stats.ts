@@ -168,6 +168,10 @@ function main(): void {
       Object.assign(fields, readJson<{ heroStats: Record<string, unknown[]> }>(join(itemsDir, f))?.heroStats ?? {});
     }
     const pairs = new Set(Object.keys(fields).map((k) => k.replace(/_(full|start|boots)$/, "")));
+    // how often each hero buys each finished item, over all its positions (ADR-027b):
+    // the plan drops draft answers this hero practically never builds
+    const buyG = new Map<string, Map<string, number>>();
+    const buyT = new Map<string, number>();
     for (const pair of pairs) {
       const m = /^h(\d+)_(\d)$/.exec(pair);
       if (!m) continue;
@@ -183,9 +187,24 @@ function main(): void {
         dcItems,
       );
       for (const k of ps.keys) used.add(k);
+      buyT.set(code, (buyT.get(code) ?? 0) + total);
+      const bm = buyG.get(code) ?? new Map<string, number>();
+      for (const r of (fields[`${pair}_full`] ?? []) as StratzTimed[]) {
+        const k = idToKey.get(String(r.itemId));
+        if (!k || r.instance !== 0 || (dcItems[k]?.cost ?? 0) < 1000) continue;
+        bm.set(k, (bm.get(k) ?? 0) + r.matchCount);
+      }
+      buyG.set(code, bm);
       const hs = (heroes[code] ??= { phases: {} });
       (hs.byPos ??= {})[m[2]!] = ps.stats;
       stratzPairs++;
+    }
+    for (const [code, bm] of buyG) {
+      const t = buyT.get(code) ?? 0;
+      if (!t || !heroes[code]) continue;
+      const buy: Record<string, number> = {};
+      for (const [k, g] of [...bm].sort((a, b) => b[1] - a[1])) if (g / t >= 0.005) buy[k] = Math.round((g / t) * 1000) / 1000;
+      heroes[code]!.buy = buy;
     }
     // win rate by match length per position, exactly Archon + Legend, latest patch:
     // durationMinute is a 5-minute bucket index

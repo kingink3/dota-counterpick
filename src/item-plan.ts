@@ -44,6 +44,8 @@ export interface HeroStats {
   mainPos?: string;
   /** games behind a byPos entry. */
   games?: number;
+  /** STRATZ: share of the hero's games (all positions) with this finished item (>= 0.5%). */
+  buy?: Record<string, number>;
 }
 
 export interface ItemInfo {
@@ -91,6 +93,17 @@ export interface PlanItem {
   qty?: number;
   /** moved up into the core because this draft calls for it. */
   promoted?: boolean;
+  /** share of this hero's games with the item (STRATZ), when it is a draft answer. */
+  heroShare?: number;
+  /** a teammate who usually builds this answer (it is lowered for you). */
+  coveredBy?: string;
+}
+
+/** fit of a draft answer to the hero: 1 usual, 0.6 occasional (1-5% of games), 0.25 practically never. */
+export function heroBuyFit(buy: Record<string, number> | undefined, key: string): number {
+  if (!buy) return 1;
+  const s = buy[key] ?? 0;
+  return s >= 0.05 ? 1 : s >= 0.01 ? 0.6 : 0.25;
 }
 
 export interface PlanPhase {
@@ -149,6 +162,8 @@ export interface PlanInput {
   /** our item id -> dotaconstants key (kb.itemDcKey). */
   dcKey?: (ourId: string) => string | undefined;
   label?: (key: string) => string;
+  /** your teammates (hero codes): an answer one of them usually builds is theirs to buy. */
+  allies?: string[];
 }
 
 export function buildPlan(inp: PlanInput): ItemPlan | undefined {
@@ -296,10 +311,27 @@ export function buildPlan(inp: PlanInput): ItemPlan | undefined {
 
   // --- this draft: counter items ---------------------------------------------------
   const situational: PlanItem[] = [];
-  const counters = (inp.counters ?? []).filter((r) => (r.fit?.mult ?? 1) >= 0.6 && r.score > 0);
-  const topCounters = new Set(counters.slice(0, 3).map((r) => inp.dcKey?.(r.code) ?? r.code));
+  // the engine knows what beats the draft; the statistics know what this hero builds and
+  // what the teammates build (ADR-027b): an answer the hero practically never buys drops
+  // out unless it is very strong, one a teammate usually carries goes down
+  const keyOf = (r: Recommendation) => inp.dcKey?.(r.code) ?? r.code;
+  const allyCover = (key: string) =>
+    (inp.allies ?? []).find((h) => h !== inp.hero && Object.entries(inp.stats.heroes[h]?.buy ?? {}).some(([k, s]) => s >= 0.25 && (k === key || related(k, key))));
+  const adjusted = (inp.counters ?? [])
+    .filter((r) => (r.fit?.mult ?? 1) >= 0.6 && r.score > 0)
+    .map((r) => {
+      const key = keyOf(r);
+      const f = heroBuyFit(base.buy, key);
+      const cover = allyCover(key);
+      return { r, key, f, cover, s: r.score * f * (cover ? 0.5 : 1) };
+    })
+    .filter((x) => x.f >= 0.5 || x.r.score >= 3)
+    .sort((a, b) => b.s - a.s);
+  const counters = adjusted.map((x) => x.r);
+  const meta = new Map(adjusted.map((x) => [x.key, x]));
+  const topCounters = new Set(counters.slice(0, 3).map(keyOf));
   for (const rec of counters) {
-    const key = inp.dcKey?.(rec.code) ?? rec.code;
+    const key = keyOf(rec);
     if (!items[key]) continue;
     const planned = [...start, ...lane, ...core, ...late];
     const already = planned.find((x) => x.key === key);
@@ -322,6 +354,9 @@ export function buildPlan(inp: PlanInput): ItemPlan | undefined {
     if ([...planned, ...situational].some((x) => related(x.key, key))) continue; // Orchid vs Bloodthorn
     const it = mk(key, "counter");
     it.counter = rec;
+    const m = meta.get(key);
+    if (base.buy) it.heroShare = base.buy[key] ?? 0;
+    if (m?.cover) it.coveredBy = m.cover;
     situational.push(it);
     if (situational.length >= 3) break;
   }

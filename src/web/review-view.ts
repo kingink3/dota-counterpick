@@ -8,7 +8,8 @@
 import { mmss } from "../item-plan.js";
 import { reviewMatch, trends, type Finding, type MatchReview, type ReviewContext } from "../review.js";
 import type { BattleReport, UseStat } from "../review-battles.js";
-import { adviceText, GRADE_LABEL, matchOverview, type MatchOverview, type OverviewRow } from "../review-match.js";
+import { adviceText, GRADE_LABEL, matchOverview, matchStory, type MatchOverview, type OverviewRow } from "../review-match.js";
+import { resolve } from "../resolver.js";
 import {
   accountFromToken,
   loadHistory,
@@ -170,7 +171,7 @@ export class ReviewView {
     const main = el("main", "rv-main");
     left.append(this.githubCard(), this.settingsCard(), this.byIdCard(), this.matchList());
     if (this.status) main.append(el("p", "rv-status", this.status));
-    if (this.open) main.append(this.switcher(this.open), this.overviewCard(this.open));
+    if (this.open) main.append(this.switcher(this.open), this.storyCard(this.open), this.overviewCard(this.open));
     else if (this.current) main.append(this.otherPlayersButton(this.current));
     if (this.current) main.append(this.report(this.current));
     else if (this.open) main.append(el("p", "muted", "Pick a player above."));
@@ -413,6 +414,67 @@ export class ReviewView {
     const ctx = this.d.ctx();
     if (!ctx) return undefined;
     return matchOverview(o.base.summary, { ...(ctx.bench ? { bench: ctx.bench } : {}), heroOf: this.d.heroOf, ...(o.base.vision ? { vision: o.base.vision } : {}) }, o.reviews);
+  }
+
+  /** who decided the match: each team's carrier, whom they fed on, when, what answers them. */
+  private storyCard(o: NonNullable<ReviewView["open"]>): HTMLElement {
+    const c = card("Match story");
+    const ctx = this.d.ctx();
+    const s = o.base.summary;
+    if (!ctx) return c;
+    const posN = (p?: string | null) => Number(/(\d)/.exec(p ?? "")?.[1] ?? 0);
+    const known = (h: string) => !!ctx.kb.taxonomy.hero_tags[h];
+    const answers = (enemy: string, team: string[], role: "core" | "support") => {
+      const side = s.players.filter((p) => team.includes(this.d.heroOf(p.heroId)));
+      const me = role === "core" ? side.find((p) => posN(p.position) === 1) ?? side[0] : side.find((p) => posN(p.position) === 5) ?? side.find((p) => posN(p.position) === 4);
+      const myHero = me ? this.d.heroOf(me.heroId) : undefined;
+      if (!known(enemy) || !myHero || !known(myHero)) return [];
+      const r = resolve(ctx.kb, { enemyHeroes: [enemy], allyHeroes: team.filter(known), myHero, myRole: role === "core" ? 1 : 5 });
+      const seen = new Set<string>();
+      return [...r.items, ...r.defense]
+        .sort((a, b) => b.score - a.score)
+        .filter((x) => !seen.has(x.label) && !!seen.add(x.label))
+        .map((x) => ({ label: x.label, why: x.reasons[0]?.mechanism ?? "" }));
+    };
+    const st = matchStory(s, { heroOf: this.d.heroOf, answers }, o.reviews);
+    const me = s.players.find((p) => p.steamAccountId === this.settings.account);
+    const winners = st.carriers.filter((x) => s.didRadiantWin === x.isRadiant);
+    const losers = st.carriers.filter((x) => s.didRadiantWin !== x.isRadiant);
+    for (const x of [...winners, ...losers]) {
+      const won = s.didRadiantWin === x.isRadiant;
+      const team = x.isRadiant ? "Radiant" : "Dire";
+      const ours = me ? me.isRadiant === x.isRadiant : undefined;
+      const row = el("div", `rv-story${won ? " won" : ""}`, "");
+      const img = document.createElement("img");
+      img.src = this.d.heroImg(x.hero);
+      img.alt = "";
+      row.append(img);
+      const t = el("div", "", "");
+      const who = ours === undefined ? team : ours ? "Your team" : "Their team";
+      t.append(el("b", "", `${who} ${won ? "was carried by" : "- best"}: ${this.d.heroLabel(x.hero)} ${x.kda.join("/")}${x.imp !== undefined ? `, IMP ${x.imp > 0 ? "+" : ""}${x.imp}` : ""}`));
+      const otherAttr = x.isRadiant ? st.attributed.dire : st.attributed.radiant;
+      if (otherAttr && x.killsOn) {
+        const otherDeaths = s.players.filter((p) => p.isRadiant !== x.isRadiant).reduce((a, p) => a + p.deaths, 0);
+        const seen = otherAttr < otherDeaths ? " (in the deaths we can see)" : "";
+        const parts = [`killed the other team ${x.killsOn} times${seen}: ${x.victims.slice(0, 3).map((v) => `${this.d.heroLabel(v.hero)} ${v.n}`).join(", ")}`];
+        if (x.atNight >= 3 && x.atNight >= 0.6 * x.killsOn) parts.push(`${x.atNight} of them at night`);
+        if (x.early >= 3 && x.early >= 0.4 * x.killsOn) parts.push(`${x.early} before 15:00 - a lane / early snowball`);
+        t.append(el("p", "rv-det", parts.join(" · ")));
+      } else if (!otherAttr) t.append(el("p", "muted", 'Whom they killed needs the other team analysed ("Analyse all").'));
+      // what answers them: for a carrier on the other side (or the winners, when you are not in the match)
+      if ((ours === false || (ours === undefined && won)) && x.answers.length) {
+        const a = el("p", "rv-det", "Against them: ");
+        x.answers.forEach((ans, i) => {
+          const sp = el("span", "rv-ans", `${ans.label}${ans.for === "support" ? " (support)" : ""}`);
+          sp.title = ans.why;
+          a.append(...(i ? [", "] : []), sp);
+        });
+        t.append(a);
+      }
+      row.append(t);
+      c.append(row);
+    }
+    return c;
   }
 
   /** who played well, who has work to do: all ten, best first within each team. */
@@ -715,6 +777,7 @@ export class ReviewView {
     const rows = [...r.deaths].sort((a, b) => a.time - b.time).map((d) => {
       const b = bAt(d.time);
       const tags: Array<[string, string]> = [];
+      if (d.killer) tags.push(["who", `by ${this.d.heroLabel(d.killer)}`]);
       if (d.flags.includes("walked into enemy vision")) tags.push(["bad", "after walking into vision"]);
       if (d.alone) tags.push(["bad", "alone"]);
       if (b?.frontmost) tags.push(["bad", "front-most"]);
@@ -725,10 +788,12 @@ export class ReviewView {
       if (d.inEnemyWindow) tags.push(["warn", "their power window"]);
       if (d.unspent >= 1500) tags.push(["warn", `${d.unspent} gold unspent`]);
       if (d.flags.includes("burst")) tags.push(["", "burst"]);
-      for (const [, t] of tags) inc(t.replace(/ \d+v\d+$/, "").replace(/^\d+ gold unspent$/, "gold unspent").replace(/^.+ ready$/, "something ready"));
+      for (const [, t] of tags) inc(t.replace(/ \d+v\d+$/, "").replace(/^\d+ gold unspent$/, "gold unspent").replace(/^.+ ready$/, "with a save ready"));
       return { d, tags };
     });
-    const top = [...count.entries()].filter(([k]) => k !== "burst").sort((a, b) => b[1] - a[1]).slice(0, 4);
+    const top = [...count.entries()].filter(([k]) => k !== "burst" && !k.startsWith("by ")).sort((a, b) => b[1] - a[1]).slice(0, 4);
+    const by = [...count.entries()].filter(([k]) => k.startsWith("by ")).sort((a, b) => b[1] - a[1]);
+    if (by.length) top.unshift([`to ${by[0]![0].slice(3)}`, by[0]![1]] as [string, number]);
     if (top.length) c.append(el("p", "rv-sum", `${r.deaths.length} deaths: ${top.map(([k, n]) => `${n} ${k}`).join(", ")}`));
     const ul = el("ul", "rv-deaths");
     for (const { d, tags } of rows) {

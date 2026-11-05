@@ -173,3 +173,25 @@ test("match plan: damage split, threats with answers, a focus per phase", async 
   for (const ph of ["lane", "mid", "late"] as const) assert.ok(m.focus[ph].title.length > 0);
   assert.deepEqual([phaseAt(-30), phaseAt(599), phaseAt(600), phaseAt(1499), phaseAt(1500)], ["lane", "lane", "mid", "mid", "late"]);
 });
+
+test("plan: draft answers the hero practically never builds drop out; a teammate's usual item goes down", async () => {
+  const { buildPlan, heroBuyFit } = await import("../src/item-plan.js");
+  const { loadKB } = await import("../src/kb.js");
+  const { resolve, archetypeOf } = await import("../src/resolver.js");
+  const { readFileSync } = await import("node:fs");
+  const kb = loadKB();
+  const stats = JSON.parse(readFileSync("data/item-stats.json", "utf8"));
+  assert.equal(heroBuyFit({ orchid: 0.51 }, "orchid"), 1);
+  assert.equal(heroBuyFit({ orchid: 0.02 }, "orchid"), 0.6);
+  assert.equal(heroBuyFit({}, "orchid"), 0.25);
+  assert.equal(heroBuyFit(undefined, "orchid"), 1, "no statistics: no filter");
+  const enemies = ["night_stalker", "phantom_lancer", "shadow_shaman", "invoker", "viper"];
+  const allies = ["witch_doctor", "lich", "gyrocopter", "abyssal_underlord", "storm_spirit"];
+  const r = resolve(kb, { enemyHeroes: enemies, allyHeroes: allies, myHero: "gyrocopter", myRole: 1 });
+  const p = buildPlan({ hero: "gyrocopter", archetype: archetypeOf(kb, "gyrocopter", 1), role: 1, stats, counters: [...r.items, ...r.defense].sort((a, b) => b.score - a.score), dcKey: (id) => kb.itemDcKey?.[id], allies });
+  const draft = p!.phases.find((x) => x.id === "situational")?.items.map((i) => i.key) ?? [];
+  assert.ok(!draft.includes("diffusal_blade") && !draft.includes("orchid"), `Gyrocopter does not build Diffusal / Orchid: ${draft.join(",")}`);
+  // Storm Spirit usually builds Orchid: as a Storm teammate's answer it is lowered for a hero that does build it
+  const st = stats.heroes.storm_spirit.buy.orchid;
+  assert.ok(st >= 0.25, "Storm buys Orchid in a quarter of games or more");
+});
