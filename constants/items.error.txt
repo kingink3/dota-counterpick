@@ -1,1 +1,0 @@
-Error: HTTP 400: {"errors":[{"message":"Cannot query field \u0027cooldown\u0027 on type \u0027ItemStatType\u0027.","locations":[{"line":1,"column":102}],"extensions":{"code":"FIELDS_ON_CORRECT_TYPE","codes":["FIELDS_ON_CORRECT_TYPE"],"number":"5.3.1"}}]}
