@@ -196,7 +196,7 @@ test("plan: draft answers the hero practically never builds drop out; a teammate
   assert.ok(st >= 0.25, "Storm buys Orchid in a quarter of games or more");
 });
 
-test("match plan: heroes with no tool tags (Bristleback, Anti-Mage...) do not break the draft", async () => {
+test("match plan: heroes with no tool tags (Bristleback, Storm Spirit, PL...) do not break the draft", async () => {
   const { loadKB } = await import("../src/kb.js");
   const { resolve } = await import("../src/resolver.js");
   const { buildMatchPlan } = await import("../src/game-plan.js");
