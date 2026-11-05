@@ -42,5 +42,33 @@ for (const [k, v] of Object.entries(dc)) {
   if (typeof v.cd === "number" && v.cd > 0) cd[k] = v.cd;
   if (v.dname) names[k] = v.dname;
 }
-writeFileSync(join(ROOT, "data", "ids.json"), JSON.stringify({ heroes, items, cd, names }));
-console.log(`ids.json: ${Object.keys(heroes).length} heroes, ${Object.keys(items).length} items, ${Object.keys(cd).length} cooldowns`);
+// items: mana cost of actives
+const mc: Record<string, number> = {};
+for (const [k, v] of Object.entries(dc as Record<string, { mc?: number | false }>)) if (typeof v.mc === "number" && v.mc > 0) mc[k] = v.mc;
+
+// hero abilities (fight analysis): id -> key, name, cooldown / mana by level, kind
+interface DcAbility {
+  dname?: string;
+  behavior?: string | string[];
+  cd?: string | string[] | number;
+  mc?: string | string[] | number;
+  target_team?: string | string[];
+}
+const abilities = JSON.parse(readFileSync(join(constants, "abilities.json"), "utf8")) as Record<string, DcAbility>;
+const abilityIds = JSON.parse(readFileSync(join(constants, "ability_ids.json"), "utf8")) as Record<string, string>;
+const heroAbilities = JSON.parse(readFileSync(join(constants, "hero_abilities.json"), "utf8")) as Record<string, { abilities: string[] }>;
+const heroKeys = new Set(Object.values(heroAbilities).flatMap((h) => h.abilities));
+const nums = (x: DcAbility["cd"]): number[] => (Array.isArray(x) ? x.map(Number) : x === undefined || x === null ? [] : [Number(x)]).filter((n) => Number.isFinite(n));
+const ab: Record<string, { k: string; n: string; cd: number[]; mc: number[]; f: string }> = {};
+for (const [id, key] of Object.entries(abilityIds)) {
+  if (!heroKeys.has(key)) continue;
+  const a = abilities[key];
+  if (!a) continue;
+  const beh = ([] as string[]).concat(a.behavior ?? []);
+  const team = ([] as string[]).concat(a.target_team ?? []);
+  // flags: p passive, h hidden (granted by shard / scepter / sub-ability), u unit target, e enemy target, c channelled
+  const f = [beh.includes("Passive") && "p", beh.includes("Hidden") && "h", beh.includes("Unit Target") && "u", team.includes("Enemy") && "e", beh.includes("Channeled") && "c"].filter(Boolean).join("");
+  ab[id] = { k: key, n: a.dname ?? key, cd: nums(a.cd), mc: nums(a.mc), f };
+}
+writeFileSync(join(ROOT, "data", "ids.json"), JSON.stringify({ heroes, items, cd, mc, names, abilities: ab }));
+console.log(`ids.json: ${Object.keys(heroes).length} heroes, ${Object.keys(items).length} items, ${Object.keys(cd).length} cooldowns, ${Object.keys(ab).length} hero abilities`);
