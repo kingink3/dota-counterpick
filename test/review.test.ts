@@ -224,3 +224,24 @@ test("players: anyone with a Steam id can be reviewed", () => {
   assert.equal(r.slot, 128);
   assert.equal(r.won, true);
 });
+
+test("match overview: every player graded; reviews add timings and battles; advice text fits Discord", async () => {
+  const { matchOverview, adviceText } = await import("../src/review-match.js");
+  const m = match();
+  m.summary.players.forEach((p, i) => {
+    p.imp = i === 5 ? 40 : i === 0 ? -40 : 0;
+    p.stats = { networthPerMinute: Array.from({ length: 41 }, (_, k) => 600 + k * (i === 5 ? 600 : 250)) };
+  });
+  const heroOf = (id: number) => ids.heroes[String(id)]!;
+  const r = reviewMatch(m, ACC, ctx);
+  const ov = matchOverview(m.summary, { bench, heroOf }, new Map([[ACC, r]]));
+  assert.equal(ov.rows.length, 10);
+  const pa = ov.rows.find((x) => x.hero === "phantom_assassin")!;
+  const am = ov.rows.find((x) => x.hero === "anti_mage")!;
+  assert.ok(pa.score > am.score, "IMP +40 and big networth beat IMP -40");
+  assert.ok(am.reviewed && !pa.reviewed);
+  assert.ok(am.timing, "a reviewed player gets item timings");
+  assert.equal(am.workOn, r.growth[0]!.title);
+  const t = adviceText(r, (h) => h);
+  assert.ok(t.length <= 1900 && t.includes("Work on") && t.includes(r.growth[0]!.title));
+});

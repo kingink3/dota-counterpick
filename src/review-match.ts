@@ -62,7 +62,7 @@ const W: Record<"core" | "support", Record<OverviewPart["key"], number>> = {
 };
 
 export function gradeOf(score: number): Grade {
-  return score >= 0.3 ? "strong" : score >= 0.05 ? "solid" : score >= -0.2 ? "mixed" : "work";
+  return score >= 0.25 ? "strong" : score >= 0 ? "solid" : score >= -0.25 ? "mixed" : "work";
 }
 export const GRADE_LABEL: Record<Grade, string> = { strong: "Strong", solid: "Solid", mixed: "Mixed", work: "Work to do" };
 
@@ -135,7 +135,7 @@ export function matchOverview(
       const windows = r.battles.totals.reduce((a, u) => a + u.windows, 0);
       if (windows >= 5) {
         battles = { used, windows };
-        add("battles", "Spells & items in battles", (used / windows - 0.6) * 2.5, `${used} of ${windows} chances used`);
+        add("battles", "Spells & items in battles", (used / windows - 0.55) * 2.5, `${used} of ${windows} chances used`);
       }
     }
 

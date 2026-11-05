@@ -417,7 +417,7 @@ export class ReviewView {
     copy.type = "button";
     copy.addEventListener("click", () => {
       const grade = this.open?.id === r.matchId ? this.overview(this.open)?.rows.find((x) => x.slot === r.slot)?.grade : undefined;
-      const txt = adviceText(r, this.d.heroLabel, { ...(grade ? { grade } : {}), ...(who ? { who: who.replace(/ · $/, "") } : {}) });
+      const txt = adviceText(r, this.d.heroLabel, { ...(grade ? { grade } : {}), ...(!own && r.player ? { who: r.player } : {}) });
       void copyText(txt).then((ok) => {
         copy.textContent = ok ? "Copied ✓" : "Copy failed - text selected below";
         if (!ok) {

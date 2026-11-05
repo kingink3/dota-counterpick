@@ -274,9 +274,11 @@ The report shows:
   outnumbered / deep deaths (ADR-029b);
 - trends across the reviewed matches.
 
-Any player of the match can be reviewed - your allies and the opponents: use the player
-switcher above the report, or **Match by ID** for any parsed match (ADR-029c). Only players
-with an open profile ("Expose Public Match Data") are read; one token is enough.
+Any player of the match can be reviewed - your allies and the opponents, private profiles
+included: use the player switcher above the report, or **Match by ID** for any parsed match
+(ADR-029c). One token is enough. **Match overview** grades all ten (who played well, who has
+work to do); **Copy for Discord / Telegram** turns a review into a short message for a
+friend. Supports get observers / sentries / enemy wards destroyed / stacks (ADR-029d).
 
 STRATZ does not accept calls from a web page, so the companion forwards them. The token
 and the history stay in your browser.

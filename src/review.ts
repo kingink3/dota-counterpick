@@ -531,7 +531,7 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
   }
   const ultDeaths = deaths.filter((x) => x.flags.includes("ultimate not used"));
   if (ultDeaths.length >= 2) {
-    findings.push({ id: "ult_unused", area: "execution", severity: clamp(0.15 * ultDeaths.length, 0.2, 0.6), title: `${ultDeaths.length} fights died in without casting the ultimate`, detail: "Engaged on death, ultimate not cast in the 90 s before (likely ready).", times: ultDeaths.map((x) => x.time) });
+    findings.push({ id: "ult_unused", area: "execution", severity: clamp(0.15 * ultDeaths.length, 0.2, 0.6), title: `${ultDeaths.length} death${ultDeaths.length > 1 ? "s" : ""} in a fight without casting the ultimate`, detail: "Engaged on death, ultimate not cast in the 90 s before (likely ready).", times: ultDeaths.map((x) => x.time) });
   }
   const healDeaths = deaths.filter((x) => x.flags.includes("heal available"));
   if (healDeaths.length >= 3 && healDeaths.length >= deaths.length / 2) {
