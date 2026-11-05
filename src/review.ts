@@ -7,6 +7,7 @@
 import { buildPlan, mmss, teamWindow, type ItemPlan, type ItemStats, type ItemTiming } from "./item-plan.js";
 import type { KnowledgeBase } from "./knowledge.js";
 import { archetypeOf, resolve } from "./resolver.js";
+import { analyseBattles, type AbilityInfo, type BattleReport } from "./review-battles.js";
 
 // ---------------------------------------------------------------- input ----
 
@@ -117,7 +118,11 @@ export interface Ids {
   heroes: Record<string, string>;
   items: Record<string, string>;
   cd: Record<string, number>;
+  /** item mana costs. */
+  mc?: Record<string, number>;
   names: Record<string, string>;
+  /** hero abilities by id (cooldowns / mana per level, kind flags). */
+  abilities?: Record<string, AbilityInfo>;
 }
 export interface Benchmarks {
   minutes: number[];
@@ -135,7 +140,7 @@ export interface ReviewContext {
 
 // --------------------------------------------------------------- output ----
 
-export type Area = "plan" | "farm" | "deaths" | "map" | "execution";
+export type Area = "plan" | "farm" | "deaths" | "battles" | "map" | "execution";
 export interface Finding {
   id: string;
   area: Area;
@@ -190,9 +195,13 @@ export interface MatchReview {
   farm: FarmRow[];
   deaths: DeathRow[];
   findings: Finding[];
-  /** the top 3 problems by severity. */
+  /** spell / item use in battles (2+ heroes a side), targets, positioning. */
+  battles?: BattleReport;
+  /** the top problems by severity (up to GROWTH). */
   growth: Finding[];
 }
+
+export const GROWTH = 10;
 
 /** items that save you when used in time (escape, immunity, defence). */
 export const SAVE_ITEMS = new Set([
@@ -573,7 +582,11 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
     findings.push({ id: "no_bounties", area: "map", severity: 0.1, title: "No bounty runes taken", detail: "Supports usually take the 0:00 / 4:00 bounties." });
   }
 
-  const growth = findings.filter((f) => !f.good).sort((a, b) => b.severity - a.severity).slice(0, 3);
+  // ---- battles: idle spells / items, mana, targets, positioning ---------------
+  const battles = analyseBattles(s, me, d.positions, ids, name, ultIds);
+  if (battles?.battles.length) findings.push(...battleFindings(battles, position));
+
+  const growth = findings.filter((f) => !f.good).sort((a, b) => b.severity - a.severity).slice(0, GROWTH);
   return {
     matchId: s.id,
     ...(s.startDateTime ? { at: s.startDateTime } : {}),
@@ -589,8 +602,80 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
     farm,
     deaths,
     findings,
+    ...(battles?.battles.length ? { battles } : {}),
     growth,
   };
+}
+
+function battleFindings(b: BattleReport, position?: number): Finding[] {
+  const out: Finding[] = [];
+  const n = b.battles.length;
+  const s = (x: number) => `${Math.round(x)} s`;
+  const pct = (a: number, z: number) => `${Math.round((a / Math.max(1, z)) * 100)}%`;
+  // spells / items that sat ready: one finding each, the 4 worst
+  const idle = b.totals.filter((u) => u.ready >= 20 && u.ready / Math.max(1, u.alive) >= 0.35).slice(0, 4);
+  for (const u of idle) {
+    const share = u.ready / u.alive;
+    const cd = u.cd ? (u.cd[0] === u.cd[1] ? `${u.cd[0]} s` : `${u.cd[1]}-${u.cd[0]} s`) : "?";
+    out.push({
+      id: `idle:${u.name}`,
+      area: "battles",
+      severity: clamp(0.1 + 0.3 * share + (u.ult ? 0.08 : 0), 0.15, 0.45),
+      title: `${u.name}${u.ult ? " (ultimate)" : ""} ready and unused ${s(u.ready)} in ${u.battles} battles`,
+      detail:
+        `Cast ${u.casts} time${u.casts === 1 ? "" : "s"}; ready ${pct(u.ready, u.alive)} of the time you were alive in them, longest gap ${s(u.longest)} ` +
+        `(cooldown ${cd}). ${u.kind === "item" && /wand|stick/i.test(u.name) ? "Counted only under 70% HP with 2+ charges. " : ""}` +
+        "Mana is accounted for; cooldown reduction and stuns on you are not.",
+    });
+  }
+  const mana = b.totals.filter((u) => u.manaShort >= 15);
+  if (mana.length) {
+    out.push({
+      id: "battle_mana",
+      area: "battles",
+      severity: 0.2,
+      title: `Out of mana in battles: ${mana.map((u) => `${u.name} ${s(u.manaShort)}`).join(", ")}`,
+      detail: "Off cooldown but not enough mana: Arcane Boots / Clarity / a Soul Ring, or skip the harass before a fight.",
+    });
+  }
+  const silent = b.battles.filter((f) => f.uses.length && f.uses.every((u) => u.casts === 0) && f.to - f.from >= 8);
+  if (silent.length >= 2) {
+    out.push({ id: "silent_battles", area: "battles", severity: clamp(0.08 * silent.length, 0.2, 0.4), title: `${silent.length} of ${n} battles without a single spell or item`, detail: "You were there, alive, and cast nothing.", times: silent.map((f) => f.from + 5) });
+  }
+  const deathsIn = b.battles.filter((f) => f.died);
+  const silentDeaths = deathsIn.filter((f) => f.silentDeath);
+  if (silentDeaths.length) {
+    out.push({ id: "silent_death", area: "battles", severity: clamp(0.12 * silentDeaths.length, 0.15, 0.35), title: `${silentDeaths.length} battle death${silentDeaths.length > 1 ? "s" : ""} with nothing cast in the last 10 s`, detail: "Died without using what you had: press the save / disable before the burst lands.", times: silentDeaths.map((f) => f.to) });
+  }
+  const front = deathsIn.filter((f) => f.frontmost);
+  if (front.length >= 2 || (front.length >= 1 && position !== undefined && position >= 4)) {
+    out.push({
+      id: "front_deaths",
+      area: "battles",
+      severity: clamp(0.12 * front.length + (position && position >= 4 ? 0.08 : 0), 0.2, 0.45),
+      title: `${front.length} battle death${front.length > 1 ? "s" : ""} as your team's closest hero to the enemy`,
+      detail: position && position >= 4 ? "A support in front is the first target: cast from the edge of your range, behind your cores." : "You were the first one they reached: let the initiator / frontliner go first.",
+      times: front.map((f) => f.to),
+    });
+  }
+  const outnumbered = deathsIn.filter((f) => f.outnumbered);
+  if (outnumbered.length >= 2) {
+    out.push({ id: "outnumbered", area: "battles", severity: clamp(0.1 * outnumbered.length, 0.2, 0.4), title: `${outnumbered.length} deaths outnumbered`, detail: outnumbered.map((f) => `${mmss(f.to)}: ${f.alliesNear! + 1}v${f.enemiesNear}`).join("; ") + ". Fight where your team is, or back off.", times: outnumbered.map((f) => f.to) });
+  }
+  const deep = deathsIn.filter((f) => f.deep);
+  if (deep.length >= 2) {
+    out.push({ id: "deep_deaths", area: "battles", severity: 0.2, title: `${deep.length} battle deaths on the enemy half`, detail: "Chasing or fighting under their towers / vision.", times: deep.map((f) => f.to) });
+  }
+  for (const t of b.targets) {
+    if (t.casts < 4) continue;
+    if (t.onSupports / t.casts > 0.5 && (position === undefined || position >= 3)) {
+      out.push({ id: `targets:${t.name}`, area: "battles", severity: 0.2, title: `${t.name}: ${t.onSupports} of ${t.casts} on supports`, detail: "The disable is worth most on their carry / mid / initiator." });
+    }
+    const conv = t.converted / t.casts;
+    if (conv < 0.35) out.push({ id: `convert:${t.name}`, area: "battles", severity: 0.2, title: `${t.name}: ${t.converted} of ${t.casts} targets died after it`, detail: "Within 8 s of the cast. Use it when your team can follow up, on the hero they can reach." });
+    else if (conv >= 0.6) out.push({ id: `convert:${t.name}`, area: "battles", severity: 0.15, good: true, title: `${t.name}: ${t.converted} of ${t.casts} targets died after it`, detail: "Good follow-up timing." });
+  }
+  return out;
 }
 
 // --------------------------------------------------------------- trends ----

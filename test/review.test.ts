@@ -4,7 +4,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { test } from "node:test";
 import { loadKB } from "../src/kb.js";
 import type { ItemStats } from "../src/item-plan.js";
-import { reviewMatch, trends, type Benchmarks, type Ids, type MatchData, type MatchReview } from "../src/review.js";
+import { GROWTH, reviewMatch, trends, type Benchmarks, type Ids, type MatchData, type MatchReview } from "../src/review.js";
+import { analyseBattles } from "../src/review-battles.js";
 
 const kb = loadKB();
 const ids = JSON.parse(readFileSync("data/ids.json", "utf8")) as Ids;
@@ -90,7 +91,7 @@ test("review: plan vs fact, farm, deaths and execution checks", () => {
   assert.ok(ids.includes("heal_unused"));
   assert.ok(ids.includes("died_alone"));
   assert.ok(ids.includes("died_with_gold"));
-  assert.ok(r.growth.length > 0 && r.growth.length <= 3);
+  assert.ok(r.growth.length > 0 && r.growth.length <= GROWTH);
   assert.ok(r.growth.every((g, i) => i === 0 || r.growth[i - 1]!.severity >= g.severity), "growth sorted by severity");
 });
 
@@ -122,4 +123,54 @@ test("review on the real STRATZ sample match (when present)", () => {
   assert.ok(r.checks.length > 0, "plan checks");
   assert.ok(r.farm.length > 0, "farm rows");
   assert.equal(r.deaths.length, s.me.playbackData?.deathEvents?.length ?? 0);
+  if (s.positions && (s.me.playbackData as { playerUpdateHealthEvents?: unknown[] })?.playerUpdateHealthEvents?.length) {
+    assert.ok(r.battles && r.battles.battles.length > 0, "battles found");
+    assert.ok(r.battles!.battles.every((b) => (b.allies ?? 2) >= 2 && (b.enemies ?? 2) >= 2), "2+ heroes a side");
+    assert.ok(r.battles!.totals.some((u) => u.casts > 0));
+  }
+});
+
+test("battles: 2+ heroes a side; idle seconds, casts, targets, positioning", () => {
+  const SHACKLE = 5130; // Windranger Shackleshot: unit target, enemy, cd 16/14/12/10
+  assert.ok(ids.abilities?.[String(SHACKLE)]?.f.includes("u"), "ids.json has hero abilities");
+  const heroes = ["windranger", "anti_mage", "mars", "pudge", "invoker", "phantom_assassin", "lion", "zeus", "axe", "necrophos"];
+  const players = heroes.map((h, i) => ({
+    playerSlot: i < 5 ? i : 128 + i - 5, steamAccountId: i === 0 ? ACC : 1000 + i, isRadiant: i < 5, heroId: H(h),
+    position: `POSITION_${(i % 5) + 1}`, isVictory: i >= 5, kills: 0, deaths: 0, assists: 0,
+  }));
+  const pa = H("phantom_assassin");
+  // t < 700: you (slot 0) alone vs PA; t >= 700: you + Anti-Mage vs PA + Lion; the rest far away
+  const at = (slot: number, t: number) => {
+    if (slot === 0) return { x: 100, y: 100 };
+    if (slot === 128) return { x: 104, y: 104 };
+    if (t >= 700 && slot === 1) return { x: 95, y: 95 };
+    if (t >= 700 && slot === 129) return { x: 106, y: 106 };
+    return { x: 200, y: 40 };
+  };
+  const d = {
+    summary: { id: 1, durationSeconds: 1800, didRadiantWin: false, players },
+    me: {
+      playerSlot: 0, heroId: H("windranger"), position: "POSITION_4", isRadiant: true,
+      playbackData: {
+        abilityLearnEvents: [{ time: 60, abilityId: SHACKLE, level: 0 }],
+        abilityUsedEvents: [{ time: 1000, abilityId: SHACKLE, target: pa }],
+        assistEvents: [{ time: 1005, target: pa }],
+        deathEvents: [{ time: 600, positionX: 100, positionY: 100 }, { time: 1020, positionX: 100, positionY: 100 }],
+      },
+    },
+    positions: { players: players.map((p) => ({ playerSlot: p.playerSlot, playbackData: { playerUpdatePositionEvents: Array.from({ length: 300 }, (_, k) => ({ time: k * 5, ...at(p.playerSlot, k * 5) })) } })) },
+  } as unknown as MatchData;
+  const b = analyseBattles(d.summary, d.me, d.positions, ids as never, (k) => k)!;
+  assert.equal(b.battles.length, 1, "the 1v1 death at 10:00 is not a battle");
+  const f = b.battles[0]!;
+  assert.ok(f.died && f.assists === 1);
+  assert.equal(f.allies, 2);
+  assert.equal(f.enemies, 2);
+  const u = f.uses.find((x) => x.name === "Shackleshot")!;
+  assert.equal(u.casts, 1);
+  // ready 995-1000 (before the cast) and 1016-1020 (cooldown 16 s at level 1)
+  assert.ok(Math.abs(u.ready - 9) <= 1, `ready ${u.ready}`);
+  assert.ok(u.longest >= 4 && u.longest <= 5.5);
+  assert.deepEqual(b.targets[0], { name: "Shackleshot", casts: 1, onCores: 1, onSupports: 0, converted: 1 });
+  assert.equal(f.frontmost, true, "you were closer to PA than Anti-Mage");
 });

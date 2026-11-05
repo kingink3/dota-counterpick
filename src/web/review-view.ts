@@ -6,6 +6,7 @@
 
 import { mmss } from "../item-plan.js";
 import { reviewMatch, trends, type Finding, type MatchReview, type ReviewContext } from "../review.js";
+import type { BattleReport } from "../review-battles.js";
 import {
   accountFromToken,
   loadHistory,
@@ -29,6 +30,7 @@ const AREA_LABEL: Record<Finding["area"], string> = {
   plan: "Plan",
   farm: "Farm & lane",
   deaths: "Deaths",
+  battles: "Battles",
   map: "Map & role",
   execution: "Execution",
 };
@@ -192,17 +194,18 @@ export class ReviewView {
     head.append(t);
     box.append(head);
 
-    const g = card("Growth areas");
+    const g = card(`Growth areas${r.growth.length > 3 ? ` · top ${r.growth.length}` : ""}`);
     if (!r.growth.length) g.append(el("p", "muted", "Nothing stood out against the checks in this match."));
-    for (const f of r.growth) g.append(findingRow(f));
+    r.growth.forEach((f, i) => g.append(findingRow(f, true, i + 1)));
     box.append(g);
 
     const grid = el("div", "rv-grid");
     grid.append(this.planCard(r), this.farmCard(r));
     box.append(grid);
     box.append(this.deathsCard(r));
+    if (r.battles) box.append(this.battlesCard(r.battles));
     const rest = card("All checks");
-    const order: Finding["area"][] = ["plan", "farm", "deaths", "map", "execution"];
+    const order: Finding["area"][] = ["plan", "farm", "deaths", "battles", "map", "execution"];
     for (const a of order) {
       const fs = r.findings.filter((f) => f.area === a);
       if (!fs.length) continue;
@@ -268,6 +271,49 @@ export class ReviewView {
     return c;
   }
 
+  private battlesCard(b: BattleReport): HTMLElement {
+    const c = card(`Battles (${b.battles.length}) · 2+ heroes a side`);
+    const sec = (x: number) => `${Math.round(x)} s`;
+    if (b.totals.length) {
+      const tb = el("table", "rv-t rv-bt");
+      tb.append(rowEl(["Spell / item", "Battles", "Casts", "Ready, unused", "of time alive", "Longest gap", "No mana"], true));
+      for (const u of b.totals) {
+        const share = u.ready / Math.max(1, u.alive);
+        const tr = rowEl([`${u.name}${u.ult ? " (ult)" : ""}`, String(u.battles), String(u.casts), sec(u.ready), `${Math.round(share * 100)}%`, sec(u.longest), u.manaShort ? sec(u.manaShort) : "-"]);
+        if (share >= 0.5 && u.ready >= 20) tr.classList.add("v-slow");
+        tb.append(tr);
+      }
+      c.append(tb);
+    }
+    const ul = el("ul", "rv-deaths rv-battles");
+    for (const f of b.battles) {
+      const li = el("li", "", "");
+      li.append(el("b", "", `${mmss(f.from + 5)}-${mmss(f.to)}`));
+      const chips = el("span", "rv-chips", "");
+      if (f.allies !== undefined) chips.append(el("i", f.enemies! > f.allies ? "warn" : "", `${f.allies}v${f.enemies}`));
+      if (f.died) chips.append(el("i", "bad", "died"));
+      if (f.kills + f.assists) chips.append(el("i", "good", `${f.kills ? `${f.kills} kill${f.kills > 1 ? "s" : ""}` : ""}${f.kills && f.assists ? " + " : ""}${f.assists ? `${f.assists} assist${f.assists > 1 ? "s" : ""}` : ""}`));
+      if (f.frontmost) chips.append(el("i", "bad", "front-most"));
+      if (f.deep) chips.append(el("i", "warn", "their half"));
+      if (f.outnumbered) chips.append(el("i", "bad", `outnumbered ${f.alliesNear! + 1}v${f.enemiesNear}`));
+      if (f.silentDeath) chips.append(el("i", "bad", "nothing cast last 10 s"));
+      const cast = f.uses.reduce((a, u) => a + u.casts, 0);
+      if (!cast) chips.append(el("i", "bad", "no casts"));
+      for (const u of f.uses.filter((u) => u.ready >= 5).slice(0, 3)) chips.append(el("i", "warn", `${u.name} idle ${sec(u.ready)}`));
+      li.append(chips);
+      ul.append(li);
+    }
+    c.append(ul);
+    if (b.targets.length) {
+      c.append(el("div", "plan-ph", "Targets of your disables"));
+      for (const t of b.targets) {
+        c.append(el("p", "rv-det", `${t.name}: ${t.casts} in battles · ${t.onCores} on cores, ${t.onSupports} on supports · ${t.converted} of them died within 8 s`));
+      }
+    }
+    c.append(el("p", "rv-note", "Ready = off cooldown at your level, with the mana, while alive. Cooldown reduction and stuns on you are not seen in the data, so treat the seconds as approximate. Wand / Stick count only under 70% HP with 2+ charges."));
+    return c;
+  }
+
   private trendsCard(): HTMLElement | undefined {
     if (this.history.length < 3) return undefined;
     const t = trends(this.history);
@@ -290,8 +336,9 @@ export class ReviewView {
   }
 }
 
-function findingRow(f: Finding, area = true): HTMLElement {
-  const r = el("div", `rv-f${f.good ? " good" : ""}${area ? "" : " flat"}`, "");
+function findingRow(f: Finding, area = true, n?: number): HTMLElement {
+  const r = el("div", `rv-f${f.good ? " good" : ""}${area ? "" : " flat"}${n ? " num" : ""}`, "");
+  if (n) r.append(el("span", "rv-n", String(n)));
   if (area) r.append(el("span", "rv-area", AREA_LABEL[f.area]));
   r.append(el("b", "", f.title));
   const det = el("span", "rv-det", f.detail);

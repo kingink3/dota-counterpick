@@ -266,7 +266,10 @@ The report shows:
 - the plan the app would have made for that draft vs what you bought and when;
 - last hits, networth and XP vs Crusader-Ancient averages for your hero and position;
 - every death (in their power window? alone? with BKB / Blink ready? with a heal? with
-  unspent gold?), map and role checks, and the top 3 growth areas;
+  unspent gold?), map and role checks, and the top 10 growth areas;
+- **Battles** (2+ heroes a side): per spell / item — casts, seconds it sat ready and unused
+  (cooldown at your level and mana counted), the longest gap; who your disables went on
+  and whether the target died; front-most / outnumbered / deep deaths (ADR-029b);
 - trends across the reviewed matches.
 
 STRATZ does not accept calls from a web page, so the companion forwards them. The token
