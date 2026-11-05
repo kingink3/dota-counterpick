@@ -107,7 +107,11 @@ export class StratzClient {
 
   recent(take = 20): Promise<RecentMatch[]> {
     const acc = this.s.account!;
-    return this.q<{ player: { matches: RecentMatch[] } }>(recentMatchesQuery(acc, take)).then((d) => d.player?.matches ?? []);
+    return this.q<{ player: { matches: RecentMatch[] | null } | null }>(recentMatchesQuery(acc, take)).then((d) => {
+      // STRATZ answers "Error trying to resolve field 'matches'" with matches: null when its match list is down
+      if (d.player && d.player.matches == null) throw new StratzError("STRATZ cannot list your matches right now - try later, or open a match by its ID", "query");
+      return d.player?.matches ?? [];
+    });
   }
 
   /** what every player's review shares: summary, positions, HP and vision of all ten (4 requests). */
