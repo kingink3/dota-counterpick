@@ -1,33 +1,15 @@
-# temporary (ADR-053): one public pro match in three forms, to build the replay adapter.
-# Professional match = public data; nothing personal. Artifact kept 1 day.
-name: Replay sample
+# temporary (ADR-054 check): OpenDota Explorer from Actions - supports and core items,
+# matched on game state. Aggregates only in the log. Delete after ADR-054.
+name: Explorer probe
 on: { workflow_dispatch: {} }
-permissions: { contents: write }
-concurrency: { group: stratz, cancel-in-progress: false }
+permissions: { contents: read }
 jobs:
-  s:
+  p:
     runs-on: ubuntu-latest
-    services:
-      parser: { image: odota/parser, ports: ["5600:5600"] }
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - run: npm ci
-      - name: Parse
-        run: |
-          mkdir -p out
-          id=9081380063
-          curl -sf https://api.opendota.com/api/matches/$id > out/opendota.json
-          url=$(jq -r .replay_url out/opendota.json)
-          curl -s -o r.pack "$url"; zstd -q -d r.pack -o r.dem
-          curl -s localhost:5600 --data-binary @r.dem | gzip -c > out/parsed.ndjson.gz
-          ls -la out
-      - name: STRATZ form
-        env: { STRATZ_TOKEN: "${{ secrets.STRATZ_TOKEN }}" }
-        run: npx tsx scripts/stratz-fetch.ts --mode match --match 9081380063 --out /tmp/m && gzip -c /tmp/m/match.json > out/stratz.json.gz
-      - name: Push to the dev-sample branch (public pro match; delete after ADR-053)
-        run: |
-          cd out && git init -q -b dev-sample && git add -A
-          git -c user.name=github-actions -c user.email=41898282+github-actions[bot]@users.noreply.github.com commit -q -m "replay sample (public pro match)"
-          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" dev-sample
+      - run: npx tsx scripts/explorer-probe.ts --days 120
