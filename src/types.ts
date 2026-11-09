@@ -347,13 +347,17 @@ export interface Recommendation {
   /** dominant damage school of this candidate's counter route (if any). */
   school?: DamageSchool;
   /** stat layer (Phase 2, ADR-005): games-weighted win rate (0..1) vs the enemy
-   *  team from public matches, present only when matchup data is loaded. Additive
-   *  info - it does NOT drive the KB rank. */
+   *  team from public matches, present only when matchup data is loaded. Shown as
+   *  is; the rank uses the matchup gap in `stat` instead (ADR-035). */
   winrate?: number;
   /** total games behind `winrate` (sample size for confidence). */
   winrateGames?: number;
-  /** per-enemy win rate breakdown. */
-  matchups?: Array<{ enemy: string; wr: number; n: number }>;
+  /** per-enemy win rate breakdown; `expected` = from both heroes' base win rates. */
+  matchups?: Array<{ enemy: string; wr: number; n: number; expected?: number }>;
+  /** how the stat layer moved the score (ADR-035): advantage = games-weighted
+   *  (actual - expected) win rate vs these enemies; base = the hero's own win rate;
+   *  factor applied to kbScore (0.94..1.06); delta = score - kbScore. */
+  stat?: { advantage: number; base?: number; confidence: number; factor: number; kbScore: number; delta: number };
   /** item recs only: how well the item suits YOUR hero (score already multiplied). */
   fit?: { archetype: Archetype; attack?: AttackType; mult: number };
   /** the hero you play buys it in this share of games (< 5%): shown and scored lower. */

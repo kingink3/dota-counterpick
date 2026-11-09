@@ -3,8 +3,10 @@
 Explainable counter-pick / counter-build rule-engine for Dota 2. Implements the
 **ADR-012** engine contract against the knowledge base in
 [`taxonomy.yaml`](taxonomy.yaml). The core ranking is **KB-only** (ADR-004); an optional
-Phase-2 **stat layer** (hero-vs-hero win rates from OpenDota) is now layered on top as
-additive info - it shows but does not drive the rank.
+Phase-2 **stat layer** (hero-vs-hero win rates from OpenDota) is layered on top: the
+win rate is shown, and the **matchup gap** (actual win rate vs the one expected from both
+heroes' base win rates) tilts the KB score by at most ±6% (ADR-035). The score tooltip
+shows KB score × factor; a strong meta hero gets no bonus for being strong in general.
 
 The differentiator (per [`DECISIONS.md`](DECISIONS.md)) is **explainability**: every
 recommendation comes with the *mechanism* of why it counters the enemy, not just a

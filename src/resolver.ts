@@ -473,39 +473,86 @@ function rankItems(
 const SYNERGY_WEIGHT = 0.6;
 
 /** Attach the candidate's public-match win rate vs the selected enemies (stat layer,
- *  ADR-005). Games-weighted aggregate is far steadier than any single small-sample pair. */
+ *  ADR-005) and its tilt on the rank (ADR-035).
+ *
+ *  The tilt measures the MATCHUP, not the meta: for each enemy the expected win rate
+ *  comes from both heroes' base win rates (log-odds difference), and only the gap
+ *  between the actual and the expected rate counts. A strong meta hero no longer
+ *  rises just for winning 54% against everyone. Games-weighted; small samples barely
+ *  move; KB mechanics still dominate (factor 0.94..1.06). The factor and the gap are
+ *  kept on the recommendation (`stat`) so the score stays explainable. */
 function attachWinrate(rec: Recommendation, kb: KnowledgeBase, census: Census): void {
   const mu = kb.matchups?.[rec.code];
   if (!mu) return;
-  const breakdown: Array<{ enemy: string; wr: number; n: number }> = [];
+  const base = baseWinrates(kb.matchups!);
+  const own = base.get(rec.code);
+  const breakdown: Array<{ enemy: string; wr: number; n: number; expected?: number }> = [];
   let weighted = 0;
   let games = 0;
+  let gap = 0;
+  let gapGames = 0;
   for (const enemy of census.allSelected) {
     const pair = mu[enemy];
     if (!pair) continue;
     const [wr, n] = pair;
-    breakdown.push({ enemy, wr, n });
+    const theirs = base.get(enemy);
+    const expected = own !== undefined && theirs !== undefined ? sigmoid(logit(own) - logit(theirs)) : undefined;
+    breakdown.push({ enemy, wr, n, ...(expected !== undefined ? { expected: round3(expected) } : {}) });
     weighted += wr * n;
     games += n;
+    if (expected !== undefined) {
+      gap += (wr - expected) * n;
+      gapGames += n;
+    }
   }
   if (games === 0) return;
   const winrate = weighted / games;
-  rec.winrate = Math.round(winrate * 1000) / 1000;
+  rec.winrate = round3(winrate);
   rec.winrateGames = games;
   rec.matchups = breakdown.sort((a, b) => a.wr - b.wr);
+  if (gapGames === 0) return;
 
-  // Blend the stat into the rank: a confidence-weighted tilt around 50% so a hero
-  // that performs well in practice rises and a theory-only counter (good mechanism,
-  // bad win rate) sinks. Small samples barely move; KB mechanics still dominate.
-  const deviation = winrate - 0.5;
-  const confidence = Math.min(1, games / WINRATE_FULL_CONF);
-  const factor = clamp(1 + WINRATE_TILT * deviation * confidence, 0.94, 1.06);
+  const advantage = gap / gapGames;
+  const confidence = Math.min(1, gapGames / WINRATE_FULL_CONF);
+  const factor = clamp(1 + WINRATE_TILT * advantage * confidence, 0.94, 1.06);
+  const kbScore = rec.score;
   rec.score = round(rec.score * factor);
+  rec.stat = {
+    advantage: round3(advantage),
+    ...(own !== undefined ? { base: round3(own) } : {}),
+    confidence: round3(confidence),
+    factor: round3(factor),
+    kbScore,
+    delta: round(rec.score - kbScore),
+  };
 }
 
-// Light tiebreaker: win rate only nudges near-tied counters; KB mechanics still lead.
-const WINRATE_TILT = 0.8; // gentle tilt strength
+// Light tiebreaker: the matchup gap only nudges near-tied counters; KB mechanics lead.
+// With a +5 pp gap at full confidence: 1 + 1.2 * 0.05 = x1.06 (the cap).
+const WINRATE_TILT = 1.2;
 const WINRATE_FULL_CONF = 150; // games for full confidence in the tilt
+
+/** each hero's games-weighted win rate over all its recorded matchups (cached per table). */
+const baseCache = new WeakMap<object, Map<string, number>>();
+function baseWinrates(table: NonNullable<KnowledgeBase["matchups"]>): Map<string, number> {
+  const hit = baseCache.get(table);
+  if (hit) return hit;
+  const out = new Map<string, number>();
+  for (const [hero, row] of Object.entries(table)) {
+    let w = 0;
+    let n = 0;
+    for (const [wr, g] of Object.values(row)) {
+      w += wr * g;
+      n += g;
+    }
+    if (n > 0) out.set(hero, w / n);
+  }
+  baseCache.set(table, out);
+  return out;
+}
+const logit = (p: number) => Math.log(Math.min(0.99, Math.max(0.01, p)) / (1 - Math.min(0.99, Math.max(0.01, p))));
+const sigmoid = (x: number) => 1 / (1 + Math.exp(-x));
+const round3 = (x: number) => Math.round(x * 1000) / 1000;
 
 function clamp(x: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, x));

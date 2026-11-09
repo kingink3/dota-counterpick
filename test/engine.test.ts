@@ -636,3 +636,40 @@ test("defense: BKB is worth less on a hero with his own debuff immunity (Juggern
   assert.ok(j.reasons.some((x) => x.selfGrant === "self_debuff_immunity"));
   assert.ok(j.score < s.score * 0.5, `Juggernaut ${j.score.toFixed(2)} vs Sven ${s.score.toFixed(2)}`);
 });
+
+// ADR-035: the stat tilt measures the matchup, not the meta.
+test("stat tilt: a hero strong vs everyone gains ~nothing; a real counter gains", () => {
+  const real = engine.kb.matchups;
+  assert.ok(real, "matchups.json is loaded");
+  const enemy = "sven";
+  const probe = engine.recommend({ enemyHeroes: [enemy] }).heroes.find((h) => h.winrate !== undefined);
+  assert.ok(probe, "some hero rec has matchup data");
+  const heroes = Object.keys(real);
+  const table = (wr: (a: string, b: string) => number) => {
+    const t: Record<string, Record<string, [number, number]>> = {};
+    for (const a of heroes) {
+      t[a] = {};
+      for (const b of heroes) if (a !== b) t[a][b] = [wr(a, b), 1000];
+    }
+    return t;
+  };
+  const cand = probe.code;
+  try {
+    // meta: the candidate wins 56% against everybody, its opponents lose accordingly
+    engine.kb.matchups = table((a, b) => (a === cand ? 0.56 : b === cand ? 0.44 : 0.5));
+    const meta = engine.recommend({ enemyHeroes: [enemy] }).heroes.find((h) => h.code === cand)!;
+    assert.equal(meta.winrate, 0.56);
+    assert.ok(meta.stat, "stat breakdown present");
+    assert.ok(Math.abs(meta.stat.advantage) < 0.005, `meta advantage ~0, got ${meta.stat.advantage}`);
+    assert.ok(Math.abs(meta.stat.factor - 1) < 0.01);
+
+    // counter: 56% only vs this enemy, 50% vs the rest
+    engine.kb.matchups = table((a, b) => (a === cand && b === enemy ? 0.56 : a === enemy && b === cand ? 0.44 : 0.5));
+    const ctr = engine.recommend({ enemyHeroes: [enemy] }).heroes.find((h) => h.code === cand)!;
+    assert.ok(ctr.stat && ctr.stat.advantage > 0.05, `counter advantage > 5 pp, got ${ctr.stat?.advantage}`);
+    assert.ok(ctr.stat.factor > meta.stat.factor);
+    assert.equal(Math.round((ctr.stat.kbScore * ctr.stat.factor) * 100) / 100, Math.round(ctr.score * 100) / 100);
+  } finally {
+    engine.kb.matchups = real;
+  }
+});

@@ -1067,8 +1067,15 @@ function winrateBadge(rec: Recommendation): string {
   if (rec.winrate === undefined) return "";
   const pct = Math.round(rec.winrate * 100);
   const cls = pct >= 52 ? "wr good" : pct <= 48 ? "wr bad" : "wr";
-  const tip = `${pct}% win rate vs their team across ${rec.winrateGames} matches (${matchupSource})`;
-  return `<span class="${cls}" title="${esc(tip)}">${pct}% WR</span>`;
+  const st = rec.stat;
+  const pp = st ? Math.round(st.advantage * 1000) / 10 : undefined;
+  const tip = [
+    `${pct}% win rate vs their team across ${rec.winrateGames} matches (${matchupSource})`,
+    st?.base !== undefined ? `hero's own win rate ${Math.round(st.base * 1000) / 10}%` : "",
+    st ? `vs expected from both heroes' base rates: ${pp! >= 0 ? "+" : ""}${pp} pp -> score x${st.factor.toFixed(3)} (${st.delta >= 0 ? "+" : ""}${st.delta.toFixed(2)} of ${rec.score.toFixed(1)}; KB ${st.kbScore.toFixed(2)})` : "",
+  ].filter(Boolean).join("\n");
+  const gapTxt = pp !== undefined && Math.abs(pp) >= 0.5 ? ` <small>${pp >= 0 ? "+" : ""}${pp} pp</small>` : "";
+  return `<span class="${cls}" title="${esc(tip)}">${pct}% WR${gapTxt}</span>`;
 }
 
 function archetypeLabel(a: Archetype, attack?: AttackType): string {
@@ -1132,7 +1139,7 @@ function recCard(rec: Recommendation): HTMLElement {
 
   const sc = document.createElement("div");
   sc.className = "sc";
-  sc.innerHTML = `<b title="KB score">${rec.score.toFixed(1)}</b>${winrateBadge(rec)}`;
+  sc.innerHTML = `<b title="${esc(rec.stat ? `KB ${rec.stat.kbScore.toFixed(2)} x stat ${rec.stat.factor.toFixed(3)} = ${rec.score.toFixed(2)}` : "KB score")}">${rec.score.toFixed(1)}</b>${winrateBadge(rec)}`;
   card.appendChild(sc);
 
   const lead = leadReason(rec);
