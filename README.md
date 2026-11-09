@@ -324,6 +324,8 @@ goals for that position (wards, dewards, stacks, XP and net worth against ranked
 Module 3 "Draft and items" (6 lessons): counter mechanisms, what items bring, typical builds,
 item timings, reading enemy items, team composition - its situations are generated from the
 knowledge base and recent public-match builds, so they follow the patch data.
+Module 4 "Macro" (6 lessons): objectives, vision and Smoke, Roshan and Tormentor, pushing and
+the high ground, when to fight or farm, defending and coming back.
 Each lesson has three tracks: **Theory + Test**, **Situations** (decide what to do; the items
 and draft lessons also generate situations from the knowledge base), and **Practice** goals
 checked on your own reviewed matches. A module exam (15 questions, 80%) opens once every

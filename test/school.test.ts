@@ -7,6 +7,7 @@ import { resolve } from "../src/resolver.js";
 import { FOUNDATIONS } from "../src/school/foundations.js";
 import { ROLES } from "../src/school/roles.js";
 import { DRAFTING } from "../src/school/drafting.js";
+import { MACRO } from "../src/school/macro.js";
 import { generate } from "../src/school/generate.js";
 import { checkGoal } from "../src/school/practice.js";
 import type { MatchReview } from "../src/review.js";
@@ -14,7 +15,7 @@ import type { MatchReview } from "../src/review.js";
 test("school: every question is well-formed and ids are unique", () => {
   const ids = new Set<string>();
   const lessonIds = new Set<string>();
-  for (const l of [...FOUNDATIONS.lessons, ...ROLES.lessons, ...DRAFTING.lessons]) {
+  for (const l of [...FOUNDATIONS.lessons, ...ROLES.lessons, ...DRAFTING.lessons, ...MACRO.lessons]) {
     assert.ok(!lessonIds.has(l.id), `duplicate lesson id ${l.id}`);
     lessonIds.add(l.id);
     assert.ok(l.theory.length >= 2, `${l.id}: theory`);

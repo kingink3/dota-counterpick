@@ -13,6 +13,7 @@
 import { FOUNDATIONS } from "../school/foundations.js";
 import { ROLES } from "../school/roles.js";
 import { DRAFTING } from "../school/drafting.js";
+import { MACRO } from "../school/macro.js";
 import { SchoolView } from "./school-view.js";
 import { loadHistory, loadSettings } from "./review-local.js";
 import { indexKB, type KnowledgeBase, type RawKB } from "../knowledge.js";
@@ -156,7 +157,7 @@ let school: SchoolView | undefined;
 /** School tab (ADR-046): lessons, tests, situations from the KB, practice on your reviews. */
 function buildSchoolView(): void {
   school = new SchoolView({
-    modules: [FOUNDATIONS, ROLES, DRAFTING],
+    modules: [FOUNDATIONS, ROLES, DRAFTING, MACRO],
     gen: () =>
       kb
         ? {
