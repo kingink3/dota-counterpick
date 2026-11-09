@@ -89,5 +89,52 @@ export const loadRecent = (): Promise<RecentList | undefined> =>
     if (/no longer in the store/.test(e.message)) return undefined;
     throw e;
   });
+// ---- starting the workflow from the page (ADR-044) ---------------------------------
+
+function dispatchToken(): string | undefined {
+  return (window as unknown as { __DOTA_BUNDLE?: { dispatch?: string } }).__DOTA_BUNDLE?.dispatch;
+}
+
+/** the site can start "Review a match" itself (the build had DISPATCH_TOKEN). */
+export function canDispatch(): boolean {
+  return !!dispatchToken();
+}
+
+const API = "https://api.github.com";
+async function gh(path: string, init: RequestInit = {}): Promise<Response> {
+  const t = dispatchToken();
+  if (!t) throw new Error("This build cannot start the workflow (no DISPATCH_TOKEN secret)");
+  const r = await fetch(`${API}/repos/${repoOf()}${path}`, {
+    ...init,
+    headers: { Accept: "application/vnd.github+json", Authorization: `Bearer ${t}`, "X-GitHub-Api-Version": "2022-11-28", ...(init.headers ?? {}) },
+  });
+  if (r.status === 401) throw new Error("GitHub refused the token: it expired or was revoked - create a new one (README, ADR-044)");
+  if (r.status === 403 || r.status === 404) throw new Error(`GitHub: the token cannot run workflows here (HTTP ${r.status}) - it needs Actions: read and write on this repository`);
+  return r;
+}
+
+/** start "Review a match": a match id, the latest (no id), or only the list. */
+export async function dispatchReview(opts: { matchId?: number; listOnly?: boolean } = {}): Promise<void> {
+  const inputs: Record<string, string> = {};
+  if (opts.matchId) inputs.match_id = String(opts.matchId);
+  if (opts.listOnly) inputs.list_only = "true";
+  const r = await gh("/actions/workflows/review-match.yml/dispatches", { method: "POST", body: JSON.stringify({ ref: "main", inputs }) });
+  if (r.status !== 204) throw new Error(`GitHub: HTTP ${r.status} ${(await r.text()).slice(0, 120)}`);
+}
+
+export interface RunState {
+  status: "queued" | "in_progress" | "completed" | string;
+  conclusion?: string | null;
+  created: number;
+}
+
+/** the newest runs of "Review a match" (status only). */
+export async function reviewRuns(n = 3): Promise<RunState[]> {
+  const r = await gh(`/actions/workflows/review-match.yml/runs?per_page=${n}`);
+  if (!r.ok) return [];
+  const j = (await r.json()) as { workflow_runs: Array<{ status: string; conclusion: string | null; created_at: string }> };
+  return j.workflow_runs.map((w) => ({ status: w.status, conclusion: w.conclusion, created: Date.parse(w.created_at) / 1000 }));
+}
+
 export const loadIndex = (): Promise<StoreEntry[]> => open<StoreEntry[]>("index.bin");
 export const loadMatch = (e: StoreEntry): Promise<StoredMatch> => open<StoredMatch>(e.file);

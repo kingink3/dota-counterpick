@@ -278,7 +278,19 @@ latest). In ~1-1.5 min it fetches all ten players and stores them encrypted with
 password on the `review-data` branch; open them in Review -> **From GitHub** (ADR-031).
 Note: the run and its Match ID are visible in the public repository. Every run also refreshes an
 encrypted list of your last 20 matches (tick "Only refresh the list" for just that); Review ->
-**Your recent matches** opens stored ones or copies an ID for the next run (ADR-042). Nothing runs on your
+**Your recent matches** opens stored ones or copies an ID for the next run (ADR-042).
+
+**Without leaving the site (ADR-044).** Your own new matches arrive by themselves: the
+workflow runs every hour and adds your parsed matches of the last 2 days. To review any
+match by its ID straight from the page, add one secret once:
+1. GitHub -> Settings -> Developer settings -> Personal access tokens -> **Fine-grained
+   tokens** -> Generate new token. Repository access: **Only select repositories** ->
+   `dota-counterpick`. Permissions -> Repository -> **Actions: Read and write** (nothing else).
+2. Repository -> Settings -> Secrets and variables -> Actions -> New secret
+   **`DISPATCH_TOKEN`** = the token.
+3. Push anything (or re-run "Deploy to GitHub Pages"): the next build carries it, encrypted.
+Then Review -> **Review a match**: a Match ID (or empty for your latest) -> Review; the
+status shows queued / running / done, and the match opens from the list. Nothing runs on your
 computer and the page holds no STRATZ token (ADR-034). The report shows:
 - the plan the app would have made for that draft vs what you bought and when;
 - last hits, networth and XP vs Crusader-Ancient averages for your hero and position;

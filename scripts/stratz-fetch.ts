@@ -9,7 +9,7 @@
 //  2000/h, 15000/day. We stay far below: <= 1 call / 0.8 s, and a hard cap per run.
 // =============================================================================
 
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { leaderboardQuery, matchMeQuery, matchPositionsQuery, matchHealthQuery, matchSummaryQuery, matchVisionQuery, ME_PARTS, recentMatchesQuery } from "../src/stratz-queries.js";
 
@@ -237,6 +237,23 @@ async function main(): Promise<void> {
     if (mode === "own") anonymise(data);
     writeFileSync(join(out, "match.json"), JSON.stringify(data));
     console.log(mode === "own" ? "own latest match fetched (anonymised)" : `sample match ${found.id}`);
+  } else if (mode === "auto") {
+    // scheduled (ADR-044): the owner's new parsed matches that are not in the store yet,
+    // newest first, at most --max per run; plus the recent list. --skip = stored ids file.
+    const owner = ownerOf(process.env.STRATZ_TOKEN ?? "");
+    if (!owner) throw new Error("no SteamId in the token");
+    const skipFile = arg("skip");
+    const skip = new Set<number>(skipFile && existsSync(skipFile) ? (JSON.parse(readFileSync(skipFile, "utf8")) as number[]) : []);
+    const max = Number(arg("max") ?? 3);
+    const r = await gql<{ player: { matches: Array<{ id: number; parsedDateTime?: number | null; startDateTime?: number }> | null } | null }>(recentMatchesQuery(owner, 20));
+    const list = r.player?.matches;
+    if (list == null) throw new Error("STRATZ could not list the matches right now");
+    writeFileSync(join(out, "recent.json"), JSON.stringify({ owner, fetchedAt: Math.floor(Date.now() / 1000), matches: list }));
+    // only the last 2 days: older ones were either reviewed already or are not wanted
+    const since = Date.now() / 1000 - 2 * 86400;
+    const todo = list.filter((m) => m.parsedDateTime && !skip.has(m.id) && (m.startDateTime ?? 0) >= since).slice(0, max);
+    console.log(`auto: ${list.length} listed, ${todo.length} new to fetch`);
+    for (const m of todo) await fetchMatch(m.id, owner, join(out, `match-${m.id}.json`));
   } else if (mode === "recent") {
     // the token owner's last 20 matches, list only (ADR-042): one call
     const owner = ownerOf(process.env.STRATZ_TOKEN ?? "");
@@ -255,44 +272,50 @@ async function main(): Promise<void> {
       if (!m) throw new Error("STRATZ returned no parsed match for the token owner (its match list may be down - pass a match id)");
       id = m.id;
     }
-    const summary = await gql<{ match: { players?: Array<{ steamAccountId?: number | null }>; parsedDateTime?: number | null } | null }>(matchSummaryQuery(id));
-    if (!summary.match) throw new Error("match not found");
-    const shared = async <T>(q: string, what: string): Promise<T | undefined> => {
-      try {
-        return (await gql<{ match: T }>(q)).match;
-      } catch (e) {
-        console.log(`${what} failed: ${String(e).slice(0, 160)}`);
-        return undefined;
-      }
-    };
-    const positions = await shared(matchPositionsQuery(id), "positions");
-    const health = await shared(matchHealthQuery(id), "health");
-    const vision = await shared(matchVisionQuery(id), "vision");
-    const players: Record<string, unknown> = {};
-    for (const p of summary.match.players ?? []) {
-      if (!p.steamAccountId) continue;
-      try {
-        const me: Record<string, unknown> = { playbackData: {} };
-        for (const part of Object.keys(ME_PARTS) as Array<keyof typeof ME_PARTS>) {
-          const r = await gql<{ match: { players: Array<Record<string, unknown>> } }>(matchMeQuery(id, p.steamAccountId, part));
-          const { playbackData, ...rest } = (r.match?.players?.[0] ?? {}) as { playbackData?: Record<string, unknown> };
-          Object.assign(me, rest);
-          Object.assign(me.playbackData as Record<string, unknown>, playbackData ?? {});
-        }
-        players[String(p.steamAccountId)] = me;
-      } catch (e) {
-        console.log(`a player failed: ${String(e).slice(0, 120)}`);
-      }
-    }
+    await fetchMatch(id, owner, join(out, "match.json"));
     // the owner's recent matches ride along (one call), so the site's list stays fresh (ADR-042)
     if (owner) await writeRecent(owner).catch((e) => console.log(`recent list failed: ${String(e).slice(0, 120)}`));
-    const data = { id, owner: owner ?? null, fetchedAt: Math.floor(Date.now() / 1000), summary: summary.match, positions, health, vision, players };
-    writeFileSync(join(out, "match.json"), JSON.stringify(data));
-    console.log(`match: ${Object.keys(players).length} of ${summary.match.players?.length ?? 0} players with events, parsed ${summary.match.parsedDateTime ? "yes" : "no"}`);
   } else {
     throw new Error(`unknown mode ${mode}`);
   }
   console.log(`${calls} calls`);
+}
+
+/** one match with every player (ADR-031), written in the clear to `file` (the store
+ *  step encrypts it). The log shows counts only. ~45 calls. */
+async function fetchMatch(id: number, owner: number | undefined, file: string): Promise<void> {
+  const summary = await gql<{ match: { players?: Array<{ steamAccountId?: number | null }>; parsedDateTime?: number | null } | null }>(matchSummaryQuery(id));
+  if (!summary.match) throw new Error("match not found");
+  const shared = async <T>(q: string, what: string): Promise<T | undefined> => {
+    try {
+      return (await gql<{ match: T }>(q)).match;
+    } catch (e) {
+      console.log(`${what} failed: ${String(e).slice(0, 160)}`);
+      return undefined;
+    }
+  };
+  const positions = await shared(matchPositionsQuery(id), "positions");
+  const health = await shared(matchHealthQuery(id), "health");
+  const vision = await shared(matchVisionQuery(id), "vision");
+  const players: Record<string, unknown> = {};
+  for (const p of summary.match.players ?? []) {
+    if (!p.steamAccountId) continue;
+    try {
+      const me: Record<string, unknown> = { playbackData: {} };
+      for (const part of Object.keys(ME_PARTS) as Array<keyof typeof ME_PARTS>) {
+        const r = await gql<{ match: { players: Array<Record<string, unknown>> } }>(matchMeQuery(id, p.steamAccountId, part));
+        const { playbackData, ...rest } = (r.match?.players?.[0] ?? {}) as { playbackData?: Record<string, unknown> };
+        Object.assign(me, rest);
+        Object.assign(me.playbackData as Record<string, unknown>, playbackData ?? {});
+      }
+      players[String(p.steamAccountId)] = me;
+    } catch (e) {
+      console.log(`a player failed: ${String(e).slice(0, 120)}`);
+    }
+  }
+  const data = { id, owner: owner ?? null, fetchedAt: Math.floor(Date.now() / 1000), summary: summary.match, positions, health, vision, players };
+  writeFileSync(file, JSON.stringify(data));
+  console.log(`match: ${Object.keys(players).length} of ${summary.match.players?.length ?? 0} players with events, parsed ${summary.match.parsedDateTime ? "yes" : "no"}`);
 }
 
 /** recent.json in --out: { owner, fetchedAt, matches } - stored encrypted by review-store. */

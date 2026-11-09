@@ -32,6 +32,8 @@ jobs:
       - run: npm run build:pages
         env:
           APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+          # optional (ADR-044): fine-grained token, this repo only, Actions read & write
+          DISPATCH_TOKEN: ${{ secrets.DISPATCH_TOKEN }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

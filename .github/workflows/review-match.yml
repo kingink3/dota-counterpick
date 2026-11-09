@@ -1,15 +1,17 @@
-# Review a match (ADR-031): fetches one match with every player from STRATZ and adds
-# it, encrypted with the site password (APP_PASSWORD), to the `review-data` branch.
-# The site (Review -> From GitHub) lists and opens it - the only way a match reaches the page.
-# Run it by hand: Actions -> "Review a match" -> Run workflow.
-#   match_id empty = the token owner's latest parsed match.
-#   list_only = only refresh the list of your last 20 matches (1 STRATZ call, ADR-042);
-#   every match run refreshes that list too.
-# Note: in a public repository the run and its inputs are public (the match id).
+# Review a match (ADR-031, ADR-042, ADR-044): fetches matches with every player from STRATZ
+# and adds them, encrypted with the site password (APP_PASSWORD), to the `review-data`
+# branch. The site (Review) lists and opens them.
+#   - every hour (schedule): your new parsed matches of the last 2 days, at most 3 a run,
+#     plus the list of your last 20 - nothing to click;
+#   - from the site ("Review" button, ADR-044) or by hand: match_id = that match,
+#     empty = your latest parsed match; list_only = only refresh the list.
+# Note: in a public repository the runs and their inputs are public (the match id).
 # STRATZ allows 2 IP addresses per 15 minutes; STRATZ runs share one queue.
 name: Review a match
 
 on:
+  schedule:
+    - cron: "17 * * * *"
   workflow_dispatch:
     inputs:
       match_id:
@@ -32,7 +34,7 @@ concurrency:
 jobs:
   fetch:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -40,19 +42,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Query STRATZ (one match, all players)
-        env:
-          STRATZ_TOKEN: ${{ secrets.STRATZ_TOKEN }}
-          MATCH_ID: ${{ inputs.match_id }}
-          LIST_ONLY: ${{ inputs.list_only }}
-        run: |
-          mkdir -p /tmp/match
-          if [ "$LIST_ONLY" = "true" ]; then
-            npx tsx scripts/stratz-fetch.ts --mode recent --out /tmp/match
-          else
-            npx tsx scripts/stratz-fetch.ts --mode match --match "$MATCH_ID" --out /tmp/match
-          fi
-      - name: Add it to the encrypted store (review-data branch)
+      - name: Open the encrypted store (review-data branch)
         env:
           APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
         run: |
@@ -60,12 +50,33 @@ jobs:
           url="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
           git clone -q --depth 1 --branch review-data --single-branch "$url" /tmp/store || {
             mkdir -p /tmp/store && cd /tmp/store && git init -q -b review-data && git remote add origin "$url"; cd -; }
-          npx tsx scripts/review-store.ts --in /tmp/match/match.json --recent /tmp/match/recent.json --dir /tmp/store
+          npx tsx scripts/review-store.ts --dir /tmp/store --ids /tmp/stored-ids.json
+      - name: Query STRATZ
+        env:
+          STRATZ_TOKEN: ${{ secrets.STRATZ_TOKEN }}
+          MATCH_ID: ${{ inputs.match_id }}
+          LIST_ONLY: ${{ inputs.list_only }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          mkdir -p /tmp/match
+          if [ "$EVENT" = "schedule" ]; then
+            npx tsx scripts/stratz-fetch.ts --mode auto --skip /tmp/stored-ids.json --max 3 --out /tmp/match
+          elif [ "$LIST_ONLY" = "true" ]; then
+            npx tsx scripts/stratz-fetch.ts --mode recent --out /tmp/match
+          else
+            npx tsx scripts/stratz-fetch.ts --mode match --match "$MATCH_ID" --out /tmp/match
+          fi
+      - name: Add to the encrypted store
+        env:
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+        run: |
+          set -e
+          npx tsx scripts/review-store.ts --in-dir /tmp/match --recent /tmp/match/recent.json --dir /tmp/store
           cd /tmp/store
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # one commit, no history: the branch holds the newest matches only
           git checkout -q --orphan fresh
           git add -A
-          git commit -q -m "review-data $(date -u +%Y-%m-%dT%H:%MZ)"
+          git commit -q -m "review-data $(date -u +%Y-%m-%dT%H:%MZ)" || { echo "nothing new"; exit 0; }
           git push -q -f origin fresh:review-data

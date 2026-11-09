@@ -57,6 +57,9 @@ async function main(): Promise<void> {
       itemStats: existsSync(itemStatsPath) ? JSON.parse(readFileSync(itemStatsPath, "utf8")) : null,
       ids: opt("ids.json"),
       benchmarks: opt("benchmarks.json"),
+      // ADR-044: a fine-grained token limited to Actions on this repository, so the page can
+      // start "Review a match" itself. Only inside the encrypted bundle (behind the password).
+      ...(process.env.DISPATCH_TOKEN ? { dispatch: process.env.DISPATCH_TOKEN } : {}),
       pages: true,
     },
   };
@@ -87,7 +90,7 @@ async function main(): Promise<void> {
     "img-src 'self' blob:",
     "font-src 'self'",
     // GitHub raw: encrypted matches (ADR-031); nothing on 127.0.0.1 (ADR-034)
-    "connect-src 'self' https://raw.githubusercontent.com",
+    "connect-src 'self' https://raw.githubusercontent.com https://api.github.com",
     "base-uri 'none'",
     "form-action 'none'",
   ].join("; ");

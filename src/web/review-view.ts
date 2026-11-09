@@ -11,7 +11,7 @@ import type { BattleReport, UseStat } from "../review-battles.js";
 import { adviceText, GRADE_LABEL, matchOverview, matchStory, type MatchOverview, type OverviewRow } from "../review-match.js";
 import { resolve } from "../resolver.js";
 import { loadHistory, loadSettings, openPlayer, saveReview, saveSettings, type MatchBase, type ReviewSettings } from "./review-local.js";
-import { loadIndex, loadMatch, loadRecent, storeAvailable, workflowUrl, type RecentList, type StoreEntry } from "./github-store.js";
+import { canDispatch, dispatchReview, loadIndex, loadMatch, loadRecent, reviewRuns, storeAvailable, workflowUrl, type RecentList, type StoreEntry } from "./github-store.js";
 
 const posOf = (p?: string | null) => Number(/(\d)/.exec(p ?? "")?.[1] ?? 0);
 
@@ -43,6 +43,10 @@ export class ReviewView {
   /** your last matches, written by every workflow run (ADR-042). */
   private recent?: RecentList | null;
   private copied?: number;
+  /** ADR-044: the run started from this page, followed until it ends. */
+  private run?: { label: string; since: number; state: string; failed?: boolean };
+  private runPoll?: number;
+  private idInput = "";
   private storeMsg = "";
   private storePoll?: number;
   private status = "";
@@ -90,14 +94,81 @@ export class ReviewView {
   }
 
   /** matches fetched on GitHub: run the workflow, then open them here. */
+  /** start the workflow from the page (ADR-044) and follow it: queued -> running -> stored. */
+  private async start(label: string, opts: { matchId?: number; listOnly?: boolean }): Promise<void> {
+    this.run = { label, since: Date.now() / 1000 - 5, state: "Starting…" };
+    this.render();
+    try {
+      await dispatchReview(opts);
+    } catch (e) {
+      this.run = { ...this.run, state: String((e as Error).message ?? e), failed: true };
+      this.render();
+      return;
+    }
+    this.run.state = "Queued…";
+    this.render();
+    window.clearInterval(this.runPoll);
+    const t0 = Date.now();
+    this.runPoll = window.setInterval(async () => {
+      const run = this.run;
+      if (!run) return window.clearInterval(this.runPoll);
+      try {
+        const mine = (await reviewRuns(5)).filter((x) => x.created >= run.since).at(-1);
+        if (mine?.status === "completed") {
+          window.clearInterval(this.runPoll);
+          run.failed = mine.conclusion !== "success";
+          run.state = run.failed ? `Failed (${mine.conclusion}) - see the run on GitHub` : "Done ✓";
+          await this.loadStore();
+          return;
+        }
+        const s = Math.round((Date.now() - t0) / 1000);
+        run.state = mine?.status === "in_progress" ? `Running… ${s} s (usually ~1 min, longer behind another run)` : `Queued… ${s} s`;
+      } catch (e) {
+        run.state = String((e as Error).message ?? e);
+      }
+      if (Date.now() - t0 > 20 * 60_000) window.clearInterval(this.runPoll);
+      this.render();
+    }, 8000);
+  }
+
   private githubCard(): HTMLElement {
-    const c = card("From GitHub");
+    const c = card("Review a match");
+    if (canDispatch() && storeAvailable()) {
+      const inp = document.createElement("input");
+      inp.type = "text";
+      inp.inputMode = "numeric";
+      inp.placeholder = "Match ID (empty = your latest)";
+      inp.className = "rv-in";
+      inp.value = this.idInput;
+      inp.addEventListener("input", () => (this.idInput = inp.value));
+      const go = el("button", "g-btn", "Review") as HTMLButtonElement;
+      go.type = "button";
+      const busy = !!this.run && !this.run.failed && this.run.state !== "Done ✓";
+      go.disabled = busy;
+      const send = () => {
+        const id = Number(this.idInput.replace(/\D/g, "")) || undefined;
+        void this.start(id ? `match ${id}` : "your latest match", id ? { matchId: id } : {});
+      };
+      go.addEventListener("click", send);
+      inp.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !busy) send();
+      });
+      const list = el("button", "g-btn", "Refresh my list") as HTMLButtonElement;
+      list.type = "button";
+      list.disabled = busy;
+      list.addEventListener("click", () => void this.start("your recent matches", { listOnly: true }));
+      const row = el("div", "game-row", "");
+      row.append(inp, go, list);
+      c.append(row);
+      if (this.run) c.append(el("p", this.run.failed ? "rv-note bad" : "rv-sub", `${this.run.label}: ${this.run.state}`));
+      c.append(el("p", "rv-note", "Your new matches also arrive by themselves: every hour the workflow adds your parsed matches of the last 2 days."));
+    }
     const run = document.createElement("a");
-    run.className = "g-btn";
+    run.className = canDispatch() ? "link" : "g-btn";
     run.href = workflowUrl();
     run.target = "_blank";
     run.rel = "noopener";
-    run.textContent = "Run on GitHub ↗";
+    run.textContent = canDispatch() ? "Runs on GitHub ↗" : "Run on GitHub ↗";
     run.title = 'Actions -> "Review a match" -> Run workflow (Match ID, or empty = your latest). Takes ~1-1.5 min.';
     run.addEventListener("click", () => this.pollStore());
     const ref = el("button", "g-btn", "Refresh") as HTMLButtonElement;
@@ -127,7 +198,7 @@ export class ReviewView {
       ul.append(li);
     }
     c.append(ul);
-    c.append(el("p", "rv-note", "Run the workflow with a Match ID (or empty for your latest); it fetches all ten players in ~1-1.5 min and stores them encrypted."));
+    if (!canDispatch()) c.append(el("p", "rv-note", "Run the workflow with a Match ID (or empty for your latest); it fetches all ten players in ~1-1.5 min and stores them encrypted. To start it from this page, add the DISPATCH_TOKEN secret (README)."));
     return c;
   }
 
@@ -162,12 +233,14 @@ export class ReviewView {
       info.append(el("b", "", this.d.heroLabel(hero)), el("span", "muted", ` ${p ? `${p.kills}/${p.deaths}/${p.assists}` : ""} · ${mode} · ${m.durationSeconds ? mmss(m.durationSeconds) : ""}`));
       li.append(info);
       const have = stored.get(m.id);
-      const b = el("button", "g-btn", have ? "Open" : this.copied === m.id ? "ID copied ✓" : m.parsedDateTime ? "Review ↗" : "Not parsed") as HTMLButtonElement;
+      const direct = canDispatch();
+      const b = el("button", "g-btn", have ? "Open" : this.copied === m.id ? "ID copied ✓" : m.parsedDateTime ? (direct ? "Review" : "Review ↗") : "Not parsed") as HTMLButtonElement;
       b.type = "button";
       b.disabled = this.busy || (!have && !m.parsedDateTime);
-      b.title = have ? "Already in the store" : m.parsedDateTime ? `Copies ${m.id} and opens the workflow: paste it as Match ID, Run.` : "STRATZ has not parsed it yet - try again later";
+      b.title = have ? "Already in the store" : m.parsedDateTime ? (direct ? "Fetch all ten players (~1 min)" : `Copies ${m.id} and opens the workflow: paste it as Match ID, Run.`) : "STRATZ has not parsed it yet - try again later";
       b.addEventListener("click", () => {
         if (have) return void this.openStored(have);
+        if (direct) return void this.start(`match ${m.id}`, { matchId: m.id });
         void copyText(String(m.id)).then(() => {
           this.copied = m.id;
           this.render();

@@ -42,6 +42,8 @@ interface PagesBundle {
   itemStats?: ItemStats | null;
   ids?: Ids | null;
   benchmarks?: Benchmarks | null;
+  /** ADR-044: token that may start "Review a match" (Actions on this repo only). */
+  dispatch?: string;
   pages: true;
 }
 const BUNDLE = (window as unknown as { __DOTA_BUNDLE?: PagesBundle }).__DOTA_BUNDLE;

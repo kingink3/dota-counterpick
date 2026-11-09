@@ -11,7 +11,7 @@
 // =============================================================================
 
 import { randomBytes } from "node:crypto";
-import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { MIN_PASSWORD, seal, siteKey, unseal } from "./seal.js";
 
@@ -47,36 +47,51 @@ async function main(): Promise<void> {
     writeFileSync(join(dir, "recent.bin"), await seal(key, readFileSync(recent, "utf8")));
     console.log("stored: the recent matches list");
   }
-  const input = arg("in");
-  if (!input || !existsSync(input)) return;
-  const m = JSON.parse(readFileSync(input, "utf8")) as {
-    id: number;
-    owner?: number | null;
-    fetchedAt: number;
-    summary: { startDateTime?: number; durationSeconds?: number; didRadiantWin?: boolean; lobbyType?: string; gameMode?: string; players?: Array<{ heroId: number }> };
-  };
   const indexPath = join(dir, "index.bin");
   let index: StoreEntry[] = existsSync(indexPath) ? (JSON.parse(await unseal(key, readFileSync(indexPath))) as StoreEntry[]) : [];
-  // a re-fetch replaces the old copy
-  for (const e of index.filter((x) => x.id === m.id)) rmSync(join(dir, e.file), { force: true });
-  index = index.filter((x) => x.id !== m.id);
-  const file = `${randomBytes(12).toString("hex")}.bin`;
-  writeFileSync(join(dir, file), await seal(key, JSON.stringify(m)));
-  index.unshift({
-    file,
-    id: m.id,
-    at: m.fetchedAt,
-    ...(m.summary.startDateTime ? { start: m.summary.startDateTime } : {}),
-    ...(m.summary.durationSeconds ? { duration: m.summary.durationSeconds } : {}),
-    ...(m.summary.didRadiantWin !== undefined ? { radiantWin: m.summary.didRadiantWin } : {}),
-    heroes: (m.summary.players ?? []).map((p) => p.heroId),
-    owner: m.owner ?? null,
-    mode: `${m.summary.lobbyType ?? ""}/${m.summary.gameMode ?? ""}`,
-  });
+  // --ids <file>: write the stored match ids (for the scheduled run to skip them) and stop
+  const idsOut = arg("ids");
+  if (idsOut) {
+    writeFileSync(idsOut, JSON.stringify(index.map((e) => e.id)));
+    console.log(`store: ${index.length} matches`);
+    return;
+  }
+  // --in <file> and/or --in-dir <dir> (every match*.json in it)
+  const inputs = [arg("in"), ...(arg("in-dir") && existsSync(arg("in-dir")!) ? readdirSync(arg("in-dir")!).filter((f) => /^match.*\.json$/.test(f)).map((f) => join(arg("in-dir")!, f)) : [])]
+    .filter((f): f is string => !!f && existsSync(f));
+  for (const input of [...new Set(inputs)]) index = await add(input, index);
+  if (!inputs.length) return;
   for (const old of index.slice(KEEP)) rmSync(join(dir, old.file), { force: true });
   index = index.slice(0, KEEP);
   writeFileSync(indexPath, await seal(key, JSON.stringify(index)));
   console.log(`stored: ${index.length} matches in the store`);
+
+  async function add(input: string, idx: StoreEntry[]): Promise<StoreEntry[]> {
+    const m = JSON.parse(readFileSync(input, "utf8")) as {
+      id: number;
+      owner?: number | null;
+      fetchedAt: number;
+      summary: { startDateTime?: number; durationSeconds?: number; didRadiantWin?: boolean; lobbyType?: string; gameMode?: string; players?: Array<{ heroId: number }> };
+    };
+    // a re-fetch replaces the old copy
+    let index = idx;
+    for (const e of index.filter((x) => x.id === m.id)) rmSync(join(dir, e.file), { force: true });
+    index = index.filter((x) => x.id !== m.id);
+    const file = `${randomBytes(12).toString("hex")}.bin`;
+    writeFileSync(join(dir, file), await seal(key, JSON.stringify(m)));
+    index.unshift({
+      file,
+      id: m.id,
+      at: m.fetchedAt,
+      ...(m.summary.startDateTime ? { start: m.summary.startDateTime } : {}),
+      ...(m.summary.durationSeconds ? { duration: m.summary.durationSeconds } : {}),
+      ...(m.summary.didRadiantWin !== undefined ? { radiantWin: m.summary.didRadiantWin } : {}),
+      heroes: (m.summary.players ?? []).map((p) => p.heroId),
+      owner: m.owner ?? null,
+      mode: `${m.summary.lobbyType ?? ""}/${m.summary.gameMode ?? ""}`,
+    });
+    return index;
+  }
 }
 
 void main().catch((e) => {
