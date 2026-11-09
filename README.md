@@ -276,7 +276,9 @@ off, with defaults per position.
 On GitHub, Actions -> **Review a match** -> Run workflow (a Match ID, or empty for your
 latest). In ~1-1.5 min it fetches all ten players and stores them encrypted with the site
 password on the `review-data` branch; open them in Review -> **From GitHub** (ADR-031).
-Note: the run and its Match ID are visible in the public repository. Nothing runs on your
+Note: the run and its Match ID are visible in the public repository. Every run also refreshes an
+encrypted list of your last 20 matches (tick "Only refresh the list" for just that); Review ->
+**Your recent matches** opens stored ones or copies an ID for the next run (ADR-042). Nothing runs on your
 computer and the page holds no STRATZ token (ADR-034). The report shows:
 - the plan the app would have made for that draft vs what you bought and when;
 - last hits, networth and XP vs Crusader-Ancient averages for your hero and position;

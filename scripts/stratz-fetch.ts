@@ -237,6 +237,11 @@ async function main(): Promise<void> {
     if (mode === "own") anonymise(data);
     writeFileSync(join(out, "match.json"), JSON.stringify(data));
     console.log(mode === "own" ? "own latest match fetched (anonymised)" : `sample match ${found.id}`);
+  } else if (mode === "recent") {
+    // the token owner's last 20 matches, list only (ADR-042): one call
+    const owner = ownerOf(process.env.STRATZ_TOKEN ?? "");
+    if (!owner) throw new Error("no SteamId in the token");
+    await writeRecent(owner);
   } else if (mode === "match") {
     // one match, every player (ADR-031): --match <id>, or the token owner's latest parsed match.
     // Written in the clear to --out; the store step encrypts it before anything is pushed.
@@ -279,6 +284,8 @@ async function main(): Promise<void> {
         console.log(`a player failed: ${String(e).slice(0, 120)}`);
       }
     }
+    // the owner's recent matches ride along (one call), so the site's list stays fresh (ADR-042)
+    if (owner) await writeRecent(owner).catch((e) => console.log(`recent list failed: ${String(e).slice(0, 120)}`));
     const data = { id, owner: owner ?? null, fetchedAt: Math.floor(Date.now() / 1000), summary: summary.match, positions, health, vision, players };
     writeFileSync(join(out, "match.json"), JSON.stringify(data));
     console.log(`match: ${Object.keys(players).length} of ${summary.match.players?.length ?? 0} players with events, parsed ${summary.match.parsedDateTime ? "yes" : "no"}`);
@@ -286,6 +293,15 @@ async function main(): Promise<void> {
     throw new Error(`unknown mode ${mode}`);
   }
   console.log(`${calls} calls`);
+}
+
+/** recent.json in --out: { owner, fetchedAt, matches } - stored encrypted by review-store. */
+async function writeRecent(owner: number): Promise<void> {
+  const r = await gql<{ player: { matches: unknown[] | null } | null }>(recentMatchesQuery(owner, 20));
+  const matches = r.player?.matches;
+  if (matches == null) throw new Error("STRATZ could not list the matches right now");
+  writeFileSync(join(arg("out") ?? "/tmp/stratz", "recent.json"), JSON.stringify({ owner, fetchedAt: Math.floor(Date.now() / 1000), matches }));
+  console.log(`recent: ${matches.length} matches listed`);
 }
 
 void main().catch((e) => {

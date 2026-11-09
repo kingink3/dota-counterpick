@@ -6,7 +6,8 @@
 //    <random>.bin  sealed match JSON (summary, positions, health, vision, players)
 //  File names are random, so the match ids are not visible either.
 //
-//    APP_PASSWORD=... tsx scripts/review-store.ts --in match.json --dir <branch checkout>
+//    APP_PASSWORD=... tsx scripts/review-store.ts --in match.json [--recent recent.json] --dir <branch checkout>
+//    recent.bin  sealed { owner, fetchedAt, matches }: the token owner's last 20 matches (ADR-042)
 // =============================================================================
 
 import { randomBytes } from "node:crypto";
@@ -39,13 +40,21 @@ async function main(): Promise<void> {
   const password = process.env.APP_PASSWORD ?? "";
   if (password.length < MIN_PASSWORD) throw new Error("APP_PASSWORD secret missing: refusing to store a match unencrypted");
   const dir = arg("dir")!;
-  const m = JSON.parse(readFileSync(arg("in")!, "utf8")) as {
+  const key = await siteKey(password);
+  // the owner's recent matches (ADR-042): one sealed file, replaced on every run
+  const recent = arg("recent");
+  if (recent && existsSync(recent)) {
+    writeFileSync(join(dir, "recent.bin"), await seal(key, readFileSync(recent, "utf8")));
+    console.log("stored: the recent matches list");
+  }
+  const input = arg("in");
+  if (!input || !existsSync(input)) return;
+  const m = JSON.parse(readFileSync(input, "utf8")) as {
     id: number;
     owner?: number | null;
     fetchedAt: number;
     summary: { startDateTime?: number; durationSeconds?: number; didRadiantWin?: boolean; lobbyType?: string; gameMode?: string; players?: Array<{ heroId: number }> };
   };
-  const key = await siteKey(password);
   const indexPath = join(dir, "index.bin");
   let index: StoreEntry[] = existsSync(indexPath) ? (JSON.parse(await unseal(key, readFileSync(indexPath))) as StoreEntry[]) : [];
   // a re-fetch replaces the old copy

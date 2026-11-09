@@ -67,5 +67,27 @@ async function open<T>(file: string): Promise<T> {
   return JSON.parse(text) as T;
 }
 
+/** the token owner's last matches (ADR-042), refreshed by every workflow run. */
+export interface RecentList {
+  owner: number;
+  fetchedAt: number;
+  matches: Array<{
+    id: number;
+    startDateTime?: number;
+    durationSeconds?: number;
+    gameMode?: string;
+    lobbyType?: string;
+    didRadiantWin?: boolean;
+    parsedDateTime?: number | null;
+    players?: Array<{ heroId: number; isVictory: boolean; position?: string; kills: number; deaths: number; assists: number }>;
+  }>;
+}
+
+/** undefined when no run has written the list yet. */
+export const loadRecent = (): Promise<RecentList | undefined> =>
+  open<RecentList>("recent.bin").catch((e: Error) => {
+    if (/no longer in the store/.test(e.message)) return undefined;
+    throw e;
+  });
 export const loadIndex = (): Promise<StoreEntry[]> => open<StoreEntry[]>("index.bin");
 export const loadMatch = (e: StoreEntry): Promise<StoredMatch> => open<StoredMatch>(e.file);

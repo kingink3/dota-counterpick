@@ -11,7 +11,7 @@ import type { BattleReport, UseStat } from "../review-battles.js";
 import { adviceText, GRADE_LABEL, matchOverview, matchStory, type MatchOverview, type OverviewRow } from "../review-match.js";
 import { resolve } from "../resolver.js";
 import { loadHistory, loadSettings, openPlayer, saveReview, saveSettings, type MatchBase, type ReviewSettings } from "./review-local.js";
-import { loadIndex, loadMatch, storeAvailable, workflowUrl, type StoreEntry } from "./github-store.js";
+import { loadIndex, loadMatch, loadRecent, storeAvailable, workflowUrl, type RecentList, type StoreEntry } from "./github-store.js";
 
 const posOf = (p?: string | null) => Number(/(\d)/.exec(p ?? "")?.[1] ?? 0);
 
@@ -40,6 +40,9 @@ export class ReviewView {
   private open?: { id: number; base: MatchBase; reviews: Map<number, MatchReview>; loading: Set<number>; failed: Map<number, string>; expanded: Set<number> };
   /** matches the "Review a match" workflow stored (ADR-031). */
   private store?: StoreEntry[];
+  /** your last matches, written by every workflow run (ADR-042). */
+  private recent?: RecentList | null;
+  private copied?: number;
   private storeMsg = "";
   private storePoll?: number;
   private status = "";
@@ -74,6 +77,8 @@ export class ReviewView {
     const left = el("aside", "rv-side");
     const main = el("main", "rv-main");
     left.append(this.githubCard());
+    const rc = this.recentCard();
+    if (rc) left.append(rc);
     if (this.status) main.append(el("p", "rv-status", this.status));
     if (this.open) main.append(this.switcher(this.open), this.storyCard(this.open), this.overviewCard(this.open));
     if (this.current) main.append(this.report(this.current));
@@ -126,15 +131,69 @@ export class ReviewView {
     return c;
   }
 
+  /** your last 20 matches from the latest workflow run (ADR-042): open a stored one, or
+   *  copy the ID and open the workflow page (GitHub cannot prefill the input from a link). */
+  private recentCard(): HTMLElement | undefined {
+    if (!storeAvailable()) return undefined;
+    const c = card("Your recent matches");
+    const list = this.recent;
+    if (list === undefined) {
+      c.append(el("p", "muted", "Loading…"));
+      return c;
+    }
+    if (list === null || !list.matches.length) {
+      c.append(el("p", "rv-note", 'No list yet. Run "Review a match" once (any match, or tick "Only refresh the list"): every run refreshes it.'));
+      return c;
+    }
+    const stored = new Map((this.store ?? []).map((e) => [e.id, e]));
+    const ago = Math.round((Date.now() / 1000 - list.fetchedAt) / 60);
+    c.append(el("p", "rv-sub", `As of ${ago < 90 ? `${ago} min` : `${Math.round(ago / 60)} h`} ago - refreshed by every run.`));
+    const ul = el("ul", "rv-list");
+    for (const m of list.matches) {
+      const p = m.players?.[0];
+      const hero = p ? this.d.heroOf(p.heroId) : "";
+      const li = el("li", `rv-m${p?.isVictory ? " win" : " loss"}${this.open?.id === m.id ? " on" : ""}`);
+      const img = document.createElement("img");
+      img.src = this.d.heroImg(hero);
+      img.alt = "";
+      li.append(img);
+      const info = el("span", "rv-mi", "");
+      const mode = /TURBO/.test(m.gameMode ?? "") ? "turbo" : /UNRANKED/.test(m.lobbyType ?? "") ? "normal" : /RANKED/.test(m.lobbyType ?? "") ? "ranked" : "other";
+      info.append(el("b", "", this.d.heroLabel(hero)), el("span", "muted", ` ${p ? `${p.kills}/${p.deaths}/${p.assists}` : ""} · ${mode} · ${m.durationSeconds ? mmss(m.durationSeconds) : ""}`));
+      li.append(info);
+      const have = stored.get(m.id);
+      const b = el("button", "g-btn", have ? "Open" : this.copied === m.id ? "ID copied ✓" : m.parsedDateTime ? "Review ↗" : "Not parsed") as HTMLButtonElement;
+      b.type = "button";
+      b.disabled = this.busy || (!have && !m.parsedDateTime);
+      b.title = have ? "Already in the store" : m.parsedDateTime ? `Copies ${m.id} and opens the workflow: paste it as Match ID, Run.` : "STRATZ has not parsed it yet - try again later";
+      b.addEventListener("click", () => {
+        if (have) return void this.openStored(have);
+        void copyText(String(m.id)).then(() => {
+          this.copied = m.id;
+          this.render();
+        });
+        window.open(workflowUrl(), "_blank", "noopener");
+        this.pollStore();
+      });
+      li.append(b);
+      ul.append(li);
+    }
+    c.append(ul);
+    return c;
+  }
+
   private async loadStore(): Promise<void> {
     if (!storeAvailable()) return;
     this.storeMsg = "Loading…";
     this.render();
     try {
-      this.store = await loadIndex();
+      const [idx, recent] = await Promise.all([loadIndex(), loadRecent().catch(() => undefined)]);
+      this.store = idx;
+      this.recent = recent ?? null;
       this.storeMsg = this.store.length ? "" : "Nothing fetched yet.";
     } catch (e) {
       this.store = [];
+      this.recent = await loadRecent().catch(() => null) ?? null;
       this.storeMsg = String((e as Error).message ?? e);
     }
     this.render();
@@ -153,6 +212,7 @@ export class ReviewView {
         const fresh = idx.some((e) => !before.has(`${e.id}@${e.at}`));
         this.store = idx;
         this.storeMsg = fresh ? "New match fetched ✓" : `Waiting for the workflow… (${n * 20} s)`;
+        if (fresh) this.recent = (await loadRecent().catch(() => undefined)) ?? this.recent;
         if (fresh || n >= 12) window.clearInterval(this.storePoll);
         if (!fresh && n >= 12) this.storeMsg = "No new match yet - check the run on GitHub, then Refresh.";
       } catch {

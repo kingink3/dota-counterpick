@@ -3,6 +3,8 @@
 # The site (Review -> From GitHub) lists and opens it - the only way a match reaches the page.
 # Run it by hand: Actions -> "Review a match" -> Run workflow.
 #   match_id empty = the token owner's latest parsed match.
+#   list_only = only refresh the list of your last 20 matches (1 STRATZ call, ADR-042);
+#   every match run refreshes that list too.
 # Note: in a public repository the run and its inputs are public (the match id).
 # STRATZ allows 2 IP addresses per 15 minutes; STRATZ runs share one queue.
 name: Review a match
@@ -14,6 +16,11 @@ on:
         description: "Match ID (empty = your latest parsed match)"
         required: false
         default: ""
+      list_only:
+        description: "Only refresh the list of my recent matches"
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: write
@@ -37,7 +44,14 @@ jobs:
         env:
           STRATZ_TOKEN: ${{ secrets.STRATZ_TOKEN }}
           MATCH_ID: ${{ inputs.match_id }}
-        run: npx tsx scripts/stratz-fetch.ts --mode match --match "$MATCH_ID" --out /tmp/match
+          LIST_ONLY: ${{ inputs.list_only }}
+        run: |
+          mkdir -p /tmp/match
+          if [ "$LIST_ONLY" = "true" ]; then
+            npx tsx scripts/stratz-fetch.ts --mode recent --out /tmp/match
+          else
+            npx tsx scripts/stratz-fetch.ts --mode match --match "$MATCH_ID" --out /tmp/match
+          fi
       - name: Add it to the encrypted store (review-data branch)
         env:
           APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
@@ -46,7 +60,7 @@ jobs:
           url="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
           git clone -q --depth 1 --branch review-data --single-branch "$url" /tmp/store || {
             mkdir -p /tmp/store && cd /tmp/store && git init -q -b review-data && git remote add origin "$url"; cd -; }
-          npx tsx scripts/review-store.ts --in /tmp/match/match.json --dir /tmp/store
+          npx tsx scripts/review-store.ts --in /tmp/match/match.json --recent /tmp/match/recent.json --dir /tmp/store
           cd /tmp/store
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
