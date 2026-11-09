@@ -224,7 +224,7 @@ export class ReviewView {
     }
     const stored = new Map((this.store ?? []).map((e) => [e.id, e]));
     const ago = Math.round((Date.now() / 1000 - list.fetchedAt) / 60);
-    c.append(el("p", "rv-sub", `As of ${ago < 90 ? `${ago} min` : `${Math.round(ago / 60)} h`} ago. Every hour up to 3 matches from this list are reviewed by themselves - no need to press anything.`));
+    c.append(el("p", "rv-sub", `As of ${ago < 90 ? `${ago} min` : `${Math.round(ago / 60)} h`} ago. Every 5 minutes up to 3 new matches from this list are reviewed by themselves (GitHub may start a run a few minutes late) - no need to press anything.`));
     const ul = el("ul", "rv-list");
     for (const m of list.matches) {
       const p = m.players?.[0];

@@ -2,8 +2,9 @@
 # their replays (OpenDota -> Valve -> odota/parser), STRATZ only where that fails, and adds
 # them, encrypted with the site password (APP_PASSWORD), to the `review-data` branch.
 # The site (Review) lists and opens them.
-#   - every hour (schedule): your new parsed matches of the last 2 days, at most 3 a run,
-#     plus the list of your last 20 - nothing to click;
+#   - every 5 minutes (schedule): matches of your last-20 list not stored yet, newest first,
+#     at most 3 a run, from their replays only (no STRATZ); a run with nothing new stops after
+#     one OpenDota call (~30 s) - nothing to click;
 #   - from the site ("Review" button, ADR-044) or by hand: match_id = that match,
 #     empty = your latest parsed match; list_only = only refresh the list.
 #   The list of your matches comes from OpenDota; the STRATZ token is still read for your
@@ -14,7 +15,8 @@ name: Review a match
 
 on:
   schedule:
-    - cron: "17 * * * *"
+    # GitHub's shortest schedule; runs can start late when GitHub is busy
+    - cron: "2-59/5 * * * *"
   workflow_dispatch:
     inputs:
       match_id:
@@ -27,7 +29,7 @@ on:
         required: false
         default: false
       auto:
-        description: "Like the hourly run: my new matches of the last 2 days"
+        description: "Like the scheduled run: my listed matches not stored yet"
         type: boolean
         required: false
         default: false
@@ -35,8 +37,10 @@ on:
 permissions:
   contents: write
 
+# its own queue (every 5 min would starve the STRATZ stats workflow); the STRATZ fallback
+# below still waits for a free STRATZ slot by itself
 concurrency:
-  group: stratz
+  group: review
   cancel-in-progress: false
 
 jobs:
@@ -50,16 +54,6 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - uses: actions/setup-java@v4
-        if: ${{ inputs.list_only != true }}
-        with:
-          distribution: temurin
-          java-version: 21
-          cache: maven
-      - name: Build our replay extractor (clarity, ADR-055; optional)
-        if: ${{ inputs.list_only != true }}
-        working-directory: tools/clarity
-        run: mvn -q -B compile dependency:copy-dependencies || echo "extractor not built - reviews go without HP / items"
       - name: Open the encrypted store (review-data branch)
         env:
           APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
@@ -68,13 +62,30 @@ jobs:
           url="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
           git clone -q --depth 1 --branch review-data --single-branch "$url" /tmp/store || {
             mkdir -p /tmp/store && cd /tmp/store && git init -q -b review-data && git remote add origin "$url"; cd -; }
-          npx tsx scripts/review-store.ts --dir /tmp/store --ids /tmp/stored-ids.json --missed /tmp/missed.json
+          npx tsx scripts/review-store.ts --dir /tmp/store --ids /tmp/stored-ids.json --missed /tmp/missed.json --prev /tmp/prev-recent.json
+      - name: Anything to do? (scheduled runs)
+        id: plan
+        if: ${{ github.event_name == 'schedule' || inputs.auto == true }}
+        env:
+          STRATZ_TOKEN: ${{ secrets.STRATZ_TOKEN }}
+        run: npx tsx scripts/replay-review.ts --mode auto --plan --skip /tmp/stored-ids.json --missed /tmp/missed.json --prev /tmp/prev-recent.json --max 3 --out /tmp/plan
+      - uses: actions/setup-java@v4
+        if: ${{ inputs.list_only != true && steps.plan.outputs.work != 'false' }}
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+      - name: Build our replay extractor (clarity, ADR-055; optional)
+        if: ${{ inputs.list_only != true && steps.plan.outputs.work != 'false' }}
+        working-directory: tools/clarity
+        run: mvn -q -B compile dependency:copy-dependencies || echo "extractor not built - reviews go without HP / items"
       - name: Start the replay parser (odota/parser)
-        if: ${{ inputs.list_only != true }}
+        if: ${{ inputs.list_only != true && steps.plan.outputs.work != 'false' }}
         run: |
           docker run -d --name parser -p 5600:5600 odota/parser >/dev/null
           for i in $(seq 1 60); do curl -s -o /dev/null localhost:5600 && break; sleep 2; done
       - name: Matches from their replays (ADR-053)
+        if: ${{ steps.plan.outputs.store != 'false' }}
         env:
           STRATZ_TOKEN: ${{ secrets.STRATZ_TOKEN }}
           MATCH_ID: ${{ inputs.match_id }}
@@ -90,7 +101,8 @@ jobs:
           else
             npx tsx scripts/replay-review.ts --mode match --match "$MATCH_ID" --missed /tmp/missed.json --out /tmp/match
           fi
-      - name: STRATZ for what the replays could not do (fallback)
+      - name: STRATZ for what the replays could not do (fallback; not on scheduled runs)
+        if: ${{ github.event_name != 'schedule' && inputs.auto != true }}
         env:
           STRATZ_TOKEN: ${{ secrets.STRATZ_TOKEN }}
           EVENT: ${{ github.event_name }}
@@ -116,11 +128,12 @@ jobs:
           done
           if [ "$recent" = "true" ] && [ "$rflag" = "" ]; then npx tsx scripts/stratz-fetch.ts --mode recent --out /tmp/match; fi
       - name: Replays for the STRATZ matches (optional - ADR-045)
-        if: ${{ inputs.list_only != true }}
+        if: ${{ inputs.list_only != true && steps.plan.outputs.work != 'false' }}
         run: |
           ls /tmp/match/match*.json >/dev/null 2>&1 && npx tsx scripts/replay-fetch.ts --dir /tmp/match || echo "no matches to add"
           docker rm -f parser >/dev/null || true
       - name: Add to the encrypted store
+        if: ${{ steps.plan.outputs.store != 'false' }}
         env:
           APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
         run: |

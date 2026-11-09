@@ -39,6 +39,9 @@ interface OdRecent {
 const GAME_MODE: Record<number, string> = { 1: "ALL_PICK", 2: "CAPTAINS_MODE", 3: "RANDOM_DRAFT", 4: "SINGLE_DRAFT", 5: "ALL_RANDOM", 16: "CAPTAINS_DRAFT", 18: "ABILITY_DRAFT", 20: "ALL_RANDOM_DEATH_MATCH", 22: "ALL_PICK_RANKED", 23: "TURBO" };
 const LOBBY: Record<number, string> = { 0: "UNRANKED", 1: "PRACTICE", 2: "TOURNAMENT", 5: "TEAM_MATCH", 6: "SOLO_QUEUE", 7: "RANKED", 9: "BATTLE_CUP" };
 
+/** a match this long after its end with no replay is given up on (Valve keeps them ~2 weeks). */
+const MISS_AFTER = 86400;
+
 async function recentOf(owner: number): Promise<OdRecent[] | undefined> {
   const r = await fetch(`${OD}/players/${owner}/recentMatches`).catch(() => undefined);
   if (!r?.ok) return undefined;
@@ -94,14 +97,27 @@ async function main(): Promise<void> {
   if (mode === "auto") {
     const skipFile = arg("skip");
     const skip = new Set<number>(skipFile && existsSync(skipFile) ? (JSON.parse(readFileSync(skipFile, "utf8")) as number[]) : []);
-    if (!list) todo.latest = true; // STRATZ's own auto run picks them
-    // every listed match not stored yet, newest first: the hourly run fills the whole list in
-    // a few hours, so nobody has to press anything; older ones get one replay try, no STRATZ
+    // every listed match not stored yet, newest first: the scheduled run (every 5 min) fills the
+    // whole list by itself; no STRATZ here (its 2-IP limit), the page's "Try STRATZ" does that
     ids = (list ?? []).filter((m) => !skip.has(m.match_id) && !missed.has(m.match_id)).slice(0, Number(arg("max") ?? 3)).map((m) => m.match_id);
   } else {
     const id = Number(arg("match") || 0) || list?.[0]?.match_id;
     if (id) ids = [id];
     else todo.latest = true;
+  }
+
+  // --plan: only say whether there is work (new matches, or the list changed), for the
+  // workflow to skip the parser / extractor / store when there is none
+  if (arg("plan") !== undefined) {
+    const prevFile = arg("prev");
+    const prev = prevFile && existsSync(prevFile) ? (JSON.parse(readFileSync(prevFile, "utf8")) as number[]) : [];
+    const now = (list ?? []).map((m) => m.match_id);
+    const listChanged = !!list && (prev.length !== now.length || prev.some((id, i) => id !== now[i]));
+    const work = mode !== "auto" || ids.length > 0;
+    const outFile = process.env.GITHUB_OUTPUT;
+    if (outFile) writeFileSync(outFile, `work=${work}\nstore=${work || listChanged}\n`, { flag: "a" });
+    console.log(`plan: ${ids.length} match(es) to review, list ${listChanged ? "changed" : "unchanged"}`);
+    return;
   }
 
   // --- each: the replay, or left for STRATZ ------------------------------------------------
@@ -111,11 +127,14 @@ async function main(): Promise<void> {
   const costs = Object.fromEntries(Object.entries(stats.items).map(([k, v]) => [k, v.cost]));
   for (const [n, id] of ids.entries()) {
     const t0 = Date.now();
-    const fresh = (list?.find((m) => m.match_id === id)?.start_time ?? 0) >= Date.now() / 1000 - 2 * 86400;
-    const backfill = mode === "auto" && !fresh;
+    const end = list?.find((m) => m.match_id === id);
+    const age = end ? Date.now() / 1000 - end.start_time - end.duration : 0;
+    const auto = mode === "auto";
+    // a just-finished match may have no replay yet: ask OpenDota and come back next run
+    const backfill = auto && age > MISS_AFTER;
     let msg: string;
     try {
-      const od = await odWithReplay(id, !backfill);
+      const od = await odWithReplay(id, auto ? "ask" : true);
       if (!od?.replay_url) msg = "no replay";
       else {
         const p = await parseReplay(id, od.replay_url, parser);
@@ -138,9 +157,9 @@ async function main(): Promise<void> {
     }
     const ok = msg.startsWith("ok");
     if (ok) missed.delete(id);
-    else if (backfill) missed.add(id); // not retried every hour; the page can still ask for it
-    else todo.ids.push(id);
-    console.log(`match ${n + 1}/${ids.length}: ${msg}${ok ? "" : backfill ? " - older match, marked as missed" : " - left for STRATZ"}`);
+    else if (backfill || /CDN HTTP 404/.test(msg)) missed.add(id); // not retried; the page can still try STRATZ
+    else if (!auto) todo.ids.push(id);
+    console.log(`match ${n + 1}/${ids.length}: ${msg}${ok ? "" : missed.has(id) ? " - marked as missed" : auto ? " - next run" : " - left for STRATZ"}`);
   }
   done();
 }

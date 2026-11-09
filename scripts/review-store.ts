@@ -56,9 +56,12 @@ async function main(): Promise<void> {
     // --missed <file>: matches the scheduled run found no replay for (kept in recent.bin)
     const missedOut = arg("missed");
     const rb = join(dir, "recent.bin");
-    if (missedOut) {
-      const prev = existsSync(rb) ? (JSON.parse(await unseal(key, readFileSync(rb))) as { missed?: number[] }) : {};
-      writeFileSync(missedOut, JSON.stringify(prev.missed ?? []));
+    const prevOut = arg("prev");
+    if (missedOut || prevOut) {
+      const prev = existsSync(rb) ? (JSON.parse(await unseal(key, readFileSync(rb))) as { missed?: number[]; matches?: Array<{ id: number }> }) : {};
+      if (missedOut) writeFileSync(missedOut, JSON.stringify(prev.missed ?? []));
+      // --prev <file>: the ids of the stored list, to tell whether it changed
+      if (prevOut) writeFileSync(prevOut, JSON.stringify((prev.matches ?? []).map((m) => m.id)));
     }
     console.log(`store: ${index.length} matches`);
     return;
