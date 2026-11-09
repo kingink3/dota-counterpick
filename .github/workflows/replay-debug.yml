@@ -1,0 +1,19 @@
+# temporary (ADR-045): name formats in odota/parser output, on a public pro match
+name: Replay debug
+on: { workflow_dispatch: {} }
+permissions: { contents: read }
+jobs:
+  d:
+    runs-on: ubuntu-latest
+    services:
+      parser: { image: odota/parser, ports: ["5600:5600"] }
+    steps:
+      - run: |
+          url=$(curl -sf https://api.opendota.com/api/matches/9081380063 | jq -r .replay_url)
+          curl -s -o r.pack "$url"; zstd -q -d r.pack -o r.dem
+          curl -s localhost:5600 --data-binary @r.dem -o o.ndjson
+          echo "interval unit values:"; jq -r 'select(.type=="interval") | .unit' o.ndjson | sort -u | head -12
+          echo "modifier targetname values (hero targets):"; jq -r 'select(.type=="DOTA_COMBATLOG_MODIFIER_ADD" and .targethero==true) | .targetname' o.ndjson | sort -u | head -12
+          echo "a stun add:"; jq -c 'select(.type=="DOTA_COMBATLOG_MODIFIER_ADD" and .inflictor=="modifier_stunned")' o.ndjson | head -2
+          echo "its remove:"; jq -c 'select(.type=="DOTA_COMBATLOG_MODIFIER_REMOVE" and .inflictor=="modifier_stunned")' o.ndjson | head -2
+          echo "life_state values:"; jq -r 'select(.type=="interval") | .life_state' o.ndjson | sort | uniq -c
