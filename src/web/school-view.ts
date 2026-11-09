@@ -253,11 +253,12 @@ export class SchoolView {
     const c = el("div", "sc-intro", "");
     c.append(
       el("h2", "", "School"),
-      el("p", "", "Start from zero and build up: every lesson has the theory and a test on it, situations to decide (map, items, draft), and a practice goal checked on your own reviewed matches."),
+      el("p", "", this.d.modules.indexOf(this.mod) === 0 ? "Start from zero and build up: every lesson has the theory and a test on it, situations to decide (map, items, draft), and a practice goal checked on your own reviewed matches." : `Module ${this.d.modules.indexOf(this.mod) + 1}: ${this.mod.title}. Best after the module 1 exam, but open to everyone.`),
       el("p", "rv-note", `Facts checked for patch ${this.mod.patch} (${this.mod.checked}). Progress is kept in this browser, and on your account if you sign in.`),
     );
     const go = el("button", "g-btn", "Start with lesson 1") as HTMLButtonElement;
     go.type = "button";
+    go.textContent = `Start with: ${this.mod.lessons[0]!.title}`;
     go.addEventListener("click", () => this.open(this.mod.lessons[0]!));
     c.append(go);
     return c;
@@ -273,7 +274,25 @@ export class SchoolView {
   }
 
   private moduleCard(): HTMLElement {
-    const c = card(`Module 1 - ${this.mod.title}`);
+    const mi = this.d.modules.indexOf(this.mod);
+    const c = card(`Module ${mi + 1} - ${this.mod.title}`);
+    if (this.d.modules.length > 1) {
+      const sw = el("div", "sc-mods", "");
+      this.d.modules.forEach((m, i) => {
+        const done = (this.progress.exam[m.id] ?? 0) >= EXAM_PASS;
+        const b = el("button", `rv-tab${m === this.mod ? " on" : ""}`, `${i + 1}. ${m.title}${done ? " ✓" : ""}`) as HTMLButtonElement;
+        b.type = "button";
+        b.addEventListener("click", () => {
+          this.mod = m;
+          this.lesson = undefined;
+          this.exam = false;
+          this.attempt = undefined;
+          this.render();
+        });
+        sw.append(b);
+      });
+      c.append(sw);
+    }
     const ul = el("ol", "sc-lessons", "");
     for (const l of this.mod.lessons) {
       const li = el("li", this.lesson?.id === l.id && !this.exam ? "on" : "", "");

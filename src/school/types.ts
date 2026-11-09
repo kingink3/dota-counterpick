@@ -28,12 +28,14 @@ export interface TheoryBlock {
   p: string[];
 }
 
-export type GoalId = "cs10" | "deaths" | "idle" | "observers" | "stacks" | "kp";
+export type GoalId = "cs10" | "nw20" | "xp10" | "deaths" | "idle" | "observers" | "stacks" | "dewards" | "kp";
 
 export interface PracticeGoal {
   id: GoalId;
   /** what to do in your next games. */
   text: string;
+  /** the threshold, when the goal's default does not fit this lesson (see practice.ts). */
+  target?: number;
   /** positions the goal is for (undefined = all). */
   roles?: number[];
   /** matches that must meet it, out of the last `of` reviewed with this role. */

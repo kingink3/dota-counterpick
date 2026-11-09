@@ -5,13 +5,17 @@ import { join } from "node:path";
 import { CounterPickEngine } from "../src/engine.js";
 import { resolve } from "../src/resolver.js";
 import { FOUNDATIONS } from "../src/school/foundations.js";
+import { ROLES } from "../src/school/roles.js";
 import { generate } from "../src/school/generate.js";
 import { checkGoal } from "../src/school/practice.js";
 import type { MatchReview } from "../src/review.js";
 
 test("school: every question is well-formed and ids are unique", () => {
   const ids = new Set<string>();
-  for (const l of FOUNDATIONS.lessons) {
+  const lessonIds = new Set<string>();
+  for (const l of [...FOUNDATIONS.lessons, ...ROLES.lessons]) {
+    assert.ok(!lessonIds.has(l.id), `duplicate lesson id ${l.id}`);
+    lessonIds.add(l.id);
     assert.ok(l.theory.length >= 2, `${l.id}: theory`);
     assert.ok(l.quiz.length >= 3, `${l.id}: test`);
     for (const q of [...l.quiz, ...l.situations]) {
@@ -69,4 +73,15 @@ test("school: progress merge keeps the best of both and clamps to 0..1", async (
   assert.deepEqual(m.exam, { foundations: 0.6 });
   assert.ok(sameProgress(m, mergeProgress(m, undefined)));
   assert.ok(!sameProgress(m, mergeProgress(m, { tests: { damage: 0.1 } })));
+});
+
+// ADR-048: per-goal thresholds and the benchmark goals.
+test("school: benchmark goals and per-goal targets", async () => {
+  const { checkMatch } = await import("../src/school/practice.js");
+  const r = { matchId: 1, position: 1, kda: [5, 6, 2], comparable: true, farm: [{ minute: 20, nw: 9000, nwBench: 8500 }, { minute: 10, xp: 3000, xpBench: 3400 }] } as unknown as MatchReview;
+  assert.equal(checkMatch("nw20", r).ok, true);
+  assert.equal(checkMatch("xp10", r).ok, false);
+  assert.equal(checkMatch("deaths", r).ok, false, "6 > 5 by default");
+  assert.equal(checkMatch("deaths", r, 6).ok, true, "the offlane goal allows 6");
+  assert.equal(checkMatch("nw20", { ...r, comparable: false } as MatchReview).ok, null, "turbo: no benchmark verdict");
 });

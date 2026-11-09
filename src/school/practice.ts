@@ -16,28 +16,51 @@ export interface GoalCheck {
   done: boolean;
 }
 
+/** default thresholds; a goal can set its own `target`. */
+export const GOAL_DEFAULT: Record<GoalId, number> = {
+  deaths: 5, // at most
+  cs10: 1, // x the ranked average
+  nw20: 1, // x the ranked average
+  xp10: 1, // x the ranked average
+  idle: 2, // minutes, under
+  observers: 8,
+  stacks: 3,
+  dewards: 2,
+  kp: 0.5,
+};
+
 /** one match against one goal: ok, and the value shown. */
-export function checkMatch(id: GoalId, r: MatchReview): { ok: boolean | null; value: string } {
+export function checkMatch(id: GoalId, r: MatchReview, target = GOAL_DEFAULT[id]): { ok: boolean | null; value: string } {
+  const bench = (minute: number, f: "cs" | "nw" | "xp", unit: string) => {
+    const row = r.farm.find((x) => x.minute === minute);
+    const v = row?.[f];
+    const b = row?.[`${f}Bench` as "csBench" | "nwBench" | "xpBench"];
+    if (!r.comparable || v === undefined || b === undefined) return { ok: null, value: `no ${minute}:00 benchmark` };
+    return { ok: v >= b * target, value: `${Math.round(v)} vs ${Math.round(b * target)} ${unit}` };
+  };
   switch (id) {
     case "deaths":
-      return { ok: r.kda[1] <= 5, value: `${r.kda[1]} deaths` };
-    case "cs10": {
-      const row = r.farm.find((f) => f.minute === 10);
-      if (!r.comparable || row?.cs === undefined || row.csBench === undefined) return { ok: null, value: "no 10:00 benchmark" };
-      return { ok: row.cs >= row.csBench, value: `${row.cs} vs ${Math.round(row.csBench)} last hits` };
-    }
+      return { ok: r.kda[1] <= target, value: `${r.kda[1]} deaths` };
+    case "cs10":
+      return bench(10, "cs", "last hits");
+    case "nw20":
+      return bench(20, "nw", "net worth");
+    case "xp10":
+      return bench(10, "xp", "XP");
     case "idle": {
       const i = r.idle;
       if (!i) return { ok: null, value: "no positions" };
       const min = i.seconds !== undefined ? i.seconds / 60 : i.minutes.length;
-      return { ok: min < 2, value: `${min.toFixed(1)} idle min` };
+      return { ok: min < target, value: `${min.toFixed(1)} idle min` };
     }
     case "observers":
-      return r.vision ? { ok: r.vision.observers >= 8, value: `${r.vision.observers} observers` } : { ok: null, value: "no ward data" };
+      return r.vision ? { ok: r.vision.observers >= target, value: `${r.vision.observers} observers` } : { ok: null, value: "no ward data" };
     case "stacks":
-      return r.vision ? { ok: r.vision.stacks >= 3, value: `${r.vision.stacks} stacks` } : { ok: null, value: "no stack data" };
+      return r.vision ? { ok: r.vision.stacks >= target, value: `${r.vision.stacks} stacks` } : { ok: null, value: "no stack data" };
+    case "dewards":
+      return r.vision ? { ok: r.vision.dewards >= target, value: `${r.vision.dewards} wards destroyed` } : { ok: null, value: "no ward data" };
     case "kp":
-      return r.kp !== undefined ? { ok: r.kp >= 0.5, value: `${Math.round(r.kp * 100)}% of kills` } : { ok: null, value: "too few kills" };
+      return r.kp !== undefined ? { ok: r.kp >= target, value: `${Math.round(r.kp * 100)}% of kills` } : { ok: null, value: "too few kills" };
   }
 }
 
@@ -45,7 +68,7 @@ export function checkGoal(g: PracticeGoal, reviews: MatchReview[]): GoalCheck {
   const fit = reviews.filter((r) => !g.roles || (r.position !== undefined && g.roles.includes(r.position)));
   const per: GoalCheck["per"] = [];
   for (const r of fit) {
-    const c = checkMatch(g.id, r);
+    const c = checkMatch(g.id, r, g.target ?? GOAL_DEFAULT[g.id]);
     if (c.ok === null) continue;
     per.push({ matchId: r.matchId, ...c });
     if (per.length >= g.of) break;
