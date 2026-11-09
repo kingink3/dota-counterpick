@@ -107,7 +107,7 @@ async function main(): Promise<void> {
         const p = await parseReplay(id, od.replay_url, parser);
         if ("error" in p) msg = p.error;
         else {
-          const m = matchFromReplay(p.lines, { ...od, match_id: id }, { ids: idsJson, components, costs });
+          const m = matchFromReplay(p.lines, { ...od, match_id: id }, { ids: idsJson, components, costs, ...(p.extract ? { extract: p.extract } : {}) });
           const replay = buildTimeline(p.lines);
           if (!m || !replay) msg = "the parse had no players";
           else if (owner && !m.players[String(owner)]) msg = "you are not in it"; // still stored: someone else's match by id
@@ -115,7 +115,7 @@ async function main(): Promise<void> {
           if (m && replay) {
             m.summary.id = id;
             writeFileSync(join(out, `match-${id}.json`), JSON.stringify({ id, owner: owner ?? null, fetchedAt: Math.floor(Date.now() / 1000), ...m, replay }));
-            msg = `ok from the replay (${p.mb.toFixed(0)} MB, ${Object.keys(m.players).length} players, ${Math.round((Date.now() - t0) / 1000)} s)${msg ? `; ${msg}` : ""}`;
+            msg = `ok from the replay (${p.mb.toFixed(0)} MB, ${Object.keys(m.players).length} players, HP / items ${m.health ? "yes" : "no"}, ${Math.round((Date.now() - t0) / 1000)} s)${msg ? `; ${msg}` : ""}`;
           }
         }
       }

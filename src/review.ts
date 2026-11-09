@@ -150,6 +150,8 @@ export interface MatchData {
   health?: StratzHealth;
   /** every player's wards / dewards / stacks (optional: the match overview). */
   vision?: StratzVision;
+  /** where the events came from (ADR-053); undefined = STRATZ. */
+  source?: "replay" | "stratz";
 }
 
 export interface Ids {
@@ -945,7 +947,10 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
       findings.push({ id: "objectives_high", area: "map", severity: 0.2, good: true, title: `Present at ${macro.buildingsWith} of ${macro.enemyBuildings} enemy buildings taken`, detail: line, confidence: "confirmed" });
   }
 
-  const fountain = (me.stats?.tripsFountainPerMinute ?? []).reduce((a, b) => a + b, 0);
+  // STRATZ counts every respawn as a trip (checked against the replay: its count is deaths +
+  // walks back, within 2, ADR-055); the replay path counts walks back only
+  const tripsRaw = (me.stats?.tripsFountainPerMinute ?? []).reduce((a, b) => a + b, 0);
+  const fountain = d.source === "replay" ? tripsRaw : Math.max(0, tripsRaw - deathsList.length);
   if (duration > 1200 && fountain / (duration / 600) > 3) {
     findings.push({ id: "fountain_trips", area: "execution", severity: 0.15, title: `${fountain} fountain trips`, detail: "Over 3 per 10 minutes: regen, a Bottle or a lane switch may save the walks." });
   }

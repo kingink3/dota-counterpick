@@ -5,7 +5,7 @@
 // =============================================================================
 
 import { execFileSync } from "node:child_process";
-import { createReadStream, rmSync, statSync, writeFileSync } from "node:fs";
+import { createReadStream, existsSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { Readable } from "node:stream";
 import type { OdMatch } from "../src/replay-match.js";
 
@@ -32,8 +32,19 @@ export async function odWithReplay(id: number): Promise<OdFull | undefined> {
   return m;
 }
 
-/** download, unpack, parse: the parser's NDJSON lines, or why not. */
-export async function parseReplay(id: number, url: string, parser: string): Promise<{ lines: string[]; mb: number } | { error: string }> {
+/** our clarity extractor (tools/clarity, ADR-055), when it was built: HP, mana, gold, items. */
+const EXTRACT_CP = "tools/clarity/target/classes:tools/clarity/target/dependency/*";
+function extract(dem: string): string[] | undefined {
+  if (!existsSync("tools/clarity/target/classes/app/Extract.class")) return undefined;
+  try {
+    return execFileSync("java", ["-cp", EXTRACT_CP, "app.Extract", dem], { maxBuffer: 256 << 20, stdio: ["ignore", "pipe", "ignore"] }).toString().split("\n");
+  } catch {
+    return undefined; // optional: the review runs without it
+  }
+}
+
+/** download, unpack, parse: the parser's NDJSON lines (+ our extractor's), or why not. */
+export async function parseReplay(id: number, url: string, parser: string): Promise<{ lines: string[]; extract?: string[]; mb: number } | { error: string }> {
   const r = await fetch(url);
   if (!r.ok) return { error: `CDN HTTP ${r.status}` };
   const packed = `/tmp/r-${id}.pack`;
@@ -50,9 +61,10 @@ export async function parseReplay(id: number, url: string, parser: string): Prom
     body: Readable.toWeb(createReadStream(dem)) as never,
     duplex: "half",
   } as RequestInit & { duplex: "half" });
+  const ex = res.ok ? extract(dem) : undefined;
   rmSync(dem, { force: true });
   if (!res.ok) return { error: `parser HTTP ${res.status}` };
-  return { lines: (await res.text()).split("\n"), mb };
+  return { lines: (await res.text()).split("\n"), ...(ex ? { extract: ex } : {}), mb };
 }
 
 /** the "SteamId" claim of a STRATZ token (no call: read from the token). */

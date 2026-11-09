@@ -58,13 +58,6 @@ const STEAM64 = 76561197960265728n;
 /** items that heal on use; Wand / Stick count from WAND_HEAL_CHARGES charges (~150+ HP). */
 const HEAL_ITEMS = /^item_(flask|faerie_fire|enchanted_mango|cheese|greater_faerie_fire|royal_jelly|famango|great_famango|greater_famango)$/;
 const WAND_HEAL_CHARGES = 5;
-/** Observer Ward: vision 1600, 360 s (Liquipedia, checked 2026-11-09). */
-const OBS_RADIUS = 1600;
-const OBS_LIFE = 360;
-/** world units per map cell (positions are cells). */
-const CELL = 64;
-/** "right before the death": the last 20 s. */
-const WARD_WALK_WINDOW = 20;
 /** cells from the fountain: inside / away (the fountain area is ~10 cells across). */
 const FOUNTAIN_IN = 8;
 const FOUNTAIN_AWAY = 30;
@@ -75,7 +68,6 @@ interface Ev {
   type: string;
   time: number;
   slot?: number;
-  ehandle?: number;
   unit?: string;
   hero_id?: number;
   x?: number;
@@ -502,23 +494,6 @@ export function matchFromReplay(lines: Iterable<string>, od: OdMatch | undefined
   for (const m of me.values()) {
     const r = m.stats.heroDamageReceivedPerMinute!;
     for (let i = 1; i < r.length; i++) r[i]! += r[i - 1]!;
-  }
-
-  // --- walked into an enemy Observer's vision before dying (geometry, ADR-055) ----------
-  // a ward sees a circle of OBS_RADIUS for OBS_LIFE s or until destroyed; trees and cliffs
-  // are not counted, so this says "in range", not "seen"
-  const wards = evs.filter((e) => e.type === "obs" && e.slot !== undefined).map((e) => {
-    const gone = evs.find((x) => x.type === "obs_left" && x.ehandle !== undefined && x.ehandle === e.ehandle && x.time >= e.time);
-    return { radiant: radiant(e.slot!), x: e.x ?? 0, y: e.y ?? 0, from: e.time, to: gone ? gone.time : e.time + OBS_LIFE };
-  });
-  const inEnemyWard = (s: number, t: number, x: number, y: number) =>
-    wards.some((w) => w.radiant !== radiant(s) && t >= w.from && t < w.to && Math.hypot(w.x - x, w.y - y) <= OBS_RADIUS / CELL);
-  for (const [s, m] of me) {
-    const rows = intervals.get(s)!;
-    for (const d of m.playbackData.deathEvents!) {
-      const near = rows.filter((r) => r.time >= d.time - WARD_WALK_WINDOW && r.time <= d.time);
-      d.isWardWalkThrough = near.some((r, i) => i > 0 && inEnemyWard(s, r.time, r.x!, r.y!) && !inEnemyWard(s, near[i - 1]!.time, near[i - 1]!.x!, near[i - 1]!.y!));
-    }
   }
 
   // --- fountain trips: back in your fountain, alive, from away (not a respawn) ----------

@@ -88,3 +88,33 @@ test("replay match: the review runs on it", () => {
   const r = reviewMatch({ summary: m.summary, me: m.players["1000"]!, positions: m.positions, vision: m.vision }, 1000, { kb: loadKB(), ids, label: (c) => c });
   assert.equal(r.kda[1], 1);
 });
+
+test("replay match + our extractor: HP, mana, gold at death, real inventory; clocks aligned", () => {
+  // the extractor's clock runs 8 s behind the parser's (as on the real sample)
+  const ex: string[] = [];
+  for (let t = -8; t <= 172; t++) {
+    HEROES.forEach((_, s) => {
+      const real = t + 8;
+      const dead = s === 0 && real >= 100 && real < 130;
+      ex.push(JSON.stringify({ t, s, lv: 1 + Math.floor(real / 40), hp: dead ? 0 : 500, mhp: 600, mp: 200, mmp: 300, rg: 150, ug: 350, it: s === 0 ? ["item_blink", "item_magic_wand", null, null, null, null, null, null, null, null] : [null, null, null, null, null, null, null, null, null, null], ch: s === 0 ? [0, real > 50 ? 9 : 2, 0, 0, 0, 0, 0, 0, 0, 0] : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }));
+    });
+  }
+  const lines = parse().map((l) => (l.includes('"interval"') ? l.replace(/"level":\d+,?/, "") : l));
+  // parser level per second, like the extractor's
+  const withLevel = lines.map((l) => {
+    if (!l.includes('"interval"')) return l;
+    const o = JSON.parse(l) as { time: number };
+    return JSON.stringify({ ...o, level: 1 + Math.floor(o.time / 40) });
+  });
+  const m = matchFromReplay(withLevel, undefined, { ids, extract: ex })!;
+  assert.ok(m.health, "health for every player");
+  const axe = m.players["1000"]!;
+  const hp = (axe.playbackData as { playerUpdateHealthEvents?: Array<{ time: number; hp: number }> }).playerUpdateHealthEvents!;
+  assert.equal(hp.find((h) => h.hp === 0)!.time, 100, "HP 0 at the parser's death time: offset found");
+  const d = axe.playbackData!.deathEvents![0]!;
+  assert.equal((d.reliableGold ?? 0) + (d.unreliableGold ?? 0), 500);
+  assert.equal(d.hasHealAvailable, true, "Wand with 9 charges");
+  const inv = axe.playbackData!.inventoryEvents!;
+  assert.equal(inv[inv.length - 1]!.item1?.itemId, idOf("magic_wand", ids.items));
+  assert.equal((inv[inv.length - 1]!.item1 as { charges?: number }).charges, 9);
+});

@@ -26,3 +26,4 @@ discgolf-flex-automation/
 .backup-*/
 .claude/
 howdoiplay-report.md
+tools/clarity/target/

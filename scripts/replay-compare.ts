@@ -35,7 +35,7 @@ for (const acc of Object.keys(st.players)) {
   const a = reviewMatch({ summary: st.summary, me: st.players[acc]!, ...(st.positions ? { positions: st.positions } : {}), ...(st.health ? { health: st.health } : {}), ...(st.vision ? { vision: st.vision } : {}), replay }, Number(acc), ctx);
   const me = rm.players[acc];
   if (!me) { console.log(acc, "missing in replay"); continue; }
-  const b = reviewMatch({ summary: rm.summary, me, positions: rm.positions, vision: rm.vision, ...(rm.health ? { health: rm.health } : {}), replay }, Number(acc), ctx);
+  const b = reviewMatch({ summary: rm.summary, me, positions: rm.positions, vision: rm.vision, ...(rm.health ? { health: rm.health } : {}), replay, source: "replay" }, Number(acc), ctx);
   const fa = new Map(a.findings.map((f) => [f.id, f]));
   const fb = new Map(b.findings.map((f) => [f.id, f]));
   console.log(`\n== slot ${st.players[acc]!.playerSlot} pos ${a.position}/${b.position} deaths ${a.deaths?.length ?? "?"}/${b.deaths?.length ?? "?"}`);

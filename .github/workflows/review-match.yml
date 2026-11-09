@@ -50,6 +50,16 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - uses: actions/setup-java@v4
+        if: ${{ inputs.list_only != true }}
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+      - name: Build our replay extractor (clarity, ADR-055; optional)
+        if: ${{ inputs.list_only != true }}
+        working-directory: tools/clarity
+        run: mvn -q -B compile dependency:copy-dependencies || echo "extractor not built - reviews go without HP / items"
       - name: Open the encrypted store (review-data branch)
         env:
           APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
