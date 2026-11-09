@@ -39,7 +39,7 @@ const DANGER: Record<string, number> = {
 
 /** an item is shown as the answer to an enemy only with at least this much of its score
  *  coming from that enemy (a hero dealing a fifth of a school is not "the" reason for Pipe). */
-const ANSWER_MIN = 0.4;
+const ANSWER_MIN = 0.25;
 
 export interface Threat {
   enemy: string;

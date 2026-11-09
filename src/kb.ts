@@ -119,8 +119,8 @@ export function readRawKB(root: string = REPO_ROOT): RawKB {
  *  minutes 5..40 for our bracket). Both optional; a pair with under 300 games is left
  *  to the position average. */
 const DAMAGE_MIN_GAMES = 300;
-function loadDamage(root: string): Pick<RawKB, "heroDamage" | "damageRate"> {
-  const out: Pick<RawKB, "heroDamage" | "damageRate"> = {};
+function loadDamage(root: string): Pick<RawKB, "heroDamage" | "damageRate" | "posShare"> {
+  const out: Pick<RawKB, "heroDamage" | "damageRate" | "posShare"> = {};
   try {
     const doc = readYaml<{ hero_damage?: Record<string, [number, number, number]> }>(join(root, "data", "hero_damage.yaml"));
     if (doc.hero_damage) out.heroDamage = doc.hero_damage;
@@ -129,6 +129,14 @@ function loadDamage(root: string): Pick<RawKB, "heroDamage" | "damageRate"> {
   }
   try {
     const doc = readYaml<{ minutes?: number[]; heroes?: Record<string, Record<string, { games?: number; heroDamage?: number[] }>> }>(join(root, "data", "benchmarks.json"));
+    // where each hero is actually played (ADR-060): share of its games by position
+    const share: NonNullable<RawKB["posShare"]> = {};
+    for (const [hero, byPos] of Object.entries(doc.heroes ?? {})) {
+      const total = Object.values(byPos).reduce((s, e) => s + (e.games ?? 0), 0);
+      if (total < DAMAGE_MIN_GAMES) continue;
+      share[hero] = Object.fromEntries(Object.entries(byPos).map(([pos, e]) => [pos, Math.round(((e.games ?? 0) / total) * 1000) / 1000]));
+    }
+    if (Object.keys(share).length) out.posShare = share;
     const at = (m: number) => (doc.minutes ?? []).indexOf(m);
     const [i10, i25, i40] = [at(10), at(25), at(40)];
     if (i10 >= 0 && i25 >= 0 && i40 >= 0) {

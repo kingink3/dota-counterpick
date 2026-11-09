@@ -51,15 +51,22 @@ export const PARAM_DOCS = {
     value: 0.5,
     kind: "expert",
     area: "counter",
-    why: "Hero picks: a counter reason is weighted by the target's position, 1 for their position 1 falling linearly to this value for their position 5 (0.875 / 0.75 / 0.625 between). Shutting down the hero the enemy plays around decides more fights than the same answer to a ward-buyer, but supports with one key spell still matter, so the floor stays well above zero. At 1 every target counts alike (the behaviour before ADR-059); below ~0.35 answers to supports would stop showing.",
+    why: "Hero picks and counter items: a counter reason is weighted by the target's position, 1 for their position 1 falling linearly to this value for their position 5 (0.875 / 0.75 / 0.625 between). Shutting down the hero the enemy plays around decides more fights than the same answer to a ward-buyer, but supports with one key spell still matter, so the floor stays well above zero. At 1 every target counts alike (the behaviour before ADR-059); below ~0.35 answers to supports would stop showing.",
     range: [0.35, 0.75],
   },
   STACK_DECAY: {
     value: 0.5,
     kind: "expert",
     area: "counter",
-    why: "Hero picks: against one enemy the strongest counter reason counts in full, the next x this, the third x this squared. Several generic edges onto the same target (pickoff -> no escape, pickoff -> low HP, burst -> low HP) describe one kill, not three; without the decay a hero with many generic tools outranks one with a single decisive answer. 0.5 bounds what one enemy can add at twice its best reason. At 1 reasons add up freely (before ADR-059).",
+    why: "Hero picks and counter items: against one enemy the strongest counter reason counts in full, the next x this, the third x this squared. Several generic edges onto the same target (pickoff -> no escape, pickoff -> low HP, burst -> low HP) describe one kill, not three; without the decay a hero with many generic tools outranks one with a single decisive answer. 0.5 bounds what one enemy can add at twice its best reason. At 1 reasons add up freely (before ADR-059).",
     range: [0.35, 0.75],
+  },
+  ROLE_FLOOR: {
+    value: 0.6,
+    kind: "expert",
+    area: "counter",
+    why: "Hero picks for a chosen position: the score is scaled by how usual the hero is there - 1 on its most played position, falling linearly with (games there / games on the main position) to this value for a position it is practically never played on. Counter reasons assume the hero gets the farm and the lane of its usual role; Clockwerk as an offlaner (19% of his games against 47% as a 4) keeps most of his score, a hero picked into a role one game in twenty keeps 0.6. At 1 the position list of the KB alone decides (before ADR-060).",
+    range: [0.4, 0.8],
   },
   // ---- two-sided (ADR-020/022) ---------------------------------------------
   RESIST_WEIGHT: {
@@ -185,12 +192,13 @@ export const PARAM_DOCS = {
     range: [0.3, 0.6],
   },
   PLAN_STRONG_SCORE: {
-    value: 3,
+    value: 2,
     kind: "expert",
     area: "items",
-    why: "An item the hero practically never builds still enters the plan at engine score >= 3: about three solid reasons against this draft, i.e. most of the enemy lineup calls for it.",
-    range: [2, 4],
+    why: "An item the hero practically never builds still enters the plan at engine score >= 2: several solid reasons against their cores, i.e. most of the enemy lineup calls for it. Was 3 before ADR-060; item scores became smaller once reasons were weighted by the target and saturated per enemy, and 2 keeps the same share of item recommendations above the line (2% over 400 random drafts; the old range 2 - 4 maps to 1.4 - 2.7).",
+    range: [1.4, 2.7],
   },
+
   PLAN_ITEM_FIT_MIN: {
     value: 0.6,
     kind: "design",

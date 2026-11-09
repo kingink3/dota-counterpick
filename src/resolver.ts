@@ -57,7 +57,7 @@ export function resolve(kb: KnowledgeBase, draft: DraftState): EngineResult {
   // item builds tailored to the hero you play: a counter item that does not belong in
   // that hero's build (Eul's on a carry Sniper) sinks instead of topping the list.
   const fit = itemFitFor(kb, draft);
-  const items = rankItems(kb, census, fit);
+  const items = rankItems(kb, census, fit, team.enemyPos);
   const enemyDealt = damageProfile(kb, census.enemies, team.enemyPos);
   const defense = resolveDefense(kb, census, fit, enemyDealt);
   const damage = readDamage(census, enemyDealt);
@@ -473,6 +473,10 @@ function resolveDefense(
   dealt: Dealt,
 ): Recommendation[] {
   const byItem = new Map<string, { label: string; reasons: Reason[] }>();
+  // ADR-060: counter items weigh a reason by the target (mean weight over five positions
+  // = (1 + TARGET_FLOOR) / 2). The school threats sum to the number of enemies, so they
+  // take the same factor: both lists are shown and planned together, on one scale.
+  const schoolScale = (1 + P.TARGET_FLOOR) / 2;
 
   for (const d of kb.defenseEdges) {
     // per-enemy threat magnitude: a specific tool, or the broad damage school.
@@ -480,14 +484,14 @@ function resolveDefense(
       if (d.except?.includes(enemy)) return 0;
       if (d.school) {
         const x = dealt.perHero.get(enemy)?.[d.school] ?? 0;
-        return x >= SCHOOL_THREAT_MIN ? round(x) : 0;
+        return x >= SCHOOL_THREAT_MIN ? round(x * schoolScale) : 0;
       }
       return census.tagsOf(enemy)!.tool?.[d.threat!] ?? 0;
     };
     // census gate: how many enemies carry the threat / deal that school.
     if (d.min_threat !== undefined) {
       // a school: only enemies dealing a real part of it count as carriers
-      const carriers = census.enemies.filter((e) => threatOf(e) >= (d.school ? 0.5 : Number.MIN_VALUE)).length;
+      const carriers = census.enemies.filter((e) => threatOf(e) >= (d.school ? 0.5 * schoolScale : Number.MIN_VALUE)).length;
       if (carriers < d.min_threat) continue;
     }
     const label = d.school ? `${d.school} damage` : d.threat;
@@ -527,6 +531,7 @@ function rankItems(
   kb: KnowledgeBase,
   census: Census,
   fit: ItemFit,
+  enemyPos: Map<string, number>,
 ): Recommendation[] {
   const acc = new Map<string, { label: string; reasons: Reason[] }>();
 
@@ -551,6 +556,9 @@ function rankItems(
     });
     acc.set(ie.item, entry);
   }
+
+  // ADR-060: like hero picks, an item's reasons are weighted by the target and saturate per enemy
+  for (const entry of acc.values()) focusReasons(entry.reasons, enemyPos);
 
   const recs = [...acc.entries()]
     .map(([code, { label, reasons }]) => finalizeItem(code, label, reasons, fit))
@@ -681,13 +689,35 @@ function rankSubjects(
     const rec = finalizeRec(subject.kind, subject.code, subject.label, subject.pos, reasons);
     // net negative = the enemy's kit beats this pick more than it answers them (ADR-022)
     if (rec.score <= 0) continue;
+    if (subject.kind === "hero" && team.myRole !== undefined) {
+      const fit = roleFit(kb, subject.code, team.myRole);
+      rec.roleFit = fit;
+      rec.score = round(rec.score * fit.factor);
+    }
     if (subject.kind === "hero") attachWinrate(rec, kb, census);
     recs.push(rec);
   }
   return recs.sort(rankCompare);
 }
 
-// P.TARGET_FLOOR, P.STACK_DECAY: src/params.ts (ADR-059)
+/** How usual a hero is on a position (ADR-060): its share of games there relative to its
+ *  most played position (data/benchmarks.json); without the data, by the order of the
+ *  KB position list (main 1, second 0.5, third 0.25). Factor: ROLE_FLOOR .. 1. */
+export function roleFit(kb: KnowledgeBase, hero: string, pos: number): NonNullable<Recommendation["roleFit"]> {
+  const shares = kb.posShare?.[hero];
+  let rel: number;
+  let share: number | undefined;
+  if (shares) {
+    share = shares[String(pos)] ?? 0;
+    rel = Math.min(1, share / Math.max(...Object.values(shares), 1e-9));
+  } else {
+    const i = kb.taxonomy.hero_tags[hero]?.pos.indexOf(pos) ?? -1;
+    rel = i < 0 ? 0 : Math.pow(0.5, i);
+  }
+  return { pos, ...(share !== undefined ? { share } : {}), rel: round(rel), factor: round(P.ROLE_FLOOR + (1 - P.ROLE_FLOOR) * rel) };
+}
+
+// P.TARGET_FLOOR, P.STACK_DECAY: src/params.ts (ADR-059); counter items too since ADR-060
 
 /** How much a counter reason against a hero on this position counts: 1 for their
  *  position 1, falling linearly to TARGET_FLOOR for their position 5. */
@@ -696,7 +726,7 @@ export function targetWeight(pos: number | undefined): number {
   return 1 - ((Math.min(5, Math.max(1, pos)) - 1) / 4) * (1 - P.TARGET_FLOOR);
 }
 
-/** Hero picks (ADR-059): what a pick does to the enemy is weighted by who the enemy is
+/** Hero picks (ADR-059) and counter items (ADR-060): what a pick does to the enemy is weighted by who the enemy is
  *  and saturates per enemy. In place, on the counter reasons (edge / hero_edge, > 0):
  *    - target weight: an answer to their carry outweighs the same answer to their
  *      position 5;
@@ -707,7 +737,7 @@ export function targetWeight(pos: number | undefined): number {
 function focusReasons(reasons: Reason[], enemyPos: Map<string, number>): void {
   const byEnemy = new Map<string, number[]>();
   reasons.forEach((r, i) => {
-    if ((r.basis !== "edge" && r.basis !== "hero_edge") || r.contribution <= 0) return;
+    if ((r.basis !== "edge" && r.basis !== "hero_edge" && r.basis !== "item_edge") || r.contribution <= 0) return;
     const w = targetWeight(enemyPos.get(r.enemy));
     if (w !== 1) reasons[i] = { ...r, contribution: r.contribution * w, factors: { ...r.factors, targetWeight: round(w) } };
     byEnemy.set(r.enemy, [...(byEnemy.get(r.enemy) ?? []), i]);

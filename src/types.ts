@@ -385,6 +385,10 @@ export interface Recommendation {
    *  (actual - expected) win rate vs these enemies; base = the hero's own win rate;
    *  factor applied to kbScore (0.94..1.06); delta = score - kbScore. */
   stat?: { advantage: number; base?: number; confidence: number; factor: number; kbScore: number; delta: number };
+  /** hero picks with a role (ADR-060): how usual the hero is on that position - its share
+   *  of the hero's games there, relative to its most played position - and the factor
+   *  already applied to the score (1 = its main role). */
+  roleFit?: { pos: number; share?: number; rel: number; factor: number };
   /** item recs only: how well the item suits YOUR hero (score already multiplied). */
   fit?: { archetype: Archetype; attack?: AttackType; mult: number };
   /** the hero you play buys it in this share of games (< 5%): shown and scored lower. */

@@ -27,7 +27,7 @@
         "items": [
           "bloodthorn",
           "silver_edge",
-          "orchid",
+          "monkey_king_bar",
           "diffusal_blade",
           "hurricane_pike"
         ],
@@ -57,21 +57,21 @@
           "rattletrap",
           "pudge",
           "axe",
-          "spirit_breaker",
-          "bloodseeker"
+          "omniknight",
+          "magnus"
         ],
         "items": [
-          "abyssal_blade",
           "force_staff",
-          "euls_scepter",
           "scythe_of_vyse",
-          "radiance"
+          "abyssal_blade",
+          "euls_scepter",
+          "linkens_sphere"
         ],
         "defense": [
+          "linkens_sphere",
           "lotus_orb",
           "crimson_guard",
-          "shivas_guard",
-          "linkens_sphere"
+          "shivas_guard"
         ],
         "damage": "physical"
       }
@@ -91,23 +91,23 @@
       "expect": {
         "heroes": [
           "outworld_destroyer",
-          "skywrath_mage",
           "huskar",
+          "skywrath_mage",
           "sniper",
-          "pugna"
+          "necrophos"
         ],
         "items": [
-          "euls_scepter",
-          "force_staff",
           "orchid",
+          "euls_scepter",
           "bloodthorn",
-          "hurricane_pike"
+          "force_staff",
+          "black_king_bar"
         ],
         "defense": [
-          "ghost_scepter",
-          "lotus_orb",
           "linkens_sphere",
-          "crimson_guard"
+          "lotus_orb",
+          "ghost_scepter",
+          "aeon_disk"
         ],
         "damage": "mixed"
       }
@@ -130,12 +130,12 @@
           "bane",
           "skywrath_mage",
           "tusk",
-          "techies"
+          "oracle"
         ],
         "items": [
           "euls_scepter",
-          "force_staff",
           "heavens_halberd",
+          "force_staff",
           "glimmer_cape",
           "lotus_orb"
         ],
@@ -162,24 +162,24 @@
       },
       "expect": {
         "heroes": [
-          "medusa",
           "sven",
-          "kunkka",
           "juggernaut",
-          "ursa"
+          "kunkka",
+          "ursa",
+          "luna"
         ],
         "items": [
           "battlefury",
           "mjollnir",
-          "gleipnir",
           "radiance",
+          "gleipnir",
           "hydras_breath"
         ],
         "defense": [
           "ghost_scepter",
           "assault_cuirass",
-          "heavens_halberd",
-          "blade_mail"
+          "linkens_sphere",
+          "heavens_halberd"
         ],
         "damage": "physical"
       }
@@ -198,18 +198,18 @@
       },
       "expect": {
         "heroes": [
-          "treant",
           "silencer",
           "batrider",
+          "treant",
           "rattletrap",
           "shadow_demon"
         ],
         "items": [
           "scythe_of_vyse",
           "orchid",
-          "euls_scepter",
-          "force_staff",
-          "solar_crest"
+          "arcane_boots",
+          "solar_crest",
+          "euls_scepter"
         ],
         "defense": [
           "glimmer_cape",
@@ -239,16 +239,16 @@
       "expect": {
         "heroes": [],
         "items": [
-          "orchid",
           "euls_scepter",
+          "orchid",
           "bloodthorn",
           "force_staff",
           "hurricane_pike"
         ],
         "defense": [
+          "black_king_bar",
           "ghost_scepter",
           "shivas_guard",
-          "black_king_bar",
           "crellas_crozier"
         ],
         "damage": "physical"
@@ -275,7 +275,7 @@
           "sentry_ward",
           "dust_of_appearance",
           "force_staff",
-          "orchid"
+          "daedalus"
         ],
         "defense": [
           "black_king_bar",

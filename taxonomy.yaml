@@ -484,6 +484,17 @@ edges:
     mechanism: "deny the greedy carry farm space - pressure with pickoffs at the right timing"
     weight: 0.7
 
+  # --- ADR-060: tempo. Both reliances named these tools in `answered_by`, but no edge
+  #     carried them, so a greedy carry into a push lineup had no risk at all.
+  - tool: early_pressure
+    target: greedy_farmer
+    mechanism: "map pressure before the farm is done: towers fall and fights start while the greedy core is still an item short"
+    weight: 0.9
+  - tool: out_scales
+    target: snowball_dependent
+    mechanism: "a late scaler that survives the first 20 minutes outgrows a hero who has to end the game on an early lead"
+    weight: 0.6
+
 # -----------------------------------------------------------------------------
 #  resistance / resist_edges - the THIRD axis (ADR-020): what a hero ENDURES.
 #  edges answer "my tool hits your weakness"; resist_edges answer "your threat
