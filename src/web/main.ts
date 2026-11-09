@@ -10,6 +10,9 @@
 //  kb.json (ADR-006). Reactive per ADR-002. Framework-free on purpose.
 // =============================================================================
 
+import { FOUNDATIONS } from "../school/foundations.js";
+import { SchoolView } from "./school-view.js";
+import { loadHistory, loadSettings } from "./review-local.js";
 import { indexKB, type KnowledgeBase, type RawKB } from "../knowledge.js";
 import { archetypeOf, resolve as resolveDraft } from "../resolver.js";
 import { genericCombos, roleFit, type RoleFit } from "../combos.js";
@@ -98,6 +101,7 @@ async function boot(): Promise<void> {
   buildModeNav();
   buildGameView();
   buildReviewView();
+  buildSchoolView();
   buildScreenInput();
   render();
 }
@@ -113,7 +117,7 @@ import { buildCombos, comboSearch, setComboSearch, renderCombos } from "./combos
 import { buildItemLabels, hudPrompt, itemLabels, myItems, renderEnemyItems } from "./enemy-items.js";
 import { archetypeLabel, damageRead, leadReason, reasonSummaryText, recCard, teamRead } from "./rec-cards.js";
 import { assignHero, assignSlot, buildScreenInput, setAssignSlot, setClockSink, mineSlot, perf, renderSideBar, unknownFor } from "./screen-input.js";
-type Mode = "counter" | "combo" | "game" | "review";
+type Mode = "counter" | "combo" | "game" | "review" | "school";
 let mode: Mode = "counter";
 function setMode(m: Mode): void {
   mode = m;
@@ -121,7 +125,9 @@ function setMode(m: Mode): void {
   (el("#combo-view") as HTMLElement).hidden = m !== "combo";
   (el("#game-view") as HTMLElement).hidden = m !== "game";
   (el("#review-view") as HTMLElement).hidden = m !== "review";
+  (el("#school-view") as HTMLElement).hidden = m !== "school";
   if (m === "review") review?.show();
+  if (m === "school") school?.show();
   for (const b of document.querySelectorAll<HTMLElement>(".mode-btn")) {
     b.classList.toggle("active", b.dataset.mode === m);
   }
@@ -143,6 +149,34 @@ let game: GameView | undefined;
 let review: ReviewView | undefined;
 let reviewIds: Ids | undefined;
 let reviewBench: Benchmarks | undefined;
+
+let school: SchoolView | undefined;
+/** School tab (ADR-046): lessons, tests, situations from the KB, practice on your reviews. */
+function buildSchoolView(): void {
+  school = new SchoolView({
+    modules: [FOUNDATIONS],
+    gen: () =>
+      kb
+        ? {
+            resolve: (d) => resolveDraft(kb, d),
+            heroes: grid.map((g) => g.engineId).filter((id) => kb.taxonomy.hero_tags[id]),
+            items: kb.items.filter((i) => Object.keys(i.tool).length).map((i) => i.code),
+            heroLabel: labelFor,
+            itemLabel: (id) => kb.items.find((i) => i.code === id)?.label || id.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+            why: (rec) => {
+              const r = leadReason(rec);
+              const div = document.createElement("div");
+              div.innerHTML = r ? reasonSummaryText(r, rec) : "";
+              return div.textContent || "the strongest answer by the knowledge base";
+            },
+          }
+        : undefined,
+    reviews: () => {
+      const me = loadSettings().account;
+      return loadHistory().filter((r) => !me || r.account === me);
+    },
+  });
+}
 
 function buildReviewView(): void {
   review = new ReviewView({

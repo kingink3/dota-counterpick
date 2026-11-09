@@ -344,6 +344,8 @@ export interface MatchReview {
   compat?: string[];
   duration: number;
   kda: [number, number, number];
+  /** share of the team's kills you took part in (0..1), when the team had kills. */
+  kp?: number;
   plan?: ItemPlan;
   checks: PlanCheck[];
   farm: FarmRow[];
@@ -735,8 +737,10 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
   }
   // kill participation
   const teamKills = s.players.filter((p) => p.isRadiant === mine.isRadiant).reduce((a, p) => a + p.kills, 0);
+  let kpShare: number | undefined;
   if (teamKills >= 10) {
     const kp = (mine.kills + mine.assists) / teamKills;
+    kpShare = kp;
     // by role (ADR-038, expert values): a safe-lane carry farms while others fight,
     // supports and the mid are expected in most kills
     const low = KP_LOW[position ?? 0] ?? 0.4;
@@ -1003,6 +1007,7 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
     comparable,
     ...(compat.issues.length ? { compat: compat.issues } : {}),
     duration,
+    ...(kpShare !== undefined ? { kp: Math.round(kpShare * 100) / 100 } : {}),
     kda: [mine.kills, mine.deaths, mine.assists],
     ...(plan ? { plan } : {}),
     checks,

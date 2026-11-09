@@ -315,6 +315,15 @@ included: use the player switcher above the report (ADR-029c). **Match overview*
 work to do); **Copy for Discord / Telegram** turns a review into a short message for a
 friend. Supports get observers / sentries / enemy wards destroyed / stacks (ADR-029d).
 
+### School (ADR-046)
+
+The **School** tab teaches the game from zero. Module 1 "Foundations" (7 lessons): the goal,
+heroes and roles, damage types, the map and its timings, economy, items, reading a draft.
+Each lesson has three tracks: **Theory + Test**, **Situations** (decide what to do; the items
+and draft lessons also generate situations from the knowledge base), and **Practice** goals
+checked on your own reviewed matches. A module exam (15 questions, 80%) opens once every
+lesson test is passed. Progress is kept in this browser.
+
 ### Item plan and game-length tendency (ADR-027, ADR-037)
 
 Mark the hero you play (★) and your position: the Game tab shows the plan next to the
