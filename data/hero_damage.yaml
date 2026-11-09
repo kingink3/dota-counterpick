@@ -1,0 +1,151 @@
+# =============================================================================
+#  What each hero DEALS (ADR-059): shares of its damage to heroes by school,
+#  [physical, magic, pure], summing to 1.
+#
+#  Separate from the reliance tags on purpose: `attack_reliant` / `spell_reliant`
+#  say what switches a hero off (disarm, silence), not which school its damage is.
+#  Dazzle is spell-reliant and deals physical damage; Timbersaw is spell-reliant and
+#  deals pure; Spectre is not attack-reliant in the KB and still hits for physical.
+#
+#  HOW MUCH and WHEN comes from data, not from here: data/benchmarks.json has the
+#  hero damage per minute by hero and position for our bracket; the engine multiplies
+#  the two (src/resolver.ts damageProfile).
+#
+#  Honesty flag: the shares are an expert estimate for a typical build in a typical
+#  game (attacks + spells + the usual damage items), rounded to 0.05. They are not
+#  measured. Reviewed for 7.41; re-check a hero when its abilities change
+#  (PATCH_RUNBOOK B5). "# ?" marks a share the author is not sure of.
+# =============================================================================
+
+hero_damage:
+  # ---- position 1 ----
+  anti_mage:          [0.80, 0.20, 0.00]
+  juggernaut:         [0.70, 0.30, 0.00]   # Blade Fury magic, Omnislash attacks
+  phantom_assassin:   [0.95, 0.05, 0.00]
+  faceless_void:      [0.80, 0.20, 0.00]   # Time Lock bonus is magic
+  spectre:            [0.50, 0.15, 0.35]   # Desolate pure
+  medusa:             [0.85, 0.15, 0.00]
+  terrorblade:        [0.95, 0.05, 0.00]
+  phantom_lancer:     [0.85, 0.15, 0.00]
+  naga_siren:         [0.75, 0.25, 0.00]
+  morphling:          [0.60, 0.40, 0.00]
+  slark:              [0.80, 0.20, 0.00]
+  sven:               [0.90, 0.10, 0.00]
+  luna:               [0.60, 0.40, 0.00]
+  drow_ranger:        [0.95, 0.05, 0.00]
+  sniper:             [0.75, 0.25, 0.00]
+  gyrocopter:         [0.55, 0.45, 0.00]
+  lifestealer:        [0.90, 0.10, 0.00]
+  troll_warlord:      [0.95, 0.05, 0.00]
+  ursa:               [0.90, 0.10, 0.00]
+  wraith_king:        [0.80, 0.20, 0.00]
+  chaos_knight:       [0.85, 0.15, 0.00]
+  lone_druid:         [0.90, 0.10, 0.00]
+  monkey_king:        [0.85, 0.15, 0.00]
+  clinkz:             [0.90, 0.10, 0.00]
+  riki:               [0.90, 0.10, 0.00]
+  bloodseeker:        [0.55, 0.05, 0.40]   # Rupture and Blood Rite are pure
+  razor:              [0.60, 0.40, 0.00]
+  weaver:             [0.80, 0.20, 0.00]
+  arc_warden:         [0.60, 0.40, 0.00]
+  meepo:              [0.55, 0.45, 0.00]
+  alchemist:          [0.90, 0.10, 0.00]
+  templar_assassin:   [0.85, 0.15, 0.00]
+  muerta:             [0.40, 0.60, 0.00]   # Pierce the Veil turns attacks magic
+  # ---- position 2 ----
+  invoker:            [0.25, 0.65, 0.10]
+  storm_spirit:       [0.15, 0.85, 0.00]
+  queen_of_pain:      [0.10, 0.65, 0.25]   # Sonic Wave pure
+  puck:               [0.10, 0.90, 0.00]
+  shadow_fiend:       [0.55, 0.45, 0.00]
+  void_spirit:        [0.20, 0.80, 0.00]
+  ember_spirit:       [0.50, 0.50, 0.00]
+  tinker:             [0.05, 0.60, 0.35]   # Laser pure
+  death_prophet:      [0.50, 0.50, 0.00]   # Exorcism physical
+  outworld_destroyer: [0.10, 0.30, 0.60]   # Arcane Orb pure
+  leshrac:            [0.20, 0.80, 0.00]   # Diabolic Edict physical
+  pugna:              [0.05, 0.95, 0.00]
+  zeus:               [0.05, 0.95, 0.00]
+  lina:               [0.25, 0.75, 0.00]
+  kunkka:             [0.60, 0.40, 0.00]
+  dragon_knight:      [0.70, 0.30, 0.00]
+  viper:              [0.35, 0.65, 0.00]
+  huskar:             [0.45, 0.55, 0.00]
+  pangolier:          [0.50, 0.50, 0.00]
+  windranger:         [0.65, 0.35, 0.00]
+  necrophos:          [0.10, 0.90, 0.00]
+  # ---- position 3 ----
+  axe:                [0.25, 0.30, 0.45]   # ? Counter Helix / Culling Blade school
+  centaur_warrunner:  [0.30, 0.70, 0.00]
+  tidehunter:         [0.45, 0.55, 0.00]
+  bristleback:        [0.90, 0.10, 0.00]   # Quill Spray is physical
+  underlord:          [0.40, 0.60, 0.00]
+  mars:               [0.55, 0.45, 0.00]
+  doom:               [0.30, 0.35, 0.35]
+  dark_seer:          [0.30, 0.70, 0.00]
+  beastmaster:        [0.90, 0.10, 0.00]
+  timbersaw:          [0.05, 0.05, 0.90]
+  night_stalker:      [0.75, 0.25, 0.00]
+  slardar:            [0.90, 0.10, 0.00]
+  brewmaster:         [0.60, 0.40, 0.00]
+  legion_commander:   [0.75, 0.25, 0.00]
+  magnus:             [0.55, 0.45, 0.00]
+  primal_beast:       [0.50, 0.50, 0.00]
+  lycan:              [0.95, 0.05, 0.00]
+  broodmother:        [0.90, 0.10, 0.00]
+  sand_king:          [0.10, 0.90, 0.00]
+  enigma:             [0.30, 0.30, 0.40]   # Midnight Pulse / Black Hole pure
+  visage:             [0.60, 0.40, 0.00]
+  natures_prophet:    [0.80, 0.20, 0.00]
+  abaddon:            [0.60, 0.40, 0.00]
+  undying:            [0.35, 0.65, 0.00]
+  pudge:              [0.10, 0.65, 0.25]   # Meat Hook pure
+  # ---- positions 4 / 5 ----
+  lion:               [0.10, 0.90, 0.00]
+  silencer:           [0.25, 0.45, 0.30]   # Glaives of Wisdom pure
+  earthshaker:        [0.30, 0.70, 0.00]
+  ancient_apparition: [0.10, 0.90, 0.00]
+  batrider:           [0.05, 0.95, 0.00]
+  shadow_shaman:      [0.45, 0.55, 0.00]   # Serpent Wards physical
+  crystal_maiden:     [0.05, 0.95, 0.00]
+  bane:               [0.10, 0.20, 0.70]   # Brain Sap, Fiend's Grip pure
+  vengeful_spirit:    [0.50, 0.50, 0.00]
+  bounty_hunter:      [0.60, 0.40, 0.00]
+  chen:               [0.70, 0.30, 0.00]
+  rattletrap:         [0.15, 0.85, 0.00]
+  dark_willow:        [0.05, 0.95, 0.00]
+  dawnbreaker:        [0.60, 0.40, 0.00]
+  dazzle:             [0.85, 0.15, 0.00]   # Poison Touch and Shadow Wave are physical
+  disruptor:          [0.05, 0.95, 0.00]
+  earth_spirit:       [0.05, 0.95, 0.00]
+  elder_titan:        [0.50, 0.50, 0.00]
+  enchantress:        [0.35, 0.05, 0.60]   # Impetus pure
+  grimstroke:         [0.05, 0.95, 0.00]
+  hoodwink:           [0.40, 0.60, 0.00]
+  wisp:               [0.50, 0.50, 0.00]
+  jakiro:             [0.10, 0.90, 0.00]
+  keeper_of_the_light: [0.05, 0.95, 0.00]
+  kez:                [0.85, 0.15, 0.00]
+  largo:              [0.20, 0.80, 0.00]   # ?
+  lich:               [0.05, 0.95, 0.00]
+  marci:              [0.70, 0.30, 0.00]
+  mirana:             [0.45, 0.55, 0.00]
+  ogre_magi:          [0.20, 0.80, 0.00]
+  omniknight:         [0.25, 0.05, 0.70]   # Purification, Hammer of Purity pure
+  oracle:             [0.10, 0.90, 0.00]
+  phoenix:            [0.05, 0.95, 0.00]
+  ringmaster:         [0.15, 0.85, 0.00]   # ?
+  rubick:             [0.10, 0.90, 0.00]
+  shadow_demon:       [0.10, 0.90, 0.00]
+  skywrath_mage:      [0.05, 0.95, 0.00]
+  snapfire:           [0.25, 0.75, 0.00]
+  spirit_breaker:     [0.30, 0.70, 0.00]   # Greater Bash magic
+  techies:            [0.05, 0.95, 0.00]
+  tiny:               [0.40, 0.60, 0.00]
+  treant:             [0.40, 0.60, 0.00]
+  tusk:               [0.50, 0.50, 0.00]
+  venomancer:         [0.20, 0.80, 0.00]
+  warlock:            [0.30, 0.60, 0.10]
+  winter_wyvern:      [0.15, 0.85, 0.00]
+  witch_doctor:       [0.50, 0.50, 0.00]   # Death Ward physical
+  nyx_assassin:       [0.10, 0.70, 0.20]

@@ -6,7 +6,7 @@
 
 import { CURVE_LABELS, mmss, WINDOW_PP, type ItemPlan, type PlanItem, type TeamWindow } from "./item-plan.js";
 import type { KnowledgeBase } from "./knowledge.js";
-import type { EngineResult, Recommendation } from "./types.js";
+import type { DamagePhase, EngineResult, Recommendation } from "./types.js";
 
 export type GamePhase = "lane" | "mid" | "late";
 export const PHASES: Array<{ id: GamePhase; label: string; from: number; to: number }> = [
@@ -37,6 +37,10 @@ const DANGER: Record<string, number> = {
   true_strike: 0.4,
 };
 
+/** an item is shown as the answer to an enemy only with at least this much of its score
+ *  coming from that enemy (a hero dealing a fifth of a school is not "the" reason for Pipe). */
+const ANSWER_MIN = 0.4;
+
 export interface Threat {
   enemy: string;
   /** the enemy's dangerous tools, strongest first. */
@@ -47,7 +51,8 @@ export interface Threat {
 }
 
 export interface MatchPlan {
-  damage: { magic: number; physical: number; magicBy: string[]; physBy: string[] };
+  /** shares over the game, the main dealers of each school, and the same by phase (ADR-059). */
+  damage: { magic: number; physical: number; pure: number; magicBy: string[]; physBy: string[]; phases: DamagePhase[] };
   defence: Array<{ rec: Recommendation; key: string }>;
   threats: Threat[];
   focus: Record<GamePhase, { title: string; lines: string[] }>;
@@ -73,25 +78,22 @@ export function buildMatchPlan(inp: MatchPlanInput): MatchPlan {
   const tags = (h: string) => kb.taxonomy.hero_tags[h];
   const fits = (r: Recommendation) => (r.fit?.mult ?? 1) >= 0.6 && r.score > 0;
 
-  // --- damage: the engine's per-hero census (attack/spell reliance + burst tools)
-  const per = inp.enemies.map((e) => {
-    const t = tags(e);
-    const phys = (t?.reliance?.attack_reliant ?? 0) + (t?.tool?.physical_burst ?? 0);
-    const magic = (t?.reliance?.spell_reliant ?? 0) + (t?.tool?.magic_burst ?? 0);
-    return { e, phys, magic };
-  });
-  const sum = result.damage.physThreat + result.damage.magicThreat || 1;
-  const by = (k: "phys" | "magic") =>
-    per
-      .filter((x) => x[k] >= 0.6)
-      .sort((a, b) => b[k] - a[k])
+  // --- damage (ADR-059): the engine's read - school shares x damage per minute by phase
+  const dr = result.damage;
+  // the heroes behind a school: its main school, by their part of the team's damage (mid game)
+  const midBy = dr.phases.find((p) => p.id === "mid")?.by ?? [];
+  const by = (k: "physical" | "magic") =>
+    midBy
+      .filter((x) => x.school === k && x.share >= 0.12)
       .slice(0, 3)
-      .map((x) => x.e);
+      .map((x) => x.hero);
   const damage = {
-    magic: result.damage.magicThreat / sum,
-    physical: result.damage.physThreat / sum,
+    magic: dr.magicThreat,
+    physical: dr.physThreat,
+    pure: dr.pureThreat,
     magicBy: by("magic"),
-    physBy: by("phys"),
+    physBy: by("physical"),
+    phases: dr.phases,
   };
 
   const keyOf = (r: Recommendation) => inp.dcKey(r.code) ?? r.code;
@@ -109,7 +111,7 @@ export function buildMatchPlan(inp: MatchPlanInput): MatchPlan {
         .sort((a, b) => b[1] * DANGER[b[0]]! - a[1] * DANGER[a[0]]!);
       const weight = dangerous.reduce((s, [c, w]) => s + w * DANGER[c]!, 0);
       const best = answers
-        .filter((r) => r.reasons.some((x) => x.enemy === enemy && x.contribution > 0))
+        .filter((r) => contributionVs(r, enemy) >= ANSWER_MIN)
         .sort((a, b) => contributionVs(b, enemy) - contributionVs(a, enemy))[0];
       return {
         enemy,

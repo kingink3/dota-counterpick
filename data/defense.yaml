@@ -16,26 +16,43 @@
 #
 #  Schema per entry (give EITHER `threat` or `school`):
 #    threat:    enemy tool tag that creates the danger   [must exist in taxonomy.tool]
-#    school:    "physical" | "magic" - gate on the enemy team's overall damage school
-#               (physical = right-clickers/attack_reliant; magic = casters/spell_reliant)
+#    school:    "physical" | "magic" - the damage school the enemy deals (ADR-059:
+#               data/hero_damage.yaml x damage per minute); an enemy counts by its part of it
 #    item:      defensive item id (own namespace; need not be in items.yaml)
 #    label:     display name
 #    mechanism: why it neutralises the threat (required)
 #    weight:    score multiplier
 #    min_threat (optional): only recommend if >= N enemies carry the threat / deal school
 #    except (optional): enemy hero codes the item does NOT answer (Ghost vs Muerta)
+#    pierced_by (optional): enemy tool that goes through the item (BKB vs piercing disables)
 # =============================================================================
 
 defense:
-  # ---- enemy deals MAGIC damage (casters + nukers) ----
-  - { school: magic, item: black_king_bar, label: "Black King Bar",
-      mechanism: "spell immunity eats their magic damage and combos for its duration", weight: 1.3 }
+  # ---- KILL THREAT: control + burst on one target (ADR-059) ----
+  #      What makes a lineup dangerous before its carry is online is not the share of
+  #      magic damage but a stun / hex followed by a nuke. BKB and the saves answer THAT;
+  #      the damage school below only decides armor vs magic resistance.
+  #      pierced_by: the item is worth less the more of that tool the enemy has.
+  - { threat: lockdown_early, item: black_king_bar, label: "Black King Bar", pierced_by: bkb_piercing_disable,
+      mechanism: "spell immunity: their stun or hex does not land, so the kill combo never starts", weight: 1.4 }
+  - { threat: magic_burst, item: black_king_bar, label: "Black King Bar", pierced_by: bkb_piercing_disable,
+      mechanism: "spell immunity through the burst window: the nuke combo deals nothing", weight: 1.0 }
+  - { threat: lockdown_early, item: linkens_sphere, label: "Linken's Sphere",
+      mechanism: "blocks the single-target stun or hex that opens the kill", weight: 0.5 }
+  - { threat: pickoff, item: force_staff, label: "Force Staff",
+      mechanism: "a push out of range breaks the jump on you or on an ally", weight: 0.7 }
+  - { threat: pickoff, item: glimmer_cape, label: "Glimmer Cape",
+      mechanism: "invisibility and magic resistance on the hero the jump is aimed at", weight: 0.6 }
+  - { threat: magic_burst, item: aeon_disk, label: "Aeon Disk",
+      mechanism: "survives the combo that would kill you from full health", weight: 0.5 }
+  - { threat: physical_burst, item: aeon_disk, label: "Aeon Disk",
+      mechanism: "survives the burst that would kill you from full health", weight: 0.5 }
+
+  # ---- enemy deals MAGIC damage (by data/hero_damage.yaml x damage per minute) ----
   - { school: magic, item: pipe_of_insight, label: "Pipe of Insight",
       mechanism: "team magic barrier soaks the incoming magic across all five", weight: 1.0, min_threat: 2 }
   - { school: magic, item: eternal_shroud, label: "Eternal Shroud",
       mechanism: "magic resist plus a barrier; incoming magic is converted to mana", weight: 0.9 }
-  - { school: magic, item: hood_of_defiance, label: "Hood of Defiance",
-      mechanism: "cheap early magic resist + barrier to survive the nuke-heavy lineup", weight: 0.85, min_threat: 2 }
   - { school: magic, item: glimmer_cape, label: "Glimmer Cape",
       mechanism: "magic resist plus invis throws off the nuker's aim and saves a single target", weight: 0.8 }
   - { school: magic, item: lotus_orb, label: "Lotus Orb",
@@ -64,7 +81,7 @@ defense:
   # ---- enemy SILENCE (Silencer / Drow / Orchid / Bloodthorn / Disruptor) ----
   - { threat: silence, item: disperser, label: "Disperser",
       mechanism: "Suppress dispels you as well as the target - a basic dispel removes the silence", weight: 0.6 }
-  - { threat: silence, item: black_king_bar, label: "Black King Bar",
+  - { threat: silence, item: black_king_bar, label: "Black King Bar", pierced_by: bkb_piercing_disable,
       mechanism: "immunity means you cannot be silenced - your casts stay available", weight: 1.1 }
   - { threat: silence, item: manta_style, label: "Manta Style",
       mechanism: "illusions remove a basic-dispellable silence from yourself (Manta dispel)", weight: 1.0 }
@@ -74,7 +91,7 @@ defense:
       mechanism: "dispel clears the silence, reflect returns a single-target cast", weight: 0.7 }
 
   # ---- enemy LOCKDOWN / ROOT (Naga Ensnare / Batrider Lasso / Hex / Shackles) ----
-  - { threat: lockdown_root, item: black_king_bar, label: "Black King Bar",
+  - { threat: lockdown_root, item: black_king_bar, label: "Black King Bar", pierced_by: bkb_piercing_disable,
       mechanism: "immunity blocks a magical root/lasso - the escape works again", weight: 1.2 }
   - { threat: lockdown_root, item: linkens_sphere, label: "Linken's Sphere",
       mechanism: "absorbs a single-target disable (Ensnare/Lasso/Hex) before it lands", weight: 1.0 }

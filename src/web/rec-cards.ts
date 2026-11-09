@@ -13,8 +13,21 @@ export function damageRead(d: DamageRead): HTMLElement {
   const build =
     d.defenseLean === "physical" ? "armor" : d.defenseLean === "magic" ? "magic resistance" : "mixed defense";
   const school = (l: string) => (l === "mixed" ? "mixed" : `<b class="${leanClass(l)}">${l}</b>`);
+  const pc = (x: number) => `${Math.round(x * 100)}%`;
+  // by phase (ADR-059): the leading school and who deals most of the damage then
+  const phaseName = { lane: "lane", mid: "mid game", late: "late" } as const;
+  const phases = d.phases
+    .map((ph) => {
+      const top = ph.physical >= ph.magic && ph.physical >= ph.pure ? "physical" : ph.magic >= ph.pure ? "magic" : "pure";
+      const who = ph.by[0] ? ` <span class="muted">(${esc(labelFor(ph.by[0].hero))} ${pc(ph.by[0].share)})</span>` : "";
+      return `${phaseName[ph.id]} ${pc(ph[top])} <b class="${leanClass(top)}">${top}</b>${who}`;
+    })
+    .join(" · ");
   p.innerHTML =
-    `They deal ${school(d.defenseLean)} damage (physical ${d.physThreat}, magic ${d.magicThreat}), so build ${build}. ` +
+    `They deal ${school(d.defenseLean)} damage: ${pc(d.physThreat)} physical, ${pc(d.magicThreat)} magic` +
+    (d.pureThreat >= 0.05 ? `, ${pc(d.pureThreat)} pure` : "") +
+    ` - build ${build}. ` +
+    (phases ? `By phase: ${phases}. ` : "") +
     (d.offenseLean === "mixed"
       ? "Neither damage type has an edge against them."
       : `They are softer to ${school(d.offenseLean)} damage.`);
@@ -30,7 +43,7 @@ export function teamRead(t: TeamRead): HTMLElement {
     const mark = state === "ok" ? "✓" : state === "part" ? "½" : "✗";
     parts.push(`<span class="need ${state}" title="${esc(`${n.label}: ${n.have} of ${n.want}`)}">${esc(n.label)} ${mark}</span>`);
   }
-  const total = t.physical + t.magic;
+  const total = t.physical + t.magic + (t.pure ?? 0);
   if (t.needs.length && total > 0) {
     const phys = Math.round((100 * t.physical) / total);
     const lean = phys >= 70 ? "physical" : phys <= 30 ? "magic" : "";

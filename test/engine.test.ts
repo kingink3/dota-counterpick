@@ -560,7 +560,11 @@ test("team gaps: a lineup without disables rewards a candidate that brings them"
   const doom = rec(r.heroes, "doom");
   assert.ok(doom?.reasons.some((x) => x.basis === "team" && x.need === "disable" && x.contribution > 0));
   assert.ok(!doom!.coverage.includes("disable"), "team reasons never count as enemy coverage");
-  assert.ok(doom!.reasons.some((x) => x.basis === "team" && x.need === "damage_mix") === false, "Doom deals physical - no damage-mix bonus");
+  // ADR-059: Doom's damage is mostly magic and pure (Infernal Blade, Scorched Earth, Doom) - a plus for three right-clickers
+  assert.ok(doom!.reasons.some((x) => x.basis === "team" && x.need === "damage_mix"));
+  for (const phys of ["slardar", "ursa", "lycan", "troll_warlord"]) {
+    assert.ok(!rec(r.heroes, phys)?.reasons.some((x) => x.need === "damage_mix"), `${phys} deals physical - no damage-mix bonus`);
+  }
   const sd = rec(r.heroes, "shadow_demon");
   assert.ok(sd?.reasons.some((x) => x.need === "damage_mix"), "all-physical team -> magic damage is a plus");
 });
@@ -716,4 +720,56 @@ test("ADR-059: reasons against one enemy saturate (best in full, the next halved
   }
   // a pick made of many generic edges no longer tops this draft
   assert.notEqual(r.heroes[0]!.code, "tusk");
+});
+
+test("ADR-059: what a team deals comes from damage shares x damage per minute, by phase", () => {
+  // Dazzle and Bristleback are not right-clickers in the tags, yet their damage is physical
+  const r = engine.recommend({ enemyHeroes: ["phantom_assassin", "storm_spirit", "bristleback", "lion", "dazzle"], myRole: 1 });
+  const d = r.damage;
+  assert.equal(d.defenseLean, "physical");
+  assert.ok(Math.abs(d.physThreat + d.magicThreat + d.pureThreat - 1) < 0.01);
+  assert.deepEqual(d.phases.map((p) => p.id), ["lane", "mid", "late"]);
+  for (const p of d.phases) assert.ok(Math.abs(p.physical + p.magic + p.pure - 1) < 0.01 && Math.abs(p.by.reduce((s, x) => s + x.share, 0) - 1) < 0.01);
+  const share = (id: string, hero: string) => d.phases.find((p) => p.id === id)!.by.find((x) => x.hero === hero)!.share;
+  assert.ok(share("late", "phantom_assassin") > 1.5 * share("lane", "phantom_assassin"), "the carry's part of the damage grows");
+  assert.ok(share("late", "dazzle") < share("lane", "dazzle"), "a support's part shrinks");
+  assert.equal(d.phases[2]!.by[0]!.hero, "phantom_assassin");
+
+  // lineups the tags could not read: no attack / spell reliance at all, or spell-reliant physical and pure dealers
+  const quiet = engine.recommend({ enemyHeroes: ["spectre", "naga_siren", "slark", "doom", "enigma"] }).damage;
+  assert.ok(quiet.physThreat > 0.5 && quiet.pureThreat > 0.1, "Spectre / Naga / Slark hit for physical; Doom, Enigma, Desolate are pure");
+  const brawl = engine.recommend({ enemyHeroes: ["axe", "mars", "kunkka", "tidehunter", "magnus"] }).damage;
+  assert.notEqual(brawl.defenseLean, "magic");
+  assert.equal(engine.recommend({ enemyHeroes: ["zeus", "lion", "lina", "skywrath_mage", "necrophos"] }).damage.defenseLean, "magic");
+  assert.deepEqual(engine.recommend({ enemyHeroes: [] }).damage.phases, []);
+});
+
+test("ADR-059: every hero has damage shares; the rates cover its positions or fall back", async () => {
+  const { loadKB } = await import("../src/kb.js");
+  const kb = loadKB();
+  for (const [hero, tags] of Object.entries(kb.taxonomy.hero_tags)) {
+    const s = kb.heroDamage![hero]!;
+    assert.ok(s && Math.abs(s[0] + s[1] + s[2] - 1) < 1e-6, hero);
+    for (const p of tags.pos) {
+      const rate = kb.damageRate?.[hero]?.[String(p)];
+      if (rate) assert.ok(rate.every((x) => x > 0 && x < 5000), `${hero} pos ${p}`);
+    }
+  }
+  assert.ok(Object.keys(kb.damageRate ?? {}).length >= 120, "rates from data/benchmarks.json");
+});
+
+test("ADR-059: BKB answers control and burst, not the magic share; piercing disables halve it", () => {
+  const top = (enemies: string[]) => engine.recommend({ enemyHeroes: enemies }).defense;
+  // physical lineup with stuns: BKB is still an answer (it was absent before: no "magic school")
+  const stuns = top(["sven", "chaos_knight", "slardar", "wraith_king", "vengeful_spirit"]);
+  assert.ok(rec(stuns, "black_king_bar")?.reasons.every((x) => x.tool !== "magic damage"));
+  assert.ok(stuns.findIndex((x) => x.code === "black_king_bar") >= 0);
+  // their control goes through BKB: discounted and noted
+  const pierce = rec(top(["doom", "faceless_void", "enigma", "lion", "zeus"]), "black_king_bar")!;
+  assert.ok(pierce.reasons.every((x) => x.notes?.some((n) => n.startsWith("their disables that pierce it"))));
+  const plain = rec(top(["lion", "zeus", "lina", "sven", "crystal_maiden"]), "black_king_bar")!;
+  assert.ok(plain.reasons.every((x) => !x.notes));
+  // a hero dealing a sliver of a school is not a reason for the item against that school
+  const pipe = rec(top(["phantom_assassin", "storm_spirit", "bristleback", "lion", "dazzle"]), "pipe_of_insight");
+  assert.ok(!pipe?.reasons.some((x) => x.enemy === "dazzle" || x.enemy === "phantom_assassin"));
 });

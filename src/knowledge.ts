@@ -64,6 +64,11 @@ export interface KnowledgeBase {
   itemDcKey?: Record<string, string>;
   /** timed map events (data/timings.yaml, ADR-026). */
   timings?: Timings;
+  /** hero -> [physical, magic, pure] shares of the damage it deals (data/hero_damage.yaml, ADR-059). */
+  heroDamage?: Record<string, [number, number, number]>;
+  /** hero -> position -> hero damage per minute in [lane 0-10, mid 10-25, late 25-40]
+   *  (from data/benchmarks.json, our bracket; ADR-059). */
+  damageRate?: Record<string, Record<string, [number, number, number]>>;
 
   // indices -----------------------------------------------------------------
   relianceByCode: Map<string, Reliance>;
@@ -100,7 +105,22 @@ export interface RawKB {
   itemTraits?: Record<string, ItemTrait>;
   itemDcKey?: Record<string, string>;
   timings?: Timings;
+  heroDamage?: Record<string, [number, number, number]>;
+  damageRate?: Record<string, Record<string, [number, number, number]>>;
 }
+
+/** hero damage per minute by position in [lane, mid, late]: the mean over heroes in
+ *  data/benchmarks.json (2026-11, Crusader-Ancient). Used for a hero / position with
+ *  no sample and for a KB loaded without the benchmarks. */
+export const POSITION_DAMAGE_RATE: Record<number, [number, number, number]> = {
+  1: [313, 474, 1072],
+  2: [315, 632, 979],
+  3: [289, 512, 859],
+  4: [285, 391, 576],
+  5: [321, 388, 546],
+};
+/** minutes in each phase of a 40-minute game (for whole-game shares). */
+export const PHASE_MINUTES: [number, number, number] = [10, 15, 15];
 
 export function indexKB(raw: RawKB): KnowledgeBase {
   const { taxonomy, items, heroEdges, itemEdges, defenseEdges, combos } = raw;
@@ -147,6 +167,9 @@ export function indexKB(raw: RawKB): KnowledgeBase {
   for (const d of defenseEdges) {
     if (d.threat && !knownTools.has(d.threat)) {
       warnings.push(`defense edge for "${d.item}" references unknown threat tool "${d.threat}"`);
+    }
+    if (d.pierced_by && !knownTools.has(d.pierced_by)) {
+      warnings.push(`defense edge for "${d.item}" references unknown pierced_by tool "${d.pierced_by}"`);
     }
     if (!d.threat && !d.school) {
       warnings.push(`defense edge for "${d.item}" has neither threat nor school`);
@@ -199,6 +222,15 @@ export function indexKB(raw: RawKB): KnowledgeBase {
     }
   }
 
+  if (raw.heroDamage) {
+    for (const hero of Object.keys(taxonomy.hero_tags)) {
+      const d = raw.heroDamage[hero];
+      if (!d) warnings.push(`hero "${hero}" has no damage shares (data/hero_damage.yaml)`);
+      else if (d.length !== 3 || d.some((x) => !(x >= 0)) || Math.abs(d[0] + d[1] + d[2] - 1) > 1e-6) warnings.push(`hero "${hero}": damage shares must be three numbers summing to 1`);
+    }
+    for (const hero of Object.keys(raw.heroDamage)) if (!taxonomy.hero_tags[hero]) warnings.push(`hero_damage: unknown hero "${hero}"`);
+  }
+
   for (const [hero, tags] of Object.entries(taxonomy.hero_tags)) {
     validateHeroTags(hero, tags, knownReliance, knownTools, warnings);
     for (const code of Object.keys(tags.resist ?? {})) {
@@ -218,6 +250,8 @@ export function indexKB(raw: RawKB): KnowledgeBase {
     ...(raw.itemTraits ? { itemTraits: raw.itemTraits } : {}),
     ...(raw.itemDcKey ? { itemDcKey: raw.itemDcKey } : {}),
     ...(raw.timings ? { timings: raw.timings } : {}),
+    ...(raw.heroDamage ? { heroDamage: raw.heroDamage } : {}),
+    ...(raw.damageRate ? { damageRate: raw.damageRate } : {}),
     relianceByCode,
     toolByCode,
     edgesByTool,

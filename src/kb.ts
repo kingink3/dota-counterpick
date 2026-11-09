@@ -110,7 +110,44 @@ export function readRawKB(root: string = REPO_ROOT): RawKB {
     itemTraits: loadItemTraits(root),
     itemDcKey: loadItemDcKey(root),
     ...loadTimings(root),
+    ...loadDamage(root),
   };
+}
+
+/** What heroes deal (ADR-059): school shares (data/hero_damage.yaml) and damage per
+ *  minute by position and phase (data/benchmarks.json: cumulative hero damage at
+ *  minutes 5..40 for our bracket). Both optional; a pair with under 300 games is left
+ *  to the position average. */
+const DAMAGE_MIN_GAMES = 300;
+function loadDamage(root: string): Pick<RawKB, "heroDamage" | "damageRate"> {
+  const out: Pick<RawKB, "heroDamage" | "damageRate"> = {};
+  try {
+    const doc = readYaml<{ hero_damage?: Record<string, [number, number, number]> }>(join(root, "data", "hero_damage.yaml"));
+    if (doc.hero_damage) out.heroDamage = doc.hero_damage;
+  } catch {
+    /* optional layer */
+  }
+  try {
+    const doc = readYaml<{ minutes?: number[]; heroes?: Record<string, Record<string, { games?: number; heroDamage?: number[] }>> }>(join(root, "data", "benchmarks.json"));
+    const at = (m: number) => (doc.minutes ?? []).indexOf(m);
+    const [i10, i25, i40] = [at(10), at(25), at(40)];
+    if (i10 >= 0 && i25 >= 0 && i40 >= 0) {
+      const rate: NonNullable<RawKB["damageRate"]> = {};
+      for (const [hero, byPos] of Object.entries(doc.heroes ?? {})) {
+        for (const [pos, e] of Object.entries(byPos)) {
+          const d = e.heroDamage;
+          if (!d || (e.games ?? 0) < DAMAGE_MIN_GAMES) continue;
+          const [a, b, c] = [d[i10], d[i25], d[i40]];
+          if (!(a! > 0) || !(b! > a!) || !(c! > b!)) continue;
+          (rate[hero] ??= {})[pos] = [Math.round(a! / 10), Math.round((b! - a!) / 15), Math.round((c! - b!) / 15)];
+        }
+      }
+      if (Object.keys(rate).length) out.damageRate = rate;
+    }
+  } catch {
+    /* optional layer */
+  }
+  return out;
 }
 
 /** data/timings.yaml -> map-event schedule (ADR-026); optional. */

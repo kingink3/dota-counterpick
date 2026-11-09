@@ -68,7 +68,7 @@ export function renderPlanZone(root: HTMLElement, z: PlanZone): void {
     root.append(box);
     const grid = document.createElement("div");
     grid.className = "gz-grid";
-    grid.append(damageCard(m, v), threatCard(m, v));
+    grid.append(damageCard(m, v, z.phase), threatCard(m, v));
     root.append(grid);
   }
   root.append(itemCard(v));
@@ -88,17 +88,29 @@ export function renderPlanZone(root: HTMLElement, z: PlanZone): void {
   if (v.source) root.append(p("muted plan-src", v.source));
 }
 
-function damageCard(m: MatchPlan, v: PlanView): HTMLElement {
+function damageCard(m: MatchPlan, v: PlanView, phase: GamePhase): HTMLElement {
   const c = card("Damage & defence");
+  // the shown phase (ADR-059): who deals the damage changes as their carry comes online
+  const ph = m.damage.phases.find((x) => x.id === phase);
+  const sh = ph ?? { physical: m.damage.physical, magic: m.damage.magic, pure: m.damage.pure, by: [] };
+  const pc = (x: number) => Math.round(x * 100);
   const bar = document.createElement("div");
   bar.className = "gz-dmg";
-  const mag = Math.round(m.damage.magic * 100);
-  bar.append(el("i", "mag", ""), el("i", "phy", ""));
-  (bar.children[0] as HTMLElement).style.width = `${mag}%`;
-  (bar.children[1] as HTMLElement).style.width = `${100 - mag}%`;
+  for (const [cls, x] of [["phy", sh.physical], ["mag", sh.magic], ["pur", sh.pure]] as const) {
+    const i = el("i", cls, "");
+    i.style.width = `${x * 100}%`;
+    bar.append(i);
+  }
   c.append(bar);
-  const who = (xs: string[]) => (xs.length ? ` (${xs.map(v.heroLabel).join(", ")})` : "");
-  c.append(p("gz-sub", `${mag}% magic${who(m.damage.magicBy)} · ${100 - mag}% physical${who(m.damage.physBy)}`));
+  const parts = [`${pc(sh.physical)}% physical`, `${pc(sh.magic)}% magic`, ...(sh.pure >= 0.05 ? [`${pc(sh.pure)}% pure`] : [])];
+  const label = PHASES.find((x) => x.id === phase)?.label ?? "";
+  c.append(p("gz-sub", `${ph ? `${label}: ` : ""}${parts.join(" · ")}`));
+  const top = sh.by.filter((x) => x.share >= 0.15).slice(0, 3);
+  if (top.length) c.append(p("gz-sub", `Most of it: ${top.map((x) => `${v.heroLabel(x.hero)} ${pc(x.share)}% (${x.school})`).join(", ")}`));
+  if (m.damage.phases.length === 3) {
+    const arc = m.damage.phases.map((x) => `${x.id} ${pc(x.physical)}%`).join(" → ");
+    c.append(p("muted plan-src", `Physical share: ${arc}.`));
+  }
   for (const d of m.defence) c.append(row(d.key, d.rec.label, v.reasonText(d.rec)));
   if (!m.defence.length) c.append(p("muted", "No defensive item stands out against this lineup."));
   return c;

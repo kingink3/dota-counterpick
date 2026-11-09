@@ -212,6 +212,13 @@ export const PARAM_DOCS = {
     why: "An answer a teammate usually builds is halved for you: still useful twice (two Force Staffs), but the second copy is worth less than the first.",
     range: [0.3, 0.7],
   },
+  PIERCE_DISCOUNT: {
+    value: 0.5,
+    kind: "expert",
+    area: "items",
+    why: "A defensive item that their lineup pierces (Black King Bar vs Doom, Chronosphere, Black Hole, Berserker's Call) loses up to this share of its score, reached when the piercing tools sum to 1.5 (about two heroes built around one). BKB still blocks the rest of their spells, so it is halved rather than removed; at 0 piercing disables are ignored (before ADR-059).",
+    range: [0.3, 0.7],
+  },
   // ---- stat layer (ADR-035) -------------------------------------------------
   WINRATE_CAP: {
     value: 0.06,

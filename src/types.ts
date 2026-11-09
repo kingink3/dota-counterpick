@@ -131,9 +131,10 @@ export interface TeamNeed {
 /** What the allied lineup already covers (ADR-023), echoed for the UI. */
 export interface TeamRead {
   needs: Array<{ code: string; label: string; have: number; want: number }>;
-  /** damage the allies deal by school (same scale as DamageRead threats). */
+  /** shares (0..1) of the damage the allies deal over the game, by school (ADR-059). */
   physical: number;
   magic: number;
+  pure: number;
   /** enemies assumed to face you in lane (needs myRole); by main position. */
   laneOpponents?: string[];
 }
@@ -218,15 +219,34 @@ export interface ItemFitTable {
 
 /** magic vs physical read of the enemy team (ADR-012 damage weighting). */
 export type DamageSchool = "physical" | "magic" | "neutral";
+/** a school of dealt damage (ADR-059). */
+export type DealtSchool = "physical" | "magic" | "pure";
+/** game phases of the plan (Game tab): lane 0-10, mid 10-25, late 25+. */
+export type DamagePhaseId = "lane" | "mid" | "late";
+/** what a team deals in one phase (ADR-059): shares by school and who deals it. */
+export interface DamagePhase {
+  id: DamagePhaseId;
+  /** shares of the team's damage in this phase, summing to 1. */
+  physical: number;
+  magic: number;
+  pure: number;
+  /** the heroes dealing it, biggest first: share of the team's damage in this phase
+   *  and the school most of theirs is. */
+  by: Array<{ hero: string; share: number; school: DealtSchool }>;
+}
 export interface DamageRead {
   /** how soft the enemy is to each school (sum of vulnerability tag weights). */
   physicalVuln: number;
   magicVuln: number;
   /** which damage to bring against them. */
   offenseLean: "physical" | "magic" | "mixed";
-  /** how much physical / magic damage the enemy team threatens (tool census). */
+  /** shares (0..1) of the damage the enemy team deals over a 40-minute game, by school
+   *  (ADR-059: per-hero school shares x damage per minute by position and phase). */
   physThreat: number;
   magicThreat: number;
+  pureThreat: number;
+  /** the same by phase: who deals it changes as the carry comes online. */
+  phases: DamagePhase[];
   /** what to defend against. */
   defenseLean: "physical" | "magic" | "mixed";
 }
@@ -240,8 +260,8 @@ export interface DefenseEdge {
   /** enemy tool tag that creates the threat (must exist in taxonomy.tool). Use this
    *  for specific disables (silence, lockdown, …). Mutually exclusive with `school`. */
   threat?: string;
-  /** OR: gate on the enemy team's overall damage school (physical = right-clickers
-   *  via attack_reliant; magic = casters via spell_reliant) instead of one tool. */
+  /** OR: the damage school the enemy deals (ADR-059: data/hero_damage.yaml x damage
+   *  per minute) instead of one tool. An enemy counts by its part of that school. */
   school?: "physical" | "magic";
   /** defensive item id (own namespace; need not appear in items.yaml). */
   item: string;
@@ -253,6 +273,9 @@ export interface DefenseEdge {
   /** enemies this item does NOT answer despite matching the threat (Ghost Scepter
    *  vs Muerta's Pierce the Veil, which hits ethereal targets) - ADR-022. */
   except?: string[];
+  /** enemy tool that goes through this item (BKB vs bkb_piercing_disable): the more of
+   *  it their lineup has, the less the item is worth (ADR-059, P.PIERCE_DISCOUNT). */
+  pierced_by?: string;
 }
 
 // ---------------------------------------------------------------------------

@@ -22,7 +22,7 @@
           "juggernaut",
           "slark",
           "medusa",
-          "viper"
+          "anti_mage"
         ],
         "items": [
           "bloodthorn",
@@ -35,9 +35,9 @@
           "black_king_bar",
           "ghost_scepter",
           "assault_cuirass",
-          "eternal_shroud"
+          "heavens_halberd"
         ],
-        "damage": "magic"
+        "damage": "physical"
       }
     },
     {
@@ -68,12 +68,12 @@
           "radiance"
         ],
         "defense": [
-          "linkens_sphere",
           "lotus_orb",
-          "aeon_disk",
-          "black_king_bar"
+          "crimson_guard",
+          "shivas_guard",
+          "linkens_sphere"
         ],
-        "damage": "mixed"
+        "damage": "physical"
       }
     },
     {
@@ -104,12 +104,12 @@
           "hurricane_pike"
         ],
         "defense": [
-          "black_king_bar",
+          "ghost_scepter",
           "lotus_orb",
-          "pipe_of_insight",
-          "eternal_shroud"
+          "linkens_sphere",
+          "crimson_guard"
         ],
-        "damage": "magic"
+        "damage": "mixed"
       }
     },
     {
@@ -143,7 +143,7 @@
           "ghost_scepter",
           "lotus_orb",
           "heavens_halberd",
-          "black_king_bar"
+          "crimson_guard"
         ],
         "damage": "physical"
       }
@@ -176,10 +176,10 @@
           "hydras_breath"
         ],
         "defense": [
-          "linkens_sphere",
-          "black_king_bar",
           "ghost_scepter",
-          "assault_cuirass"
+          "assault_cuirass",
+          "heavens_halberd",
+          "blade_mail"
         ],
         "damage": "physical"
       }
@@ -215,7 +215,7 @@
           "glimmer_cape",
           "pipe_of_insight",
           "lotus_orb",
-          "black_king_bar"
+          "force_staff"
         ],
         "damage": "magic"
       }
@@ -246,12 +246,12 @@
           "hurricane_pike"
         ],
         "defense": [
-          "black_king_bar",
-          "eternal_shroud",
           "ghost_scepter",
-          "shivas_guard"
+          "shivas_guard",
+          "black_king_bar",
+          "crellas_crozier"
         ],
-        "damage": "magic"
+        "damage": "physical"
       }
     },
     {
@@ -279,9 +279,9 @@
         ],
         "defense": [
           "black_king_bar",
+          "glimmer_cape",
           "lotus_orb",
-          "eternal_shroud",
-          "glimmer_cape"
+          "eternal_shroud"
         ],
         "damage": "magic"
       }

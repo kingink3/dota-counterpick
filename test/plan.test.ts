@@ -163,7 +163,8 @@ test("match plan: damage split, threats with answers, a focus per phase", async 
   const enemies = ["phantom_assassin", "zeus", "lion", "axe", "necrophos"];
   const result = resolve(kb, { enemyHeroes: enemies, allyHeroes: ["anti_mage", "crystal_maiden"], myHero: "anti_mage", myRole: 1 });
   const m = buildMatchPlan({ kb, result, enemies, allies: ["anti_mage", "crystal_maiden"], myHero: "anti_mage", label: (h) => h, itemLabel: (k) => k, dcKey: (id) => kb.itemDcKey?.[id] });
-  assert.ok(Math.abs(m.damage.magic + m.damage.physical - 1) < 1e-9);
+  assert.ok(Math.abs(m.damage.magic + m.damage.physical + m.damage.pure - 1) < 0.01);
+  assert.deepEqual(m.damage.phases.map((p) => p.id), ["lane", "mid", "late"]);
   assert.ok(m.damage.magic > m.damage.physical, "Zeus / Lion / Necro: mostly magic");
   assert.ok(m.damage.physBy.includes("phantom_assassin"));
   const pa = m.threats.find((t) => t.enemy === "phantom_assassin")!;

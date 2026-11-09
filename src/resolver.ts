@@ -14,12 +14,15 @@
 import { P } from "./params.js";
 import { buildCensus, type Census } from "./census.js";
 import { evaluateConditions } from "./conditions.js";
-import { TOOL_SCHOOL, type KnowledgeBase } from "./knowledge.js";
+import { PHASE_MINUTES, POSITION_DAMAGE_RATE, TOOL_SCHOOL, type KnowledgeBase } from "./knowledge.js";
 import { ARCHETYPES } from "./types.js";
 import type {
   Archetype,
   AttackType,
+  DamagePhase,
+  DamagePhaseId,
   DamageRead,
+  DealtSchool,
   DamageSchool,
   DraftState,
   EngineResult,
@@ -55,8 +58,9 @@ export function resolve(kb: KnowledgeBase, draft: DraftState): EngineResult {
   // that hero's build (Eul's on a carry Sniper) sinks instead of topping the list.
   const fit = itemFitFor(kb, draft);
   const items = rankItems(kb, census, fit);
-  const defense = resolveDefense(kb, census, fit);
-  const damage = readDamage(census);
+  const enemyDealt = damageProfile(kb, census.enemies, team.enemyPos);
+  const defense = resolveDefense(kb, census, fit, enemyDealt);
+  const damage = readDamage(census, enemyDealt);
 
   // Honest gap reporting (ADR-004): which enemies did nothing answer - offensively
   // OR defensively? (a pure threat we can itemise against is not a blind spot.)
@@ -91,12 +95,15 @@ interface TeamContext {
   /** need code -> { have, want, weight, tools } for gap bonuses. */
   gaps: Array<{ code: string; label: string; have: number; want: number; weight: number; tools: Record<string, number> }>;
   scale: number;
+  /** shares of the allies' damage over the game (ADR-059). */
   physical: number;
   magic: number;
+  pure: number;
   allies: number;
   lane: Set<string>;
   /** each enemy's assumed position (assignPositions). */
   enemyPos: Map<string, number>;
+  myRole?: number;
 }
 
 function readTeam(kb: KnowledgeBase, draft: DraftState): TeamContext {
@@ -111,12 +118,9 @@ function readTeam(kb: KnowledgeBase, draft: DraftState): TeamContext {
     needsRead.push({ code: n.code, label: n.label, have, want: n.want });
     gaps.push({ code: n.code, label: n.label, have, want: n.want, weight: n.weight, tools: n.tools });
   }
-  let physical = 0;
-  let magic = 0;
-  for (const a of allyCodes) {
-    physical += schoolDamage(tagsOf(a)!, "physical");
-    magic += schoolDamage(tagsOf(a)!, "magic");
-  }
+  const allyPos = assignPositions(kb, allyCodes, draft.myHero && draft.myRole !== undefined ? { hero: draft.myHero, pos: draft.myRole } : undefined);
+  const dealt = damageProfile(kb, allyCodes, allyPos).whole;
+  const { physical, magic, pure } = dealt;
   const enemyPos = assignPositions(kb, draft.enemyHeroes);
   const lane = laneOpponents(draft, enemyPos);
   const read: TeamRead | undefined =
@@ -125,6 +129,7 @@ function readTeam(kb: KnowledgeBase, draft: DraftState): TeamContext {
           needs: allyCodes.length ? needsRead : [],
           physical: round(physical),
           magic: round(magic),
+          pure: round(pure),
           ...(lane.size ? { laneOpponents: [...lane] } : {}),
         }
       : undefined;
@@ -134,9 +139,11 @@ function readTeam(kb: KnowledgeBase, draft: DraftState): TeamContext {
     scale: Math.min(1, allyCodes.length / P.TEAM_FULL_AT),
     physical,
     magic,
+    pure,
     allies: allyCodes.length,
     lane,
     enemyPos,
+    ...(draft.myRole !== undefined ? { myRole: draft.myRole } : {}),
   };
 }
 
@@ -188,7 +195,7 @@ function laneOpponents(draft: DraftState, enemyPos: Map<string, number>): Set<st
 }
 
 /** gap + damage-mix bonuses for one hero candidate (basis "team"). */
-function teamReasons(team: TeamContext, tags: HeroTags | undefined): Reason[] {
+function teamReasons(kb: KnowledgeBase, team: TeamContext, code: string, tags: HeroTags | undefined): Reason[] {
   if (!tags || team.allies === 0) return [];
   const out: Reason[] = [];
   for (const g of team.gaps) {
@@ -208,13 +215,20 @@ function teamReasons(team: TeamContext, tags: HeroTags | undefined): Reason[] {
     });
   }
   // damage mix: a lineup dealing (almost) one school is easy to itemise against
-  const total = team.physical + team.magic;
+  // (pure counts toward neither: no single item answers it)
+  const total = team.physical + team.magic + team.pure;
   if (team.allies >= 2 && total > 0) {
+    const split = splitOf(kb, code);
     for (const school of ["magic", "physical"] as const) {
       const share = (school === "magic" ? team.magic : team.physical) / total;
       if (share >= P.DAMAGE_MIX_MIN_SHARE) continue;
-      const c = schoolDamage(tags, school);
-      if (c <= 0) continue;
+      // a core dealing ~60% of the missing school fills the gap fully; pure counts too
+      // (what answers the team's school does not answer it). Scaled by how much damage
+      // the pick deals at all: a position 5 does not fix a lineup's damage mix.
+      const rate = rateOf(kb, code, team.myRole);
+      const volume = Math.min(1, rate.reduce((a, r, i) => a + r * PHASE_MINUTES[i]!, 0) / CORE_GAME_DAMAGE);
+      const c = (((school === "magic" ? split[1] : split[0]) + split[2]) / 0.6) * volume;
+      if (c < 0.5) continue;
       const other = school === "magic" ? "physical" : "magic";
       out.push({
         enemy: "damage_mix",
@@ -372,15 +386,81 @@ function scaleReasons(reasons: Reason[], m: number): Reason[] {
   return m === 1 ? reasons : reasons.map((r) => ({ ...r, contribution: r.contribution * m }));
 }
 
-/** How much damage of a given school a single hero deals (right-clickers = physical
- *  via attack_reliant; casters = magic via spell_reliant; burst tools add on top). */
-function schoolDamage(tags: HeroTags, school: "physical" | "magic"): number {
-  const rel = tags.reliance ?? {};
-  const tool = tags.tool ?? {};
-  return school === "physical"
-    ? (rel.attack_reliant ?? 0) + (tool.physical_burst ?? 0)
-    : (rel.spell_reliant ?? 0) + (tool.magic_burst ?? 0);
+// ---------------------------------------------------------------------------
+//  What a team deals (ADR-059): school shares per hero (data/hero_damage.yaml) x
+//  hero damage per minute by position and phase (data/benchmarks.json).
+// ---------------------------------------------------------------------------
+
+const PHASE_IDS: DamagePhaseId[] = ["lane", "mid", "late"];
+const SCHOOLS: DealtSchool[] = ["physical", "magic", "pure"];
+
+/** [physical, magic, pure] shares of a hero's damage. Without the data file: a guess
+ *  from the tags (attack / spell reliance and the burst tools), as before ADR-059. */
+function splitOf(kb: KnowledgeBase, hero: string): [number, number, number] {
+  const d = kb.heroDamage?.[hero];
+  if (d) return d;
+  const tags = kb.taxonomy.hero_tags[hero];
+  const phys = (tags?.reliance?.attack_reliant ?? 0) + (tags?.tool?.physical_burst ?? 0);
+  const magic = (tags?.reliance?.spell_reliant ?? 0) + (tags?.tool?.magic_burst ?? 0);
+  return phys + magic > 0 ? [phys / (phys + magic), magic / (phys + magic), 0] : [0.5, 0.5, 0];
 }
+
+/** hero damage per minute in [lane, mid, late] on a position; the position's mean when
+ *  this hero has no sample there. */
+function rateOf(kb: KnowledgeBase, hero: string, pos: number | undefined): [number, number, number] {
+  const p = pos ?? kb.taxonomy.hero_tags[hero]?.pos[0] ?? 3;
+  return kb.damageRate?.[hero]?.[String(p)] ?? POSITION_DAMAGE_RATE[p] ?? POSITION_DAMAGE_RATE[3]!;
+}
+
+interface Dealt {
+  phases: DamagePhase[];
+  /** shares over a 40-minute game. */
+  whole: { physical: number; magic: number; pure: number };
+  /** hero -> its damage over the game by school, in units of one average hero of this
+   *  team (the team sums to its hero count). The scale of the school threats. */
+  perHero: Map<string, { physical: number; magic: number; pure: number }>;
+}
+
+export function damageProfile(kb: KnowledgeBase, heroes: string[], pos: Map<string, number>): Dealt {
+  const list = heroes.map((hero) => ({ hero, split: splitOf(kb, hero), rate: rateOf(kb, hero, pos.get(hero)) }));
+  const phases: DamagePhase[] = PHASE_IDS.map((id, i) => {
+    const total = list.reduce((s, h) => s + h.rate[i]!, 0) || 1;
+    const share = (k: number) => list.reduce((s, h) => s + h.rate[i]! * h.split[k]!, 0) / total;
+    return {
+      id,
+      physical: round(share(0)),
+      magic: round(share(1)),
+      pure: round(share(2)),
+      by: list
+        .map((h) => ({ hero: h.hero, share: round(h.rate[i]! / total), school: SCHOOLS[h.split.indexOf(Math.max(...h.split))]! }))
+        .sort((a, b) => b.share - a.share),
+    };
+  });
+  const game = (h: (typeof list)[number]) => h.rate.reduce((s, r, i) => s + r * PHASE_MINUTES[i]!, 0);
+  const total = list.reduce((s, h) => s + game(h), 0) || 1;
+  const perHero: Dealt["perHero"] = new Map();
+  const whole = { physical: 0, magic: 0, pure: 0 };
+  for (const h of list) {
+    const part = game(h) / total;
+    whole.physical += part * h.split[0];
+    whole.magic += part * h.split[1];
+    whole.pure += part * h.split[2];
+    const k = part * list.length;
+    perHero.set(h.hero, { physical: k * h.split[0], magic: k * h.split[1], pure: k * h.split[2] });
+  }
+  return { phases, whole, perHero };
+}
+
+/** damage to heroes over 40 minutes of an average core (positions 1-3). */
+const CORE_GAME_DAMAGE = [1, 2, 3].reduce((s, p) => s + POSITION_DAMAGE_RATE[p]!.reduce((a, r, i) => a + r * PHASE_MINUTES[i]!, 0), 0) / 3;
+
+/** summed weight of the piercing tool in their lineup at which the discount is full
+ *  (about two heroes built around a piercing disable). */
+const PIERCE_FULL = 1.5;
+
+/** a hero dealing less than this of a school (in average-hero units) is not a reason
+ *  to buy against that school. */
+const SCHOOL_THREAT_MIN = 0.25;
 
 // ---------------------------------------------------------------------------
 //  Defensive layer: enemy threat tools -> defensive items (mirror of edges)
@@ -390,6 +470,7 @@ function resolveDefense(
   kb: KnowledgeBase,
   census: Census,
   fit: ItemFit,
+  dealt: Dealt,
 ): Recommendation[] {
   const byItem = new Map<string, { label: string; reasons: Reason[] }>();
 
@@ -397,16 +478,22 @@ function resolveDefense(
     // per-enemy threat magnitude: a specific tool, or the broad damage school.
     const threatOf = (enemy: string): number => {
       if (d.except?.includes(enemy)) return 0;
-      const tags = census.tagsOf(enemy)!;
-      if (d.school) return schoolDamage(tags, d.school);
-      return tags.tool?.[d.threat!] ?? 0;
+      if (d.school) {
+        const x = dealt.perHero.get(enemy)?.[d.school] ?? 0;
+        return x >= SCHOOL_THREAT_MIN ? round(x) : 0;
+      }
+      return census.tagsOf(enemy)!.tool?.[d.threat!] ?? 0;
     };
     // census gate: how many enemies carry the threat / deal that school.
     if (d.min_threat !== undefined) {
-      const carriers = census.enemies.filter((e) => threatOf(e) > 0).length;
+      // a school: only enemies dealing a real part of it count as carriers
+      const carriers = census.enemies.filter((e) => threatOf(e) >= (d.school ? 0.5 : Number.MIN_VALUE)).length;
       if (carriers < d.min_threat) continue;
     }
     const label = d.school ? `${d.school} damage` : d.threat;
+    // the item is pierced by a tool their lineup has (BKB vs Doom / Chrono / Black Hole)
+    const pierce = d.pierced_by ? census.enemies.reduce((s, e) => s + (census.tagsOf(e)!.tool?.[d.pierced_by!] ?? 0), 0) : 0;
+    const kept = 1 - P.PIERCE_DISCOUNT * Math.min(1, pierce / PIERCE_FULL);
     for (const enemy of census.enemies) {
       const threatWeight = threatOf(enemy);
       if (threatWeight <= 0) continue;
@@ -417,8 +504,9 @@ function resolveDefense(
         basis: "defense",
         tool: label,
         mechanism: d.mechanism,
-        contribution: threatWeight * d.weight,
+        contribution: threatWeight * d.weight * kept,
         factors: { threatWeight, defenseWeight: d.weight },
+        ...(kept < 1 ? { notes: [`their disables that pierce it: x${round(kept)}`] } : {}),
         ...viaField(d.threat ? census.viaOf(enemy, "tool", d.threat) : undefined),
       });
       byItem.set(d.item, entry);
@@ -575,7 +663,7 @@ function rankSubjects(
     );
     if (subject.kind === "hero") {
       focusReasons(reasons, team.enemyPos);
-      reasons.push(...teamReasons(team, subject.tags));
+      reasons.push(...teamReasons(kb, team, subject.code, subject.tags));
     }
     // synergy with allied team (only when picking a hero)
     for (const s of synergy.get(subject.code) ?? []) {
@@ -696,33 +784,29 @@ function dominantSchool(reasons: Reason[]): DamageSchool | undefined {
 //  Magic vs physical damage read of the enemy team
 // ---------------------------------------------------------------------------
 
-function readDamage(census: Census): DamageRead {
+function readDamage(census: Census, dealt: Dealt): DamageRead {
   let physicalVuln = 0;
   let magicVuln = 0;
-  let physThreat = 0;
-  let magicThreat = 0;
   for (const enemy of census.enemies) {
-    const tags = census.tagsOf(enemy)!;
-    const rel = tags.reliance ?? {};
-    const tool = tags.tool ?? {};
+    const rel = census.tagsOf(enemy)!.reliance ?? {};
     // what to bring against them (defensive weakness): low_armor -> physical,
     // magic_burst_vulnerable / high_armor (physical mitigated) -> magic, and
     // squishy_to_burst dies to either.
     const anySquish = 0.5 * (rel.squishy_to_burst ?? 0);
     physicalVuln += (rel.low_armor ?? 0) + anySquish;
     magicVuln += (rel.magic_burst_vulnerable ?? 0) + (rel.high_armor ?? 0) + anySquish;
-    // what they deal: right-clickers (attack_reliant) deal physical; spell-reliant
-    // casters deal magic. The dedicated burst tools add on top.
-    physThreat += (rel.attack_reliant ?? 0) + (tool.physical_burst ?? 0);
-    magicThreat += (rel.spell_reliant ?? 0) + (tool.magic_burst ?? 0);
   }
+  // what they deal (ADR-059): school shares x damage per minute, over the game and by phase
+  const w = census.enemies.length ? dealt.whole : { physical: 0, magic: 0, pure: 0 };
   return {
     physicalVuln: round(physicalVuln),
     magicVuln: round(magicVuln),
     offenseLean: lean(physicalVuln, magicVuln),
-    physThreat: round(physThreat),
-    magicThreat: round(magicThreat),
-    defenseLean: lean(physThreat, magicThreat),
+    physThreat: round(w.physical),
+    magicThreat: round(w.magic),
+    pureThreat: round(w.pure),
+    phases: census.enemies.length ? dealt.phases : [],
+    defenseLean: lean(w.physical, w.magic),
   };
 }
 

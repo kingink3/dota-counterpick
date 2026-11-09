@@ -37,9 +37,17 @@ export function explainResult(
     `Damage read: enemy is softer to ${d.offenseLean.toUpperCase()} ` +
       `(phys-vuln ${d.physicalVuln} vs magic-vuln ${d.magicVuln}); ` +
       `they deal mostly ${d.defenseLean.toUpperCase()} ` +
-      `(phys ${d.physThreat} vs magic ${d.magicThreat}) - build ` +
+      `(${pc(d.physThreat)} physical, ${pc(d.magicThreat)} magic${d.pureThreat >= 0.05 ? `, ${pc(d.pureThreat)} pure` : ""}) - build ` +
       `${d.defenseLean === "physical" ? "armor" : d.defenseLean === "magic" ? "magic resist" : "mixed defense"}`,
   );
+  if (d.phases.length) {
+    lines.push(
+      "By phase: " +
+        d.phases
+          .map((ph) => `${ph.id} ${pc(ph.physical)} phys / ${pc(ph.magic)} magic${ph.pure >= 0.05 ? ` / ${pc(ph.pure)} pure` : ""}, most from ${ph.by[0] ? `${heroLabel(ph.by[0].hero)} ${pc(ph.by[0].share)}` : "-"}`)
+          .join("; "),
+    );
+  }
   lines.push("");
 
   if (result.heroes.length > 0) {
@@ -174,4 +182,8 @@ export function heroLabel(code: string): string {
     .split("_")
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
+}
+
+function pc(x: number): string {
+  return `${Math.round(x * 100)}%`;
 }
