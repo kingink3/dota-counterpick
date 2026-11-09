@@ -68,9 +68,10 @@ jobs:
           start=$(date +%s)
           case "$(file -b r.dem.bz2)" in
             bzip2*) bunzip2 r.dem.bz2 ;;
+            Zstandard*) zstd -q -d r.dem.bz2 -o r.dem && rm r.dem.bz2 ;;
             *) mv r.dem.bz2 r.dem ;;
           esac
-          echo "unpacked $(stat -c%s r.dem) bytes in $(( $(date +%s) - start )) s"
+          echo "unpacked $(stat -c%s r.dem) bytes in $(( $(date +%s) - start )) s; header: $(head -c 8 r.dem | tr -dc 'A-Z0-9')"
       - name: Parse with odota/parser
         run: |
           set -e
