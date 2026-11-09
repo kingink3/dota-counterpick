@@ -29,13 +29,37 @@ export interface ReplayDisable {
   kind: string;
 }
 
+/** a building, Roshan or Tormentor that died, and who hit it shortly before (ADR-051). */
+export interface ReplayObjective {
+  t: number;
+  kind: "tower" | "rax" | "fort" | "roshan" | "tormentor";
+  /** for buildings: whose building it was. */
+  owner?: "radiant" | "dire";
+  /** player slots whose hero (or its summons) damaged it in the last OBJ_WINDOW s. */
+  by: number[];
+}
+
 export interface ReplayTimeline {
   v: 1;
   /** game time (s) of index 0. */
   start: number;
   heroes: Record<string, ReplayHero>;
   disables: ReplayDisable[];
+  /** ADR-051 (older stored matches lack these). */
+  objectives?: ReplayObjective[];
+  /** building damage per player slot, end of game. */
+  towerDamage?: Record<string, number>;
 }
+
+/** how far back damage counts as taking part: buildings fall fast, Roshan takes a while. */
+export const OBJ_WINDOW = { building: 20, boss: 60 } as const;
+const objKind = (name: string): ReplayObjective["kind"] | undefined =>
+  /^npc_dota_(goodguys|badguys)_tower/.test(name) ? "tower"
+  : /^npc_dota_(goodguys|badguys)_(melee|range)_rax/.test(name) ? "rax"
+  : /^npc_dota_(goodguys|badguys)_fort/.test(name) ? "fort"
+  : name === "npc_dota_roshan" ? "roshan"
+  : /miniboss|tormentor/.test(name) ? "tormentor" // name not yet seen in a parsed match (ADR-051)
+  : undefined;
 
 /** modifiers that stop you from acting (casting or moving the way you want). */
 export const DISABLE_RE = /stun|hex|sheep|silence|taunt|fear|cyclone|eul|sleep|nightmare|root|ensnare|bash|frozen|freeze|petrif|banish|disarm|duel|black_hole|chrono|reverse_polarity|fiends_grip|shackle|dream_coil|mute|doom/;
@@ -51,13 +75,16 @@ export const heroKey = (name: string): string =>
 export const playerSlot = (s: number): number => (s < 5 ? s : 128 + s - 5);
 
 interface IntervalEvt { type: "interval"; time: number; slot: number; unit?: string; x?: number; y?: number; life_state?: number; lh?: number; denies?: number; xp?: number; gold?: number }
-interface ModEvt { type: string; time: number; targetname?: string; targethero?: boolean; targetillusion?: boolean; inflictor?: string; stun_duration?: number }
+interface ModEvt { type: string; time: number; targetname?: string; targethero?: boolean; targetillusion?: boolean; inflictor?: string; stun_duration?: number; sourcename?: string; attackername?: string }
 
 /** NDJSON lines of odota/parser -> timeline. Lines that are not JSON are skipped. */
 export function buildTimeline(lines: Iterable<string>): ReplayTimeline | undefined {
   const rows = new Map<number, IntervalEvt[]>(); // slot -> events
   const opened = new Map<string, { t: number; slotName: string; kind: string; d?: number }>();
   const mods: Array<{ t: number; d: number; target: string; kind: string }> = [];
+  const objHits = new Map<string, Array<{ t: number; src: string }>>(); // target -> hits
+  const objDeaths: Array<{ t: number; target: string }> = [];
+  const towerDmg = new Map<number, number>(); // parser slot -> last tower_damage
   let start = Infinity;
   let end = -Infinity;
   for (const line of lines) {
@@ -74,6 +101,14 @@ export function buildTimeline(lines: Iterable<string>): ReplayTimeline | undefin
       start = Math.min(start, iv.time);
       end = Math.max(end, iv.time);
       (rows.get(iv.slot) ?? rows.set(iv.slot, []).get(iv.slot)!).push(iv);
+      const td = (e as IntervalEvt & { tower_damage?: number }).tower_damage;
+      if (typeof td === "number") towerDmg.set(iv.slot, td);
+    } else if (e.type === "DOTA_COMBATLOG_DAMAGE" || e.type === "DOTA_COMBATLOG_DEATH") {
+      const m = e as ModEvt;
+      if (!m.targetname || !objKind(m.targetname)) continue;
+      if (e.type === "DOTA_COMBATLOG_DEATH") objDeaths.push({ t: m.time, target: m.targetname });
+      const src = m.sourcename ?? m.attackername;
+      if (src && /^npc_dota_hero_/.test(src)) (objHits.get(m.targetname) ?? objHits.set(m.targetname, []).get(m.targetname)!).push({ t: m.time, src });
     } else if (e.type === "DOTA_COMBATLOG_MODIFIER_ADD" || e.type === "DOTA_COMBATLOG_MODIFIER_REMOVE") {
       const m = e as ModEvt;
       if (!m.targethero || m.targetillusion || !m.targetname || !m.inflictor) continue;
@@ -121,7 +156,19 @@ export function buildTimeline(lines: Iterable<string>): ReplayTimeline | undefin
     .filter((m) => slotOfHero.has(heroKey(m.target)))
     .map((m) => ({ t: Math.round(m.t * 10) / 10, d: Math.round(m.d * 10) / 10, slot: slotOfHero.get(heroKey(m.target))!, kind: m.kind }))
     .sort((a, b) => a.t - b.t);
-  return { v: 1, start, heroes, disables };
+  const objectives: ReplayObjective[] = objDeaths
+    .map((o) => {
+      const kind = objKind(o.target)!;
+      const win = kind === "roshan" || kind === "tormentor" ? OBJ_WINDOW.boss : OBJ_WINDOW.building;
+      const by = new Set<number>();
+      for (const h of objHits.get(o.target) ?? []) if (h.t <= o.t && h.t >= o.t - win && slotOfHero.has(heroKey(h.src))) by.add(slotOfHero.get(heroKey(h.src))!);
+      const owner = /goodguys/.test(o.target) ? "radiant" : /badguys/.test(o.target) ? "dire" : undefined;
+      return { t: Math.round(o.t), kind, ...(owner ? { owner } : {}), by: [...by].sort((a, b) => a - b) } as ReplayObjective;
+    })
+    .sort((a, b) => a.t - b.t);
+  const towerDamage: Record<string, number> = {};
+  for (const [slot, v] of towerDmg) towerDamage[String(playerSlot(slot))] = v;
+  return { v: 1, start, heroes, disables, objectives, towerDamage };
 }
 
 /** is the hero in `slot` under a disable at game time t? */

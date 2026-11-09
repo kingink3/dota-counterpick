@@ -54,3 +54,37 @@ test("replay: both spellings of a hero name meet", () => {
   for (const [a, b] of [["CDOTA_Unit_Hero_DarkWillow", "npc_dota_hero_dark_willow"], ["CDOTA_Unit_Hero_Obsidian_Destroyer", "npc_dota_hero_obsidian_destroyer"], ["CDOTA_Unit_Hero_EarthSpirit", "npc_dota_hero_earth_spirit"]] as const)
     assert.equal(heroKey(a), heroKey(b));
 });
+
+// ADR-051: objectives - who hit a building / Roshan shortly before it fell.
+test("replay: objectives record the heroes that hit them in the last seconds; macro stats per player", async () => {
+  const { macroOf } = await import("../src/review.js");
+  const dmg = (time: number, target: string, src: string) => JSON.stringify({ type: "DOTA_COMBATLOG_DAMAGE", time, targetname: target, sourcename: src, attackername: src, value: 50 });
+  // the killer counts as present too (it is in the death event); creeps finish these
+  const death = (time: number, target: string, src = "npc_dota_badguys_siege") => JSON.stringify({ type: "DOTA_COMBATLOG_DEATH", time, targetname: target, sourcename: src });
+  const lines = [
+    iv(0, 0), iv(100, 0, { tower_damage: 900 }), iv(0, 5), iv(100, 5, { tower_damage: 100 }),
+    dmg(50, "npc_dota_badguys_tower1_top", "npc_dota_hero_axe"), // Axe (Radiant) 10 s before
+    dmg(55, "npc_dota_badguys_tower1_top", "npc_dota_hero_lina"),
+    death(60, "npc_dota_badguys_tower1_top"),
+    dmg(20, "npc_dota_badguys_tower1_mid", "npc_dota_hero_axe"), // 50 s before: too early
+    death(70, "npc_dota_badguys_tower1_mid"),
+    death(80, "npc_dota_goodguys_tower1_bot"),
+    dmg(85, "npc_dota_roshan", "npc_dota_hero_axe"),
+    death(90, "npc_dota_roshan", "npc_dota_hero_axe"),
+  ];
+  const tl = buildTimeline(lines)!;
+  assert.deepEqual(tl.objectives!.map((o) => [o.kind, o.owner ?? "-", o.by.join(",")]), [
+    ["tower", "dire", "0,128"],
+    ["tower", "dire", ""],
+    ["tower", "radiant", ""],
+    ["roshan", "-", "0"],
+  ]);
+  assert.deepEqual(tl.towerDamage, { "0": 900, "128": 100 });
+  const m = macroOf(tl, 0)!;
+  assert.equal(m.enemyBuildings, 2);
+  assert.equal(m.buildingsWith, 1);
+  assert.equal(m.ownLost, 1);
+  assert.deepEqual(m.roshan, { team: 1, mine: 1, enemy: 0 });
+  assert.equal(m.towerShare, 1, "the only Radiant hero in the data");
+  assert.deepEqual(macroOf(tl, 128)!.roshan, { team: 0, mine: 0, enemy: 1 });
+});

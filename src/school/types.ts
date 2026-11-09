@@ -28,7 +28,7 @@ export interface TheoryBlock {
   p: string[];
 }
 
-export type GoalId = "cs10" | "nw20" | "xp10" | "deaths" | "idle" | "observers" | "stacks" | "dewards" | "kp" | "answers";
+export type GoalId = "cs10" | "nw20" | "xp10" | "deaths" | "idle" | "observers" | "stacks" | "dewards" | "kp" | "answers" | "objectives" | "roshan";
 
 export interface PracticeGoal {
   id: GoalId;

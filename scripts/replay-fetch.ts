@@ -62,7 +62,7 @@ async function one(file: string, parser: string): Promise<string> {
   m.replay = tl;
   writeFileSync(file, JSON.stringify(m));
   const secs = tl.heroes[Object.keys(tl.heroes)[0]!]!.x.length;
-  return `ok: ${(size / 1e6).toFixed(0)} MB dem, ${Object.keys(tl.heroes).length} heroes x ${secs} s, ${tl.disables.length} disables, ${Math.round((Date.now() - t0) / 1000)} s`;
+  return `ok: ${(size / 1e6).toFixed(0)} MB dem, ${Object.keys(tl.heroes).length} heroes x ${secs} s, ${tl.disables.length} disables, ${tl.objectives?.filter((o) => o.kind === "tower" || o.kind === "rax").length ?? 0} buildings / ${tl.objectives?.filter((o) => o.kind === "roshan").length ?? 0} Roshan / ${tl.objectives?.filter((o) => o.kind === "tormentor").length ?? 0} Tormentor fell, ${Math.round((Date.now() - t0) / 1000)} s`;
 }
 
 async function main(): Promise<void> {

@@ -205,6 +205,46 @@ export interface Finding {
   /** what the data could not see, for likely / possible findings. */
   missingContext?: MissingContext[];
 }
+export interface MacroStats {
+  /** enemy towers + barracks that fell, and how many you damaged in their last 20 s. */
+  enemyBuildings: number;
+  buildingsWith: number;
+  /** your own towers + barracks lost. */
+  ownLost: number;
+  /** Roshan / Tormentor kills by your team (most of the damage dealers on your side), and yours among them. */
+  roshan: { team: number; mine: number; enemy: number };
+  tormentor: { team: number; mine: number; enemy: number };
+  /** your building damage and its share of your team's. */
+  towerDamage?: number;
+  towerShare?: number;
+}
+
+/** objectives from the replay timeline, seen from player slot `slot` (ADR-051). */
+export function macroOf(tl: ReplayTimeline, slot: number): MacroStats | undefined {
+  if (!tl.objectives) return undefined;
+  const radiant = slot < 128;
+  const mineSide = (s: number) => s < 128 === radiant;
+  const myOwner = radiant ? "radiant" : "dire";
+  const bld = tl.objectives.filter((o) => o.kind === "tower" || o.kind === "rax");
+  const enemyB = bld.filter((o) => o.owner && o.owner !== myOwner);
+  const boss = (kind: "roshan" | "tormentor") => {
+    const ks = tl.objectives!.filter((o) => o.kind === kind);
+    const team = ks.filter((o) => o.by.filter(mineSide).length > o.by.length / 2);
+    return { team: team.length, mine: team.filter((o) => o.by.includes(slot)).length, enemy: ks.length - team.length };
+  };
+  const td = tl.towerDamage;
+  const mineTd = td?.[String(slot)];
+  const teamTd = td ? Object.entries(td).filter(([k]) => mineSide(Number(k))).reduce((a, [, v]) => a + v, 0) : 0;
+  return {
+    enemyBuildings: enemyB.length,
+    buildingsWith: enemyB.filter((o) => o.by.includes(slot)).length,
+    ownLost: bld.filter((o) => o.owner === myOwner).length,
+    roshan: boss("roshan"),
+    tormentor: boss("tormentor"),
+    ...(mineTd !== undefined ? { towerDamage: mineTd, ...(teamTd > 0 ? { towerShare: Math.round((mineTd / teamTd) * 100) / 100 } : {}) } : {}),
+  };
+}
+
 export type Confidence = "confirmed" | "likely" | "possible";
 /** self_disabled: stuns / silences / hexes on you are not in the data; target_vision: whether the
  *  target was visible; cdr: cooldown reduction; range_approx: cast range + walking distance;
@@ -355,6 +395,8 @@ export interface MatchReview {
   vision?: VisionStats;
   /** minutes alive and out of base with nothing that pays (ADR-041). */
   idle?: IdleReport;
+  /** objectives from the replay (ADR-051): building falls, Roshan, Tormentor, building damage. */
+  macro?: MacroStats;
   /** spell / item use in battles (2v3 / 3v2 or bigger), targets, positioning. */
   battles?: BattleReport;
   /** fixFirst + workOn (kept for the copy text / older code). */
@@ -891,6 +933,17 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
     });
   }
 
+  // ---- objectives from the replay (ADR-051) ------------------------------------------
+  const macro = d.replay ? macroOf(d.replay, mine.playerSlot) : undefined;
+  if (macro && position !== undefined && position <= 3 && macro.enemyBuildings >= 4) {
+    const share = macro.buildingsWith / macro.enemyBuildings;
+    const line = `You hit ${macro.buildingsWith} of the ${macro.enemyBuildings} enemy towers and barracks in their last 20 s${macro.towerShare !== undefined ? `; ${Math.round(macro.towerShare * 100)}% of your team's building damage` : ""}.`;
+    if (share < 0.3)
+      findings.push({ id: "objectives_low", area: "map", severity: 0.2, title: `Present at ${macro.buildingsWith} of ${macro.enemyBuildings} enemy buildings taken`, detail: `${line} As a core, buildings are where a lead is cashed in.`, confidence: "likely", missingContext: ["role_context"] });
+    else if (share >= 0.6)
+      findings.push({ id: "objectives_high", area: "map", severity: 0.2, good: true, title: `Present at ${macro.buildingsWith} of ${macro.enemyBuildings} enemy buildings taken`, detail: line, confidence: "confirmed" });
+  }
+
   const fountain = (me.stats?.tripsFountainPerMinute ?? []).reduce((a, b) => a + b, 0);
   if (duration > 1200 && fountain / (duration / 600) > 3) {
     findings.push({ id: "fountain_trips", area: "execution", severity: 0.15, title: `${fountain} fountain trips`, detail: "Over 3 per 10 minutes: regen, a Bottle or a lane switch may save the walks." });
@@ -1016,6 +1069,7 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
     findings,
     vision,
     ...(idle ? { idle } : {}),
+    ...(macro ? { macro } : {}),
     ...(battles?.battles.length ? { battles } : {}),
     growth,
     fixFirst,

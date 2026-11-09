@@ -28,6 +28,8 @@ export const GOAL_DEFAULT: Record<GoalId, number> = {
   dewards: 2,
   kp: 0.5,
   answers: 0, // "missing / late answer" problems allowed
+  objectives: 0.5, // share of enemy buildings taken that you hit (replay)
+  roshan: 1, // share of your team's Roshan kills you took part in (replay)
 };
 
 /** one match against one goal: ok, and the value shown. */
@@ -64,6 +66,16 @@ export function checkMatch(id: GoalId, r: MatchReview, target = GOAL_DEFAULT[id]
       // ADR-029g: a missing or late answer counts only when it answers the real killers
       const n = r.findings.filter((f) => (f.id === "counter_missing" || f.id === "counter_late") && !f.good && !f.note).length;
       return { ok: n <= target, value: n ? `${n} missing / late answer${n > 1 ? "s" : ""}` : "answers bought" };
+    }
+    case "objectives": {
+      const m = r.macro;
+      if (!m || m.enemyBuildings < 3) return { ok: null, value: m ? "fewer than 3 buildings fell" : "no replay" };
+      return { ok: m.buildingsWith / m.enemyBuildings >= target, value: `at ${m.buildingsWith} of ${m.enemyBuildings} buildings` };
+    }
+    case "roshan": {
+      const m = r.macro;
+      if (!m || !m.roshan.team) return { ok: null, value: m ? "your team took no Roshan" : "no replay" };
+      return { ok: m.roshan.mine / m.roshan.team >= target, value: `in ${m.roshan.mine} of ${m.roshan.team} Roshans` };
     }
     case "kp":
       return r.kp !== undefined ? { ok: r.kp >= target, value: `${Math.round(r.kp * 100)}% of kills` } : { ok: null, value: "too few kills" };

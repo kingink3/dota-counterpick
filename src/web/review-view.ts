@@ -751,6 +751,21 @@ export class ReviewView {
     }
     if (r.runes) parts.push(`${r.runes.power} power runes`, `${r.runes.bounty} bounties`);
     c.append(el("p", "rv-sum", parts.join(" · ") || "No map data."));
+    // ADR-051: objectives from the replay
+    const m = r.macro;
+    if (m) {
+      const boss = (n: string, b: { team: number; mine: number; enemy: number }) => (b.team || b.enemy ? `${n}: your team ${b.team} (you in ${b.mine}), enemy ${b.enemy}` : "");
+      const line = [
+        `Enemy buildings: present at ${m.buildingsWith} of ${m.enemyBuildings}`,
+        m.towerDamage !== undefined ? `building damage ${m.towerDamage}${m.towerShare !== undefined ? ` (${Math.round(m.towerShare * 100)}% of team)` : ""}` : "",
+        `own buildings lost ${m.ownLost}`,
+        boss("Roshan", m.roshan),
+        boss("Tormentor", m.tormentor),
+      ].filter(Boolean).join(" · ");
+      const p = el("p", "rv-sub", `Objectives (replay): ${line}.`);
+      p.title = "Present = your hero or its summons damaged the building in its last 20 s (Roshan / Tormentor: last 60 s).";
+      c.append(p);
+    }
     for (const f of r.findings.filter((x) => x.area === "map" && !x.note)) c.append(findingRow(f, false));
     return c;
   }

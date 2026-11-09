@@ -45,6 +45,7 @@ export const MACRO: Module = {
         { id: "obs2", scene: "Minute 30. The enemy smokes and takes your bottom Tier 2; your team is on the top side of the map.", q: "What is the best answer?", options: ["Push the enemy's top tower at the same time", "Run across the map into five enemies", "Go back to base and wait", "Farm the jungle"], correct: 0, why: "Trade: their bottom push is answered by your top push, not by a lost fight." },
       ],
       practice: [
+        { id: "objectives", text: "Be there (deal damage) when at least half of the enemy towers and barracks fall.", need: 2, of: 3 },
         { id: "kp", text: "Take part in at least half of your team's kills.", need: 2, of: 3 },
       ],
     },
@@ -127,6 +128,7 @@ export const MACRO: Module = {
         { id: "ros2", scene: "Your team wants Roshan; two enemy heroes are visible farming the far side, three are unseen.", q: "What should come first?", options: ["Vision around the den and finding the three missing heroes", "Go in immediately", "Split the team: two on Roshan, three farm", "Skip Roshan forever"], correct: 0, why: "Three unseen enemies can trap you in the pit; see them first." },
       ],
       practice: [
+        { id: "roshan", text: "Take part in every Roshan your team kills.", need: 2, of: 3 },
         { id: "deaths", text: "Die at most 5 times in a match.", need: 2, of: 3 },
       ],
     },
@@ -166,6 +168,7 @@ export const MACRO: Module = {
         { id: "hgs2", scene: "Minute 40. You push without creeps; your heroes hit a tower that barely loses health.", q: "Why?", options: ["Backdoor protection: no creeps near the building", "The tower has the Aegis", "Towers heal at night", "Your heroes are too low level"], correct: 0, why: "Bring a creep wave; without it buildings take reduced damage and regenerate." },
       ],
       practice: [
+        { id: "objectives", text: "As position 1, 2 or 3: be there when at least 60% of the enemy buildings fall.", target: 0.6, roles: [1, 2, 3], need: 2, of: 3 },
         { id: "deaths", text: "Die at most 4 times in a match.", target: 4, need: 2, of: 3 },
       ],
     },
