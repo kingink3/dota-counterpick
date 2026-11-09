@@ -1,0 +1,22 @@
+# temporary (ADR-051): names of Roshan / Tormentor / buildings in odota/parser output
+name: Replay debug
+on: { workflow_dispatch: {} }
+permissions: { contents: read }
+jobs:
+  d:
+    runs-on: ubuntu-latest
+    services:
+      parser: { image: odota/parser, ports: ["5600:5600"] }
+    steps:
+      - run: |
+          url=$(curl -sf https://api.opendota.com/api/matches/9081380063 | jq -r .replay_url)
+          curl -s -o r.pack "$url"; zstd -q -d r.pack -o r.dem
+          curl -s localhost:5600 --data-binary @r.dem -o o.ndjson
+          echo "DEATH non-hero targets:"; jq -r 'select(.type=="DOTA_COMBATLOG_DEATH" and (.targethero|not)) | .targetname' o.ndjson | grep -v "creep\|npc_dota_neutral\|ward\|illusion" | sort | uniq -c | sort -rn | head -30
+          echo "a DEATH event (tower):"; jq -c 'select(.type=="DOTA_COMBATLOG_DEATH" and (.targetname|test("tower")))' o.ndjson | head -1
+          echo "a DAMAGE event on roshan:"; jq -c 'select(.type=="DOTA_COMBATLOG_DAMAGE" and (.targetname|test("roshan")))' o.ndjson | head -1
+          echo "damage to roshan by attacker:"; jq -r 'select(.type=="DOTA_COMBATLOG_DAMAGE" and (.targetname|test("roshan"))) | .attackername' o.ndjson | sort | uniq -c | sort -rn | head
+          echo "miniboss/tormentor damage by attacker:"; jq -r 'select(.type=="DOTA_COMBATLOG_DAMAGE" and (.targetname|test("miniboss|tormentor"))) | .attackername' o.ndjson | sort | uniq -c | sort -rn | head
+          echo "interval tower_damage at the end:"; jq -c 'select(.type=="interval") | [.slot,.time,.tower_damage]' o.ndjson | tail -10
+          echo "other event types:"; jq -r '.type' o.ndjson | sort | uniq -c | sort -rn | sed -n '1,40p'
+          echo "CHAT_MESSAGE / objectives sample:"; jq -c 'select(.type=="CHAT_MESSAGE_ROSHAN_KILL" or .type=="CHAT_MESSAGE_AEGIS" or .type=="CHAT_MESSAGE_TOWER_KILL" or .type=="building_kill")' o.ndjson | head -5
