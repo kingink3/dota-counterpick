@@ -547,6 +547,14 @@ export class ReviewView {
       tb.append(tr);
     }
     c.append(tb);
+    // idle time (ADR-041): always shown when measured, a finding only above the threshold
+    if (r.idle) {
+      const n = r.idle.minutes.length;
+      const cost = r.idle.goldLost !== undefined ? `, up to ~${r.idle.goldLost} gold at ${r.idle.pace}/min` : r.idle.stackChances !== undefined && n ? `, ${n} stack / ward chance${n > 1 ? "s" : ""}` : "";
+      const p = el("p", "rv-sub", `Idle: ${n} of ${r.idle.checked} minutes out of base${cost}.`);
+      p.title = "Alive, out of base, and in that minute: no last hit or deny, stack, ward, rune, cast, hero damage, enemy hero within ~960 units, or lane XP. Per-minute data: a walk between camps can look idle - check the replay.";
+      c.append(p);
+    }
     if (!r.comparable) c.append(el("p", "rv-note", `${r.mode === "turbo" ? "Turbo" : "This mode"}: averages are from ranked All Pick games, not compared.`));
     else if (r.compat?.length) c.append(el("p", "rv-note", `${r.compat.join("; ")}.`));
     return c;

@@ -4,6 +4,7 @@
 //  Pure: no fetch, no DOM. Every finding carries its evidence (times, counts).
 // =============================================================================
 
+import { idleRuns, idleTime, type IdleReport } from "./review-idle.js";
 import { buildPlan, mmss, teamWindow, WINDOW_PP, type ItemPlan, type ItemStats, type ItemTiming } from "./item-plan.js";
 import type { KnowledgeBase } from "./knowledge.js";
 import { archetypeOf, resolve } from "./resolver.js";
@@ -216,7 +217,8 @@ export type MissingContext =
   | "causality"
   | "role_context"
   | "historical_stat"
-  | "benchmark_mode";
+  | "benchmark_mode"
+  | "minute_stats";
 export const MISSING_LABEL: Record<MissingContext, string> = {
   self_disabled: "stuns / silences on you are not in the data",
   target_vision: "whether the target was visible is unknown",
@@ -227,6 +229,7 @@ export const MISSING_LABEL: Record<MissingContext, string> = {
   role_context: "role, split push and objectives are not weighed",
   historical_stat: "based on other games' statistics, not this match",
   benchmark_mode: "averages are from ranked games, this match is another mode",
+  minute_stats: "farm data is per minute: a walk between camps can look idle",
 };
 
 /** default confidence per finding id (prefix before ':' for per-spell ids), ADR-036. */
@@ -266,6 +269,7 @@ const CONFIDENCE: Record<string, [Confidence, MissingContext[]?]> = {
   battle_mana: ["likely", ["cdr"]],
   targets: ["likely", ["causality"]],
   convert: ["likely", ["causality"]],
+  idle_time: ["possible", ["minute_stats", "position_sampling"]],
   idle: ["possible", ["self_disabled", "target_vision", "cdr", "range_approx"]],
   low_kp: ["possible", ["role_context"]],
   died_in_their_window: ["possible", ["historical_stat"]],
@@ -344,6 +348,8 @@ export interface MatchReview {
   findings: Finding[];
   /** wards placed / destroyed and stacks: the support metrics, shown for every position. */
   vision?: VisionStats;
+  /** minutes alive and out of base with nothing that pays (ADR-041). */
+  idle?: IdleReport;
   /** spell / item use in battles (2v3 / 3v2 or bigger), targets, positioning. */
   battles?: BattleReport;
   /** fixFirst + workOn (kept for the copy text / older code). */
@@ -793,6 +799,49 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
     }
     if (obs / Math.max(1, duration / 600) >= 2.5) findings.push({ id: "good_wards", area: "map", severity: 0.15, good: true, title: `${obs} observer wards (${per10(obs)} per 10 min)`, detail: "Good vision count." });
   }
+  // ---- idle time (ADR-041): alive, out of base, nothing that pays ----------------
+  const slotPos = (slot: number) => d.positions?.players.find((p) => p.playerSlot === slot)?.playbackData?.playerUpdatePositionEvents ?? [];
+  const idle = d.positions
+    ? idleTime({
+        lastHits: me.stats?.lastHitsPerMinute,
+        denies: me.stats?.deniesPerMinute,
+        networth: me.stats?.networthPerMinute,
+        xp: me.stats?.experiencePerMinute,
+        heroDamage: me.stats?.heroDamagePerMinute,
+        damageReceived: me.stats?.heroDamageReceivedPerMinute,
+        campStack: me.stats?.campStack,
+        actions: [
+          ...(pb.abilityUsedEvents ?? []).map((e) => e.time),
+          ...(pb.itemUsedEvents ?? []).map((e) => e.time),
+          ...(pb.runeEvents ?? []).map((e) => e.time),
+          ...(me.stats?.wards ?? []).map((w) => w.time),
+        ],
+        me: slotPos(mine.playerSlot),
+        enemies: s.players.filter((p) => p.isRadiant !== mine.isRadiant).map((p) => slotPos(p.playerSlot)),
+        dead: deathsList.map((dd) => [dd.time, dd.time + (dd.timeDead ?? 30)] as [number, number]),
+        duration,
+        ...(position ? { position } : {}),
+      })
+    : undefined;
+  if (idle && idle.minutes.length >= 3 && idle.minutes.length >= 0.08 * idle.checked) {
+    const n = idle.minutes.length;
+    const runs = idleRuns(idle.minutes);
+    const cost =
+      idle.goldLost !== undefined
+        ? ` - up to ~${idle.goldLost} gold at your farming pace (${idle.pace} per minute)`
+        : idle.stackChances !== undefined
+          ? ` - ${idle.stackChances} minute${idle.stackChances > 1 ? "s" : ""} in which a stack or a ward was possible`
+          : "";
+    findings.push({
+      id: "idle_time",
+      area: position && position >= 4 ? "map" : "farm",
+      severity: clamp(0.1 + 0.03 * n, 0.15, 0.4),
+      title: `${n} idle minute${n > 1 ? "s" : ""} (${Math.round((n / Math.max(1, idle.checked)) * 100)}% of your time out of base)${cost}`,
+      detail: `Alive and out of base with no last hit, stack, ward, rune, cast, hero damage or enemy nearby: ${runs.map(([a, b]) => (a === b ? `${a}:00` : `${a}:00-${b + 1}:00`)).join(", ")}.`,
+      times: runs.map(([a]) => a * 60),
+    });
+  }
+
   const fountain = (me.stats?.tripsFountainPerMinute ?? []).reduce((a, b) => a + b, 0);
   if (duration > 1200 && fountain / (duration / 600) > 3) {
     findings.push({ id: "fountain_trips", area: "execution", severity: 0.15, title: `${fountain} fountain trips`, detail: "Over 3 per 10 minutes: regen, a Bottle or a lane switch may save the walks." });
@@ -916,6 +965,7 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
     deaths,
     findings,
     vision,
+    ...(idle ? { idle } : {}),
     ...(battles?.battles.length ? { battles } : {}),
     growth,
     fixFirst,

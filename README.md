@@ -280,6 +280,9 @@ Note: the run and its Match ID are visible in the public repository. Nothing run
 computer and the page holds no STRATZ token (ADR-034). The report shows:
 - the plan the app would have made for that draft vs what you bought and when;
 - last hits, networth and XP vs Crusader-Ancient averages for your hero and position;
+- **idle time** (ADR-041): minutes alive and out of base with no last hit, stack, ward,
+  rune, cast, hero damage or enemy nearby - for cores priced at your own farming pace,
+  for supports as missed stack / ward chances (per-minute data: "check the replay");
 - every death (in a stretch their lineup tends to win? alone? with BKB / Blink ready? with a heal? with
   unspent gold?), map and role checks, and the top 10 growth areas;
 - **Battles** (2v3 / 3v2 or bigger): per spell / item — chances (ready with the mana and
