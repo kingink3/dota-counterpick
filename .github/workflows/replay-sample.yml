@@ -36,6 +36,7 @@ jobs:
       - name: Push the extract to the dev-sample branch (public pro match)
         run: |
           git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mv extract.ndjson.gz /tmp/x.gz; rm -f extract.ndjson r.pack r.dem
           git fetch -q origin dev-sample && git checkout -q -B dev-sample origin/dev-sample
-          cp extract.ndjson.gz ./extract.ndjson.gz 2>/dev/null || true
+          cp /tmp/x.gz extract.ndjson.gz
           git add -f extract.ndjson.gz && git commit -q -m "clarity extract sample" && git push -q origin dev-sample
