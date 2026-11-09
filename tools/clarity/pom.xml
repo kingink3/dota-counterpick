@@ -6,9 +6,9 @@
   <artifactId>replay-extract</artifactId>
   <version>1</version>
   <properties>
-    <maven.compiler.release>17</maven.compiler.release>
+    <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <clarity.version>3.1.1</clarity.version>
+    <clarity.version>5.0.1</clarity.version>
   </properties>
   <dependencies>
     <dependency>
