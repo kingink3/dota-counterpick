@@ -1233,6 +1233,54 @@ Farm строка «Idle: N из M минут» видна всегда, ког�
 **Приватность.** Список, как и матчи, зашифрован. В публичном логе Actions — только счётчик
 («recent: N matches listed»).
 
+## ADR-043 — Реплеи `.dem`: источник, парсер, срок хранения — проверено в Actions (2026-11-09)
+
+**Цепочка (проверена временными workflow «Replay spike» / «Replay age probe», удалены).**
+1. OpenDota `GET /api/matches/{id}` → `replay_url`. Если поля нет, `POST /api/request/{id}`:
+   OpenDota сама берёт salt у Game Coordinator (нам Steam-логин не нужен). Ссылка
+   появилась через несколько минут.
+2. `replay{N}.valve.net/570/{id}_{salt}.dem.bz2`. **Внимание: содержимое — Zstandard**,
+   хотя имя `.bz2` (`file`: «Zstandard compressed data»). 54,8 МБ → 97,6 МБ `PBDEMS2`.
+   Скачивание из Actions — 1–35 с.
+3. Парсер **`odota/parser`** — Docker-образ OpenDota (Java + clarity), им они парсят все
+   матчи, поэтому он обновляется под патчи. В Actions — `services: parser` на порту 5600,
+   `curl --data-binary @r.dem` → NDJSON. На профессиональном матче (~40 мин): 4–7 с,
+   225 тыс. событий, 47 МБ.
+
+**Что есть в данных (то, чего нет в STRATZ).**
+- `interval` — каждую секунду для всех 10 героев: `x`, `y` (клетки как у STRATZ, дробные),
+  `life_state`, `gold`, `networth`, `lh`, `denies`, `xp`, `level`, `stuns`,
+  `camps_stacked`, `obs_placed`, `sen_placed`, `rune_pickups`, `hero_damage`,
+  `tower_damage`, `teamfight_participation`.
+- Боевой лог: `DAMAGE`, `HEAL`, `MODIFIER_ADD/REMOVE` с `stun_duration` / `slow_duration`
+  (станы, сайленсы, страх, рут, циклон на герое — то, что Review помечал `self_disabled`),
+  `GOLD` с `gold_reason`, `ABILITY`, `ITEM`, `PURCHASE`, `DEATH`, `XP`; варды
+  (`obs`/`sen` с `_left`), смоки, руны, пинги, `actions` (приказы игрока).
+- **Нет видимости** (кто кого видел): этого нет и в `odota/parser`. Для видимости нужен
+  свой обработчик clarity (fog-of-war сущностей) — отдельная задача.
+
+**Срок хранения на CDN Valve** (только HEAD-запросы):
+| Возраст | Про-матч | Публичный матч |
+|---|---|---|
+| 3 д | 200 | 200 (по запросу) |
+| 14 д | 200 | 200 (по запросу) |
+| 28 д | 200 | 200 |
+| 45 д | 200 | 200 |
+| 60 д | 200 | 200 |
+Старше 60 дней не проверялось.
+
+**Решение.** Встроить реплей в «Review a match» как необязательный шаг: если ссылка
+есть — скачать, распарсить, ужать до компактного таймлайна (посекундно x, y, life_state,
+gold, lh+denies, xp для 10 героев; станы/сайленсы/хексы на героях с длительностью;
+`gold_reason`) и зашифровать вместе с матчем. Если реплея нет — всё работает на STRATZ,
+как сейчас. В Review: простой — посекундно (`minute_stats` уходит); «не использовал
+способность» — с проверкой стана на себе (`self_disabled` уходит, Possible → Likely/Confirmed);
+урон по типам из боевого лога (Physical / Magical / Pure).
+
+**Риски.** Внешние зависимости: OpenDota (бесплатно 60 запросов/мин, 2000/сут) и формат
+образа `odota/parser` (поля NDJSON могут меняться). Размер: ~1 МБ сжатого таймлайна на матч
+(оценка, не замер).
+
 ## Дорожная карта (фазы)
 
 1. **MVP (KB-only):** парсер `taxonomy.yaml` → rule-engine (резолвер edges +
