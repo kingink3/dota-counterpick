@@ -20,7 +20,7 @@ jobs:
           mvn -q -B -Dclarity.version=$ver compile dependency:copy-dependencies
       - name: Replay
         run: |
-          url=$(curl -sf https://api.opendota.com/api/matches/9081380063 | jq -r .replay_url)
+          for i in 1 2 3 4 5 6; do url=$(curl -sf https://api.opendota.com/api/matches/9081380063 | jq -r .replay_url) && [ -n "$url" ] && break; sleep 20; done
           curl -s -o r.pack "$url"; zstd -q -d r.pack -o r.dem; ls -la r.dem
       - name: Probe
         working-directory: tools/clarity
