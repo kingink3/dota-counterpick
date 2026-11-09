@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 import skadistats.clarity.event.Insert;
 import skadistats.clarity.model.Entity;
+import skadistats.clarity.model.StringTable;
 import skadistats.clarity.processor.entities.Entities;
 import skadistats.clarity.processor.entities.UsesEntities;
 import skadistats.clarity.processor.reader.OnTickEnd;
@@ -50,11 +51,11 @@ public class Probe {
     List<Entity> heroes = es.stream().filter(e -> e.getDtClass().getDtName().startsWith("CDOTA_Unit_Hero_")).toList();
     int n = 0;
     for (Entity h : heroes) {
-      if (n++ == 0) dump("hero", h);
+      if (n++ == 0) { System.out.println("== HERO FULL"); System.out.println(h.toString()); }
       Integer item = (Integer) get(h, "m_hItems.0000");
       if (n == 1 && item != null) {
         Entity it = es.getByHandle(item);
-        dump("item0", it);
+        System.out.println("== ITEM FULL"); System.out.println(it);
         if (it != null) {
           Integer idx = (Integer) get(it, "m_pEntity.m_nameStringableIndex");
           System.out.println("item0 name: " + (idx == null ? null : tables.forName("EntityNames").getNameByIndex(idx)));
@@ -62,8 +63,10 @@ public class Probe {
       }
       System.out.println("hero " + h.getDtClass().getDtName() + " hp " + get(h, "m_iHealth") + " visible " + get(h, "m_iTaggedAsVisibleByTeam") + " pid " + get(h, "m_iPlayerID") + " active " + h.isActive());
     }
-    dump("radiant data", one("CDOTA_DataRadiant"));
-    dump("player resource", one("CDOTA_PlayerResource"));
+    es.stream().filter(e -> e.getDtClass().getDtName().contains("Item") && !e.getDtClass().getDtName().equals("CDOTA_Item_WindLace")).limit(3).forEach(e -> System.out.println("item class " + e.getDtClass().getDtName()));
+    System.out.println("item classes: " + es.stream().map(e -> e.getDtClass().getDtName()).filter(d -> d.startsWith("CDOTA_Item")).distinct().count() + " distinct, generic CDOTA_Item: " + es.stream().filter(Entities.byDtName("CDOTA_Item")).count());
+    StringTable names = tables.forName("EntityNames");
+    System.out.println("EntityNames: " + (names == null ? "none" : names.getEntryCount() + " entries, e.g. " + names.getNameByIndex(1) + ", " + names.getNameByIndex(100)));
   }
 
   public static void main(String[] args) throws Exception {
