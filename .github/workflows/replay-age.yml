@@ -1,0 +1,33 @@
+# Replay retention probe (ADR-043, temporary): for pro matches of a given age, is the
+# replay still on Valve's CDN? HEAD requests only; nothing is downloaded or stored.
+name: Replay age probe
+on:
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - run: |
+          od=https://api.opendota.com/api
+          now=$(date +%s)
+          lt=""
+          for age in 3 7 10 14 21 28 45 60; do
+            # page back through pro matches until one is older than $age days
+            while :; do
+              page=$(curl -sf "$od/proMatches${lt:+?less_than_match_id=$lt}") || { sleep 5; continue; }
+              m=$(echo "$page" | jq -r --argjson t $((now - age*86400)) '[.[] | select(.start_time < $t)][0] // empty | "\(.match_id) \(.start_time)"')
+              [ -n "$m" ] && break
+              lt=$(echo "$page" | jq -r '.[-1].match_id')
+              sleep 1.2
+            done
+            id=${m% *}; st=${m#* }
+            url=$(curl -sf "$od/matches/$id" | jq -r '.replay_url // empty')
+            code=none
+            [ -n "$url" ] && code=$(curl -s -o /dev/null -I -w '%{http_code}' "$url")
+            echo "age ${age}d: match $id ($(( (now - st) / 86400 )) d old) replay_url=$([ -n "$url" ] && echo yes || echo no) CDN HTTP $code"
+            lt=$id
+            sleep 1.2
+          done
