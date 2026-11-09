@@ -1,0 +1,290 @@
+{
+  "drafts": [
+    {
+      "name": "pos 1 vs PA / Storm / Bristleback / Lion / Dazzle (allies CM, Zeus)",
+      "draft": {
+        "enemyHeroes": [
+          "phantom_assassin",
+          "storm_spirit",
+          "bristleback",
+          "lion",
+          "dazzle"
+        ],
+        "allyHeroes": [
+          "crystal_maiden",
+          "zeus"
+        ],
+        "myRole": 1
+      },
+      "expect": {
+        "heroes": [
+          "bloodseeker",
+          "juggernaut",
+          "ursa",
+          "chaos_knight",
+          "slark"
+        ],
+        "items": [
+          "bloodthorn",
+          "silver_edge",
+          "orchid",
+          "diffusal_blade",
+          "hurricane_pike"
+        ],
+        "defense": [
+          "black_king_bar",
+          "ghost_scepter",
+          "assault_cuirass",
+          "eternal_shroud"
+        ],
+        "damage": "magic"
+      }
+    },
+    {
+      "name": "pos 3 vs Spectre / Naga / Slark / Doom / Enigma",
+      "draft": {
+        "enemyHeroes": [
+          "spectre",
+          "naga_siren",
+          "slark",
+          "doom",
+          "enigma"
+        ],
+        "myRole": 3
+      },
+      "expect": {
+        "heroes": [
+          "rattletrap",
+          "pudge",
+          "axe",
+          "bloodseeker",
+          "magnus"
+        ],
+        "items": [
+          "abyssal_blade",
+          "force_staff",
+          "euls_scepter",
+          "scythe_of_vyse",
+          "radiance"
+        ],
+        "defense": [
+          "linkens_sphere",
+          "lotus_orb",
+          "aeon_disk",
+          "black_king_bar"
+        ],
+        "damage": "mixed"
+      }
+    },
+    {
+      "name": "pos 2 vs Axe / Mars / Kunkka / Tidehunter / Magnus",
+      "draft": {
+        "enemyHeroes": [
+          "axe",
+          "mars",
+          "kunkka",
+          "tidehunter",
+          "magnus"
+        ],
+        "myRole": 2
+      },
+      "expect": {
+        "heroes": [
+          "outworld_destroyer",
+          "skywrath_mage",
+          "huskar",
+          "pugna",
+          "sniper"
+        ],
+        "items": [
+          "euls_scepter",
+          "force_staff",
+          "orchid",
+          "bloodthorn",
+          "hurricane_pike"
+        ],
+        "defense": [
+          "black_king_bar",
+          "lotus_orb",
+          "pipe_of_insight",
+          "eternal_shroud"
+        ],
+        "damage": "magic"
+      }
+    },
+    {
+      "name": "pos 5 vs Medusa / Sniper / Drow / CM / Shaman",
+      "draft": {
+        "enemyHeroes": [
+          "medusa",
+          "sniper",
+          "drow_ranger",
+          "crystal_maiden",
+          "shadow_shaman"
+        ],
+        "myRole": 5
+      },
+      "expect": {
+        "heroes": [
+          "tusk",
+          "skywrath_mage",
+          "lion",
+          "bane",
+          "techies"
+        ],
+        "items": [
+          "euls_scepter",
+          "force_staff",
+          "heavens_halberd",
+          "glimmer_cape",
+          "lotus_orb"
+        ],
+        "defense": [
+          "ghost_scepter",
+          "lotus_orb",
+          "heavens_halberd",
+          "black_king_bar"
+        ],
+        "damage": "physical"
+      }
+    },
+    {
+      "name": "pos 1 vs Broodmother / Lycan / Beastmaster / NP / Chen",
+      "draft": {
+        "enemyHeroes": [
+          "broodmother",
+          "lycan",
+          "beastmaster",
+          "natures_prophet",
+          "chen"
+        ],
+        "myRole": 1
+      },
+      "expect": {
+        "heroes": [
+          "medusa",
+          "sven",
+          "kunkka",
+          "luna",
+          "juggernaut"
+        ],
+        "items": [
+          "battlefury",
+          "mjollnir",
+          "gleipnir",
+          "radiance",
+          "hydras_breath"
+        ],
+        "defense": [
+          "linkens_sphere",
+          "black_king_bar",
+          "ghost_scepter",
+          "assault_cuirass"
+        ],
+        "damage": "physical"
+      }
+    },
+    {
+      "name": "pos 4 vs Anti-Mage / Storm / Timbersaw / Pudge / Oracle",
+      "draft": {
+        "enemyHeroes": [
+          "anti_mage",
+          "storm_spirit",
+          "timbersaw",
+          "pudge",
+          "oracle"
+        ],
+        "myRole": 4
+      },
+      "expect": {
+        "heroes": [
+          "silencer",
+          "treant",
+          "batrider",
+          "grimstroke",
+          "rattletrap"
+        ],
+        "items": [
+          "scythe_of_vyse",
+          "orchid",
+          "euls_scepter",
+          "force_staff",
+          "solar_crest"
+        ],
+        "defense": [
+          "glimmer_cape",
+          "pipe_of_insight",
+          "lotus_orb",
+          "black_king_bar"
+        ],
+        "damage": "magic"
+      }
+    },
+    {
+      "name": "items on Zeus (pos 2) vs PA / Storm / Bristleback / Lion / Dazzle",
+      "draft": {
+        "enemyHeroes": [
+          "phantom_assassin",
+          "storm_spirit",
+          "bristleback",
+          "lion",
+          "dazzle"
+        ],
+        "allyHeroes": [
+          "crystal_maiden"
+        ],
+        "myHero": "zeus",
+        "myRole": 2
+      },
+      "expect": {
+        "heroes": [],
+        "items": [
+          "orchid",
+          "euls_scepter",
+          "bloodthorn",
+          "force_staff",
+          "hurricane_pike"
+        ],
+        "defense": [
+          "black_king_bar",
+          "eternal_shroud",
+          "ghost_scepter",
+          "shivas_guard"
+        ],
+        "damage": "magic"
+      }
+    },
+    {
+      "name": "early draft, any position: two enemies (Riki, Zeus)",
+      "draft": {
+        "enemyHeroes": [
+          "riki",
+          "zeus"
+        ]
+      },
+      "expect": {
+        "heroes": [
+          "ursa",
+          "juggernaut",
+          "chaos_knight",
+          "meepo",
+          "storm_spirit"
+        ],
+        "items": [
+          "gem_of_true_sight",
+          "sentry_ward",
+          "dust_of_appearance",
+          "force_staff",
+          "orchid"
+        ],
+        "defense": [
+          "black_king_bar",
+          "lotus_orb",
+          "eternal_shroud",
+          "glimmer_cape"
+        ],
+        "damage": "magic"
+      }
+    }
+  ]
+}
