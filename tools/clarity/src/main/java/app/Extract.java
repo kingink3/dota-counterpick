@@ -55,11 +55,11 @@ public class Extract {
     if (rules == null) return;
     Object st = get(rules, "m_pGameRules.m_flGameStartTime");
     if (!(st instanceof Float start) || start <= 0) return;
-    int t = (int) Math.floor(ctx.getTick() / 30f - start);
-    if (t == last) return;
-    if (last == Integer.MIN_VALUE || t % 600 == 0) {
-      for (String line : rules.toString().split("\n")) if (line.matches("(?i).*(paus|tick|gametime|starttime).*")) System.err.println("rules@" + ctx.getTick() + " " + line.replaceAll("\\s+", " "));
-    }
+    // game time stands still in a pause; the reader aligns the constant offset to the parser's clock
+    if (Boolean.TRUE.equals(get(rules, "m_pGameRules.m_bGamePaused"))) return;
+    int paused = num(rules, "m_pGameRules.m_nTotalPausedTicks");
+    int t = (int) Math.floor((ctx.getTick() - paused) / 30f - start);
+    if (t <= last) return;
     last = t;
     if (radiant == null) radiant = one("CDOTA_DataRadiant");
     if (dire == null) dire = one("CDOTA_DataDire");
