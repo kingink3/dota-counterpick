@@ -23,6 +23,11 @@ on:
         type: boolean
         required: false
         default: false
+      auto:
+        description: "Like the hourly run: my new matches of the last 2 days"
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: write
@@ -57,9 +62,10 @@ jobs:
           MATCH_ID: ${{ inputs.match_id }}
           LIST_ONLY: ${{ inputs.list_only }}
           EVENT: ${{ github.event_name }}
+          AUTO: ${{ inputs.auto }}
         run: |
           mkdir -p /tmp/match
-          if [ "$EVENT" = "schedule" ]; then
+          if [ "$EVENT" = "schedule" ] || [ "$AUTO" = "true" ]; then
             npx tsx scripts/stratz-fetch.ts --mode auto --skip /tmp/stored-ids.json --max 3 --out /tmp/match
           elif [ "$LIST_ONLY" = "true" ]; then
             npx tsx scripts/stratz-fetch.ts --mode recent --out /tmp/match
