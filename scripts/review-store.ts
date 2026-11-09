@@ -53,6 +53,13 @@ async function main(): Promise<void> {
   const idsOut = arg("ids");
   if (idsOut) {
     writeFileSync(idsOut, JSON.stringify(index.map((e) => e.id)));
+    // --missed <file>: matches the scheduled run found no replay for (kept in recent.bin)
+    const missedOut = arg("missed");
+    const rb = join(dir, "recent.bin");
+    if (missedOut) {
+      const prev = existsSync(rb) ? (JSON.parse(await unseal(key, readFileSync(rb))) as { missed?: number[] }) : {};
+      writeFileSync(missedOut, JSON.stringify(prev.missed ?? []));
+    }
     console.log(`store: ${index.length} matches`);
     return;
   }

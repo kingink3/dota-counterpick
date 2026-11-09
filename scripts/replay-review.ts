@@ -52,11 +52,22 @@ async function main(): Promise<void> {
   const mode = arg("mode") ?? "match";
   const parser = arg("parser") ?? "http://localhost:5600";
   const owner = Number(process.env.OWNER_ID || 0) || ownerOf(process.env.STRATZ_TOKEN ?? "");
+  const list = owner ? await recentOf(owner) : undefined;
   const todo = { ids: [] as number[], latest: false, recent: false };
-  const done = () => writeFileSync(join(out, "stratz-todo.json"), JSON.stringify(todo));
+  // matches an earlier scheduled run found no replay for (sealed in recent.bin; --missed)
+  const missedFile = arg("missed");
+  const missed = new Set<number>(missedFile && existsSync(missedFile) ? (JSON.parse(readFileSync(missedFile, "utf8")) as number[]) : []);
+  let recentOut: { owner: number; fetchedAt: number; source: string; matches: unknown[]; missed?: number[] } | undefined;
+  const done = () => {
+    writeFileSync(join(out, "stratz-todo.json"), JSON.stringify(todo));
+    if (recentOut) {
+      const inList = new Set((list ?? []).map((m) => m.match_id));
+      recentOut.missed = [...missed].filter((id) => inList.has(id));
+      writeFileSync(join(out, "recent.json"), JSON.stringify(recentOut));
+    }
+  };
 
   // --- the list (OpenDota: shown on the site, and what auto / latest pick from) ----------
-  const list = owner ? await recentOf(owner) : undefined;
   if (list && owner) {
     const now = Math.floor(Date.now() / 1000);
     const matches = list.map((m) => {
@@ -73,7 +84,7 @@ async function main(): Promise<void> {
         players: [{ heroId: m.hero_id, isVictory: m.radiant_win === radiant, kills: m.kills, deaths: m.deaths, assists: m.assists }],
       };
     });
-    writeFileSync(join(out, "recent.json"), JSON.stringify({ owner, fetchedAt: now, source: "opendota", matches }));
+    recentOut = { owner, fetchedAt: now, source: "opendota", matches };
   } else todo.recent = true;
   console.log(`list: ${list ? `${list.length} from OpenDota` : "OpenDota gave none - STRATZ lists"}`);
   if (mode === "recent") return done();
@@ -83,9 +94,10 @@ async function main(): Promise<void> {
   if (mode === "auto") {
     const skipFile = arg("skip");
     const skip = new Set<number>(skipFile && existsSync(skipFile) ? (JSON.parse(readFileSync(skipFile, "utf8")) as number[]) : []);
-    const since = Date.now() / 1000 - 2 * 86400;
     if (!list) todo.latest = true; // STRATZ's own auto run picks them
-    ids = (list ?? []).filter((m) => m.start_time >= since && !skip.has(m.match_id)).slice(0, Number(arg("max") ?? 3)).map((m) => m.match_id);
+    // every listed match not stored yet, newest first: the hourly run fills the whole list in
+    // a few hours, so nobody has to press anything; older ones get one replay try, no STRATZ
+    ids = (list ?? []).filter((m) => !skip.has(m.match_id) && !missed.has(m.match_id)).slice(0, Number(arg("max") ?? 3)).map((m) => m.match_id);
   } else {
     const id = Number(arg("match") || 0) || list?.[0]?.match_id;
     if (id) ids = [id];
@@ -99,9 +111,11 @@ async function main(): Promise<void> {
   const costs = Object.fromEntries(Object.entries(stats.items).map(([k, v]) => [k, v.cost]));
   for (const [n, id] of ids.entries()) {
     const t0 = Date.now();
+    const fresh = (list?.find((m) => m.match_id === id)?.start_time ?? 0) >= Date.now() / 1000 - 2 * 86400;
+    const backfill = mode === "auto" && !fresh;
     let msg: string;
     try {
-      const od = await odWithReplay(id);
+      const od = await odWithReplay(id, !backfill);
       if (!od?.replay_url) msg = "no replay";
       else {
         const p = await parseReplay(id, od.replay_url, parser);
@@ -122,8 +136,11 @@ async function main(): Promise<void> {
     } catch (e) {
       msg = `failed: ${String(e).slice(0, 120)}`;
     }
-    if (!msg.startsWith("ok")) todo.ids.push(id);
-    console.log(`match ${n + 1}/${ids.length}: ${msg}${msg.startsWith("ok") ? "" : " - left for STRATZ"}`);
+    const ok = msg.startsWith("ok");
+    if (ok) missed.delete(id);
+    else if (backfill) missed.add(id); // not retried every hour; the page can still ask for it
+    else todo.ids.push(id);
+    console.log(`match ${n + 1}/${ids.length}: ${msg}${ok ? "" : backfill ? " - older match, marked as missed" : " - left for STRATZ"}`);
   }
   done();
 }

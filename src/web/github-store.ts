@@ -76,6 +76,8 @@ async function open<T>(file: string): Promise<T> {
 export interface RecentList {
   owner: number;
   fetchedAt: number;
+  /** matches the hourly run found no replay for (ADR-053). */
+  missed?: number[];
   matches: Array<{
     id: number;
     startDateTime?: number;

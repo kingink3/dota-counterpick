@@ -224,7 +224,7 @@ export class ReviewView {
     }
     const stored = new Map((this.store ?? []).map((e) => [e.id, e]));
     const ago = Math.round((Date.now() / 1000 - list.fetchedAt) / 60);
-    c.append(el("p", "rv-sub", `As of ${ago < 90 ? `${ago} min` : `${Math.round(ago / 60)} h`} ago - refreshed by every run.`));
+    c.append(el("p", "rv-sub", `As of ${ago < 90 ? `${ago} min` : `${Math.round(ago / 60)} h`} ago. Every hour up to 3 matches from this list are reviewed by themselves - no need to press anything.`));
     const ul = el("ul", "rv-list");
     for (const m of list.matches) {
       const p = m.players?.[0];
@@ -241,10 +241,11 @@ export class ReviewView {
       const have = stored.get(m.id);
       const direct = canDispatch();
       // any match can be tried: the replay first, then STRATZ (ADR-053); a miss is reported after the run
-      const b = el("button", "g-btn", have ? "Open" : this.copied === m.id ? "ID copied ✓" : direct ? "Review" : "Review ↗") as HTMLButtonElement;
+      const gone = !have && (list.missed ?? []).includes(m.id); // the hourly run found no replay
+      const b = el("button", "g-btn", have ? "Open" : this.copied === m.id ? "ID copied ✓" : gone ? (direct ? "Try STRATZ" : "Try STRATZ ↗") : direct ? "Review" : "Review ↗") as HTMLButtonElement;
       b.type = "button";
       b.disabled = this.busy;
-      b.title = have ? "Already in the store" : direct ? "From the replay (or STRATZ), all ten players, ~1 min" : `Copies ${m.id} and opens the workflow: paste it as Match ID, Run.`;
+      b.title = have ? "Already in the store" : gone ? "Valve no longer has the replay; STRATZ may still have the match" : direct ? "From the replay (or STRATZ), all ten players, ~1 min" : `Copies ${m.id} and opens the workflow: paste it as Match ID, Run.`;
       b.addEventListener("click", () => {
         if (have) return void this.openStored(have);
         if (direct) return void this.start(`match ${m.id}`, { matchId: m.id });

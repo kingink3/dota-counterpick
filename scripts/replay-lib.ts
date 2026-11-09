@@ -20,10 +20,11 @@ export async function odMatch(id: number): Promise<OdFull | undefined> {
   return (await r.json()) as OdFull;
 }
 
-/** OpenDota's match with a replay_url; asks OpenDota to fetch it when missing (up to ~8 min). */
-export async function odWithReplay(id: number): Promise<OdFull | undefined> {
+/** OpenDota's match with a replay_url; asks OpenDota to fetch it when missing (up to ~8 min),
+ *  unless `wait` is false (backfill of older matches: one try). */
+export async function odWithReplay(id: number, wait = true): Promise<OdFull | undefined> {
   let m = await odMatch(id);
-  if (m?.replay_url) return m;
+  if (m?.replay_url || !wait) return m;
   await fetch(`${OD}/request/${id}`, { method: "POST" }).catch(() => undefined);
   for (let i = 0; i < 16 && !m?.replay_url; i++) {
     await sleep(30_000);

@@ -281,7 +281,8 @@ encrypted list of your last 20 matches (tick "Only refresh the list" for just th
 **Your recent matches** opens stored ones or copies an ID for the next run (ADR-042).
 
 **Without leaving the site (ADR-044).** Your own new matches arrive by themselves: the
-workflow runs every hour and adds your parsed matches of the last 2 days. To review any
+workflow runs every hour and reviews up to 3 matches of your recent list not stored yet,
+newest first (older ones get one replay try; a miss shows "Try STRATZ"). To review any
 match by its ID straight from the page, add one secret once:
 1. GitHub -> Settings -> Developer settings -> Personal access tokens -> **Fine-grained
    tokens** -> Generate new token. Repository access: **Only select repositories** ->

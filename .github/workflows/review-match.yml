@@ -68,7 +68,7 @@ jobs:
           url="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
           git clone -q --depth 1 --branch review-data --single-branch "$url" /tmp/store || {
             mkdir -p /tmp/store && cd /tmp/store && git init -q -b review-data && git remote add origin "$url"; cd -; }
-          npx tsx scripts/review-store.ts --dir /tmp/store --ids /tmp/stored-ids.json
+          npx tsx scripts/review-store.ts --dir /tmp/store --ids /tmp/stored-ids.json --missed /tmp/missed.json
       - name: Start the replay parser (odota/parser)
         if: ${{ inputs.list_only != true }}
         run: |
@@ -84,11 +84,11 @@ jobs:
         run: |
           mkdir -p /tmp/match
           if [ "$EVENT" = "schedule" ] || [ "$AUTO" = "true" ]; then
-            npx tsx scripts/replay-review.ts --mode auto --skip /tmp/stored-ids.json --max 3 --out /tmp/match
+            npx tsx scripts/replay-review.ts --mode auto --skip /tmp/stored-ids.json --missed /tmp/missed.json --max 3 --out /tmp/match
           elif [ "$LIST_ONLY" = "true" ]; then
-            npx tsx scripts/replay-review.ts --mode recent --out /tmp/match
+            npx tsx scripts/replay-review.ts --mode recent --missed /tmp/missed.json --out /tmp/match
           else
-            npx tsx scripts/replay-review.ts --mode match --match "$MATCH_ID" --out /tmp/match
+            npx tsx scripts/replay-review.ts --mode match --match "$MATCH_ID" --missed /tmp/missed.json --out /tmp/match
           fi
       - name: STRATZ for what the replays could not do (fallback)
         env:
