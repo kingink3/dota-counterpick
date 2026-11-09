@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ADR-055: our own replay processor on skadistats/clarity (HP, mana, gold, items, visibility). -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>app</groupId>
+  <artifactId>replay-extract</artifactId>
+  <version>1</version>
+  <properties>
+    <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <clarity.version>3.1.1</clarity.version>
+  </properties>
+  <dependencies>
+    <dependency>
+      <groupId>com.skadistats</groupId>
+      <artifactId>clarity</artifactId>
+      <version>${clarity.version}</version>
+    </dependency>
+  </dependencies>
+</project>
