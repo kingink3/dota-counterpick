@@ -44,7 +44,7 @@ export class ReviewView {
   private recent?: RecentList | null;
   private copied?: number;
   /** ADR-044: the run started from this page, followed until it ends. */
-  private run?: { label: string; since: number; state: string; failed?: boolean };
+  private run?: { label: string; since: number; state: string; failed?: boolean; matchId?: number };
   private runPoll?: number;
   private idInput = "";
   private storeMsg = "";
@@ -96,7 +96,7 @@ export class ReviewView {
   /** matches fetched on GitHub: run the workflow, then open them here. */
   /** start the workflow from the page (ADR-044) and follow it: queued -> running -> stored. */
   private async start(label: string, opts: { matchId?: number; listOnly?: boolean }): Promise<void> {
-    this.run = { label, since: Date.now() / 1000 - 5, state: "Starting…" };
+    this.run = { label, since: Date.now() / 1000 - 5, state: "Starting…", ...(opts.matchId ? { matchId: opts.matchId } : {}) };
     this.render();
     try {
       await dispatchReview(opts);
@@ -119,6 +119,12 @@ export class ReviewView {
           run.failed = mine.conclusion !== "success";
           run.state = run.failed ? `Failed (${mine.conclusion}) - see the run on GitHub` : "Done ✓";
           await this.loadStore();
+          if (!run.failed && run.matchId && !this.store?.some((e) => e.id === run.matchId)) {
+            // the run went fine but got nothing: no replay any more and no STRATZ parse
+            run.failed = true;
+            run.state = "No data for this match: Valve no longer has its replay and STRATZ has not parsed it";
+            this.render();
+          }
           return;
         }
         const s = Math.round((Date.now() - t0) / 1000);
@@ -234,10 +240,11 @@ export class ReviewView {
       li.append(info);
       const have = stored.get(m.id);
       const direct = canDispatch();
-      const b = el("button", "g-btn", have ? "Open" : this.copied === m.id ? "ID copied ✓" : m.parsedDateTime ? (direct ? "Review" : "Review ↗") : "Not parsed") as HTMLButtonElement;
+      // any match can be tried: the replay first, then STRATZ (ADR-053); a miss is reported after the run
+      const b = el("button", "g-btn", have ? "Open" : this.copied === m.id ? "ID copied ✓" : direct ? "Review" : "Review ↗") as HTMLButtonElement;
       b.type = "button";
-      b.disabled = this.busy || (!have && !m.parsedDateTime);
-      b.title = have ? "Already in the store" : m.parsedDateTime ? (direct ? "Fetch all ten players (~1 min)" : `Copies ${m.id} and opens the workflow: paste it as Match ID, Run.`) : "Older than ~2 weeks (no replay) and not parsed by STRATZ";
+      b.disabled = this.busy;
+      b.title = have ? "Already in the store" : direct ? "From the replay (or STRATZ), all ten players, ~1 min" : `Copies ${m.id} and opens the workflow: paste it as Match ID, Run.`;
       b.addEventListener("click", () => {
         if (have) return void this.openStored(have);
         if (direct) return void this.start(`match ${m.id}`, { matchId: m.id });

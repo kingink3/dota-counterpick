@@ -68,8 +68,8 @@ async function main(): Promise<void> {
         gameMode: GAME_MODE[m.game_mode] ?? `MODE_${m.game_mode}`,
         lobbyType: LOBBY[m.lobby_type] ?? `LOBBY_${m.lobby_type}`,
         didRadiantWin: m.radiant_win,
-        // a replay is on Valve's servers for ~2 weeks: "parsed" = can be reviewed now
-        parsedDateTime: now - (m.start_time + m.duration) < 14 * 86400 ? m.start_time + m.duration : null,
+        // every match can be tried (replay, then STRATZ); the page reports a miss after the run
+        parsedDateTime: m.start_time + m.duration,
         players: [{ heroId: m.hero_id, isVictory: m.radiant_win === radiant, kills: m.kills, deaths: m.deaths, assists: m.assists }],
       };
     });
