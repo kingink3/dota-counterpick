@@ -17,11 +17,16 @@ import skadistats.clarity.source.MappedFileSource;
 @UsesEntities
 @UsesStringTable("EntityNames")
 public class Probe {
-  static final Pattern KEEP = Pattern.compile("(?i)health|mana|visib|lifestate|hitems|charges|playerid|gold|gametime|gamestart|replicat|nameStringable|cellx|celly|vecorigin|selectedhero|teamnum|level|cooldown|neutral");
+  static final Pattern KEEP = Pattern.compile("(?i)time|health|mana|visib|lifestate|hitems|charges|playerid|gold|gametime|gamestart|replicat|nameStringable|cellx|celly|vecorigin|selectedhero|teamnum|level|cooldown|neutral");
   boolean done;
   @Insert private Context ctx;
   @Insert private Entities es;
   @Insert private StringTables tables;
+
+  boolean rulesShown;
+  static Object get(Entity e, String p) {
+    return e != null && e.hasProperty(p) ? e.getProperty(p) : null;
+  }
 
   Entity one(String dt) {
     return es.stream().filter(Entities.byDtName(dt)).findFirst().orElse(null);
@@ -38,26 +43,25 @@ public class Probe {
     if (done) return;
     Entity rules = one("CDOTAGamerulesProxy");
     if (rules == null) return;
-    Float t = rules.getProperty("m_pGameRules.m_fGameTime");
-    Float st = rules.getProperty("m_pGameRules.m_flGameStartTime");
-    if (t == null || st == null || st <= 0 || t - st < 900) return;
+    if (!rulesShown) { rulesShown = true; dump("rules (first)", rules); }
+    if (ctx.getTick() < 30 * 60 * 30) return; // ~30 min into the file: past the horn
     done = true;
-    System.out.println("tick " + ctx.getTick() + " game time " + (t - st));
+    System.out.println("tick " + ctx.getTick());
     dump("rules", rules);
     List<Entity> heroes = es.stream().filter(e -> e.getDtClass().getDtName().startsWith("CDOTA_Unit_Hero_")).toList();
     int n = 0;
     for (Entity h : heroes) {
       if (n++ == 0) dump("hero", h);
-      Integer item = h.getProperty("m_hItems.0000");
+      Integer item = (Integer) get(h, "m_hItems.0000");
       if (n == 1 && item != null) {
         Entity it = es.getByHandle(item);
         dump("item0", it);
         if (it != null) {
-          Integer idx = it.getProperty("m_pEntity.m_nameStringableIndex");
+          Integer idx = (Integer) get(it, "m_pEntity.m_nameStringableIndex");
           System.out.println("item0 name: " + (idx == null ? null : tables.forName("EntityNames").getNameByIndex(idx)));
         }
       }
-      System.out.println("hero " + h.getDtClass().getDtName() + " hp " + h.getProperty("m_iHealth") + " visible " + h.getProperty("m_iTaggedAsVisibleByTeam") + " pid " + h.getProperty("m_iPlayerID"));
+      System.out.println("hero " + h.getDtClass().getDtName() + " hp " + get(h, "m_iHealth") + " visible " + get(h, "m_iTaggedAsVisibleByTeam") + " pid " + get(h, "m_iPlayerID") + " active " + h.isActive());
     }
     dump("radiant data", one("CDOTA_DataRadiant"));
     dump("player resource", one("CDOTA_PlayerResource"));
