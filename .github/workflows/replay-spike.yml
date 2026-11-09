@@ -80,14 +80,19 @@ jobs:
           curl -s --max-time 900 localhost:5600 --data-binary "@r.dem" -o out.ndjson
           echo "parsed in $(( $(date +%s) - start )) s, $(wc -l < out.ndjson) lines, $(stat -c%s out.ndjson) bytes"
           echo "event types (count):"
-          jq -r '.type' out.ndjson | sort | uniq -c | sort -rn | head -40
+          jq -r '.type' out.ndjson | sort | uniq -c | sort -rn > types.txt; head -12 types.txt
           echo "interval events per hero slot:"
-          jq -r 'select(.type=="interval") | .slot' out.ndjson | sort -n | uniq -c | head -12
-          echo "interval fields:"
-          jq -c 'select(.type=="interval") | keys' out.ndjson | head -1
+          jq -r 'select(.type=="interval") | .slot' out.ndjson | sort -n | uniq -c | wc -l
+          echo "interval fields at 10:00 (union):"
+          jq -c 'select(.type=="interval" and .time==600) | keys' out.ndjson | sort -u
+          echo "x/y present in interval events after 0:00: $(jq -r 'select(.type=="interval" and .time>0 and .x!=null) | .slot' out.ndjson | wc -l)"
+          echo "sample position precision (slot 0, 600..603 s): $(jq -c 'select(.type=="interval" and .slot==0 and .time>=600 and .time<=603) | [.time,.x,.y]' out.ndjson | tr '\n' ' ')"
+          echo "disabling modifiers on heroes (top 15 by count):"
+          jq -r 'select(.type=="DOTA_COMBATLOG_MODIFIER_ADD" and .targethero==true) | .inflictor' out.ndjson | grep -Ei "stun|hex|silence|root|sleep|taunt|fear|cyclone|bash|disarm" | sort | uniq -c | sort -rn | head -15
+          echo "gold reasons: $(jq -c 'select(.type=="DOTA_COMBATLOG_GOLD") | keys' out.ndjson | sort -u | head -2)"
           echo "time span of interval events:"
-          jq -r 'select(.type=="interval") | .time' out.ndjson | sort -n | sed -n '1p;$p'
+          jq -r 'select(.type=="interval") | .time' out.ndjson | sort -n > t.txt; sed -n '1p;$p' t.txt
           echo "combat log types (DOTA_COMBATLOG_*):"
-          jq -r 'select(.type|startswith("DOTA_COMBATLOG")) | .type' out.ndjson | sort | uniq -c | sort -rn | head -20
+          echo "(see above)"
           echo "modifier fields:"
-          jq -c 'select(.type=="DOTA_COMBATLOG_MODIFIER_ADD") | keys' out.ndjson | head -1
+          jq -c 'select(.type=="DOTA_COMBATLOG_MODIFIER_ADD") | keys' out.ndjson | sort -u | head -2
