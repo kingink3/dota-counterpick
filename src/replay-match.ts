@@ -177,6 +177,23 @@ export interface ReplayMatchCtx {
   extract?: Iterable<string>;
 }
 
+/** what each side could see before a death (ADR-056); seconds, capped at VISION_CAP. */
+export interface DeathVision {
+  vision?: {
+    /** the enemy saw you without a break this long before their first hit. */
+    enemySawFor: number;
+    /** your team saw any of the killers this long before the first hit; null = no hero killer. */
+    sawKillersFor: number | null;
+    /** enemy heroes your team had not seen for MISSING_FOR s when the fight started. */
+    missing: number;
+    firstHit: number;
+  };
+}
+/** fight start = the first enemy-hero damage within this many seconds before the death. */
+const FIGHT_LOOKBACK = 30;
+const VISION_CAP = 60;
+export const MISSING_FOR = 15;
+
 /** one second of one hero from the clarity extractor. */
 export interface ExtractRow {
   t: number;
@@ -188,6 +205,9 @@ export interface ExtractRow {
   mmp: number;
   rg: number;
   ug: number;
+  /** visible to Radiant / Dire: 1, 0, -1 = unknown (older extracts lack these). */
+  vr?: number;
+  vd?: number;
   it: Array<string | null>;
   ch: number[];
 }
@@ -355,6 +375,7 @@ export function matchFromReplay(lines: Iterable<string>, od: OdMatch | undefined
   }
   const minuteOf = (t: number) => Math.min(minutes - 1, Math.max(0, Math.ceil(t / 60) - 1)); // gains: index i = (60i, 60i+60]
   const held = new Map<number, string[]>(); // parser slot -> rebuilt inventory
+  const hitsOn = new Map<number, number[]>(); // parser slot -> times an enemy hero damaged it
   const comps = ctx.components ?? {};
   const cost = ctx.costs ?? {};
   const removeOnce = (bag: string[], k: string) => {
@@ -373,6 +394,7 @@ export function matchFromReplay(lines: Iterable<string>, od: OdMatch | undefined
         if (from === undefined || to === undefined || radiant(from) === radiant(to)) break;
         const m = minuteOf(e.time);
         if (m < 0 || minutes === 0) break;
+        (hitsOn.get(to) ?? hitsOn.set(to, []).get(to)!).push(e.time);
         me.get(from)!.stats.heroDamagePerMinute![m]! += e.value ?? 0;
         me.get(to)!.stats.heroDamageReceivedPerMinute![m]! += e.value ?? 0;
         break;
@@ -560,6 +582,38 @@ export function matchFromReplay(lines: Iterable<string>, od: OdMatch | undefined
         d.reliableGold = r.rg;
         d.unreliableGold = r.ug;
         d.hasHealAvailable = r.it.some((k, i) => !!k && (HEAL_ITEMS.test(k) || (/^item_magic_(wand|stick)$/.test(k) && (r.ch[i] ?? 0) >= WAND_HEAL_CHARGES)));
+      }
+    }
+    // --- who saw whom before each death (ADR-056): the team visibility bits -------------
+    const seen = new Map<number, Map<number, ExtractRow>>(); // slot -> time (parser clock) -> row
+    for (const [s, rows] of ex) seen.set(s, new Map(rows.map((r) => [r.t + off, r])));
+    const sees = (byRadiant: boolean, target: number, t: number) => {
+      const r = seen.get(target)?.get(t);
+      const v = r ? (byRadiant ? r.vr : r.vd) : undefined;
+      return v === undefined || v < 0 ? undefined : v === 1;
+    };
+    for (const [s, m] of me) {
+      const enemies = slots.filter((o) => radiant(o) !== radiant(s));
+      for (const d of m.playbackData.deathEvents!) {
+        const de = d as DeathVision & typeof d;
+        const hits = (hitsOn.get(s) ?? []).filter((t) => t <= d.time && t >= d.time - FIGHT_LOOKBACK);
+        const first = Math.floor(hits.length ? Math.min(...hits) : d.time);
+        if (sees(!radiant(s), s, first) === undefined) continue; // no visibility data here
+        // how long the enemy had sight of you, without a break, before the first hit
+        let lead = 0;
+        while (lead < VISION_CAP && sees(!radiant(s), s, first - lead - 1)) lead++;
+        // how long your team had sight of any of the killers before the first hit
+        const killers = [d.attacker, ...((de as { assist?: number[] }).assist ?? [])]
+          .map((h) => slots.find((o) => heroIdOf.get(o) === h))
+          .filter((o): o is number => o !== undefined && radiant(o) !== radiant(s));
+        let saw = 0;
+        while (saw < VISION_CAP && killers.some((k) => sees(radiant(s), k, first - saw))) saw++;
+        // enemies your team had not seen for MISSING_FOR s when the fight started
+        const missing = enemies.filter((o) => {
+          for (let t = first; t > first - MISSING_FOR; t--) if (sees(radiant(s), o, t) !== false) return false;
+          return true;
+        }).length;
+        de.vision = { enemySawFor: lead, sawKillersFor: killers.length ? saw : null, missing, firstHit: first };
       }
     }
   }

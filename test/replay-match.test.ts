@@ -96,7 +96,9 @@ test("replay match + our extractor: HP, mana, gold at death, real inventory; clo
     HEROES.forEach((_, s) => {
       const real = t + 8;
       const dead = s === 0 && real >= 100 && real < 130;
-      ex.push(JSON.stringify({ t, s, lv: 1 + Math.floor(real / 40), hp: dead ? 0 : 500, mhp: 600, mp: 200, mmp: 300, rg: 150, ug: 350, it: s === 0 ? ["item_blink", "item_magic_wand", null, null, null, null, null, null, null, null] : [null, null, null, null, null, null, null, null, null, null], ch: s === 0 ? [0, real > 50 ? 9 : 2, 0, 0, 0, 0, 0, 0, 0, 0] : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }));
+      const vr = s < 5 ? 1 : 0; // Radiant never sees Dire
+      const vd = s >= 5 ? 1 : s === 0 && real >= 80 ? 1 : 0; // Dire sees Axe from 80 s
+      ex.push(JSON.stringify({ t, s, lv: 1 + Math.floor(real / 40), hp: dead ? 0 : 500, mhp: 600, mp: 200, mmp: 300, rg: 150, ug: 350, vr, vd, it: s === 0 ? ["item_blink", "item_magic_wand", null, null, null, null, null, null, null, null] : [null, null, null, null, null, null, null, null, null, null], ch: s === 0 ? [0, real > 50 ? 9 : 2, 0, 0, 0, 0, 0, 0, 0, 0] : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }));
     });
   }
   const lines = parse().map((l) => (l.includes('"interval"') ? l.replace(/"level":\d+,?/, "") : l));
@@ -117,4 +119,6 @@ test("replay match + our extractor: HP, mana, gold at death, real inventory; clo
   const inv = axe.playbackData!.inventoryEvents!;
   assert.equal(inv[inv.length - 1]!.item1?.itemId, idOf("magic_wand", ids.items));
   assert.equal((inv[inv.length - 1]!.item1 as { charges?: number }).charges, 9);
+  const v = (d as { vision?: { enemySawFor: number; sawKillersFor: number | null; missing: number; firstHit: number } }).vision!;
+  assert.deepEqual(v, { enemySawFor: 15, sawKillersFor: 0, missing: 5, firstHit: 95 }, "seen from 80, first hit at 95; killers never seen");
 });

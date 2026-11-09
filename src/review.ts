@@ -65,6 +65,8 @@ export interface StratzDeath extends TimeEvt {
   isWardWalkThrough?: boolean | null;
   isTracked?: boolean | null;
   isFeed?: boolean | null;
+  /** from the replay's team visibility (ADR-056). */
+  vision?: { enemySawFor: number; sawKillersFor: number | null; missing: number; firstHit: number };
   timeDead?: number | null;
 }
 type Inv = { itemId?: number | null } | null;
@@ -283,6 +285,7 @@ const CONFIDENCE: Record<string, [Confidence, MissingContext[]?]> = {
   many_deaths: ["confirmed"],
   died_with_gold: ["confirmed"],
   ward_walk: ["confirmed"],
+  fog_deaths: ["confirmed"],
   low_cs10: ["confirmed"],
   good_cs10: ["confirmed"],
   low_nw20: ["confirmed"],
@@ -434,11 +437,18 @@ const WORK_ON = 5;
 /** kill participation below this is "far from the fights", by position (expert values). */
 const KP_LOW: Record<number, number> = { 1: 0.35, 2: 0.45, 3: 0.4, 4: 0.5, 5: 0.5 };
 /** findings that cost deaths or fights (tier 1); the rest is efficiency (tier 2). */
-const TIER1 = new Set(["many_deaths", "died_alone", "ward_walk", "front_deaths", "outnumbered", "silent_death", "silent_battles", "deep_deaths", "low_kp", "ult_unused", "died_with_item_ready", "heal_unused"]);
+const TIER1 = new Set(["many_deaths", "died_alone", "ward_walk", "fog_deaths", "front_deaths", "outnumbered", "silent_death", "silent_battles", "deep_deaths", "low_kp", "ult_unused", "died_with_item_ready", "heal_unused"]);
 /** plan-conformity findings: problems only with evidence that the game went badly for this player. */
 const PLAN_IDS = new Set(["counter_missing", "counter_late"]);
 
 /** items that save you when used in time (escape, immunity, defence). */
+/** ADR-056: killers seen at most this long before the first hit = "from the fog". */
+const FOG_SEEN_MAX = 1;
+/** ...and the enemy had you in sight at least this long before = "they saw you first". */
+const SEEN_FIRST = 8;
+/** enemies unseen this long at the fight start count as missing (same as the adapter). */
+const MISSING_FOR = 15;
+
 export const SAVE_ITEMS = new Set([
   "black_king_bar", "blink", "overwhelming_blink", "swift_blink", "arcane_blink", "manta", "glimmer_cape",
   "force_staff", "hurricane_pike", "cyclone", "wind_waker", "ghost", "ethereal_blade", "lotus_orb", "satanic",
@@ -728,6 +738,10 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
     if (dd.isAttemptTpOut) flags.push("tried to TP out");
     if (dd.isBurst) flags.push("burst");
     if (dd.isTracked) flags.push("tracked");
+    // ADR-056: the replay's team visibility - killers unseen until the first hit
+    const unseen = dd.vision && dd.vision.sawKillersFor !== null && dd.vision.sawKillersFor <= FOG_SEEN_MAX;
+    if (unseen) flags.push(dd.vision!.enemySawFor >= SEEN_FIRST ? `killers unseen, they saw you ${dd.vision!.enemySawFor} s before` : "killers unseen before the hit");
+    if (dd.vision && dd.vision.missing >= 3) flags.push(`${dd.vision.missing} enemies missing`);
     const ultReady = ultIds.size > 0 && dd.isEngagedOnDeath && !ultCasts.some((t) => t <= dd.time && dd.time - t < 90);
     if (ultReady) flags.push("ultimate not used");
     let alone: boolean | undefined;
@@ -770,6 +784,19 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
   const richDeaths = deaths.filter((x) => x.unspent >= 2000);
   if (richDeaths.length >= 2) {
     findings.push({ id: "died_with_gold", area: "deaths", severity: 0.2, title: `${richDeaths.length} deaths holding 2000+ gold`, detail: `Up to ${Math.max(...richDeaths.map((x) => x.unspent))} gold unspent: buy before you fight.`, times: richDeaths.map((x) => x.time) });
+  }
+  const fogDeaths = deaths.filter((x) => x.flags.some((f) => f.startsWith("killers unseen")));
+  if (fogDeaths.length >= 2 && fogDeaths.length >= 0.25 * deaths.length) {
+    const missing = deathsList.filter((x) => fogDeaths.some((f) => f.time === x.time)).map((x) => x.vision?.missing ?? 0);
+    const avgMissing = missing.reduce((a, b) => a + b, 0) / Math.max(1, missing.length);
+    findings.push({
+      id: "fog_deaths",
+      area: "deaths",
+      severity: clamp(0.12 * fogDeaths.length, 0.2, 0.5),
+      title: `${fogDeaths.length} of ${deaths.length} deaths to enemies your team could not see`,
+      detail: `No one on your team had sight of the killers before their first hit (on average ${avgMissing.toFixed(1)} enemies unseen for ${MISSING_FOR}+ s when the fight started): check the minimap for missing heroes, ward where you farm, keep a way out.`,
+      times: fogDeaths.map((x) => x.time),
+    });
   }
   const walkDeaths = deaths.filter((x) => x.flags.includes("walked into enemy vision"));
   if (walkDeaths.length >= 2) {
@@ -1212,6 +1239,7 @@ const TREND_TITLES: Record<string, string> = {
   lane_lost: "Losing the lane",
   lane_won: "Winning the lane",
   ward_walk: "Walking into enemy vision before deaths",
+  fog_deaths: "Deaths to enemies your team could not see",
   time_dead: "Long time dead",
   low_kp: "Low kill participation",
   high_kp: "High kill participation",
