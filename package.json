@@ -13,7 +13,7 @@
     "serve": "npm run build:web && npx --yes serve web -l 5173",
     "params:report": "tsx scripts/params-report.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.web.json",
-    "test": "tsx --test test/engine.test.ts test/screen.test.ts test/coach.test.ts test/combos.test.ts test/items.test.ts test/game.test.ts test/plan.test.ts test/review.test.ts test/idle.test.ts",
+    "test": "tsx --test test/engine.test.ts test/screen.test.ts test/coach.test.ts test/combos.test.ts test/items.test.ts test/game.test.ts test/plan.test.ts test/review.test.ts test/idle.test.ts test/replay.test.ts",
     "patch:check": "tsx scripts/patch-check.ts",
     "build:pages": "npm run build:web && tsx scripts/build-pages.ts",
     "review:howdoiplay": "tsx scripts/howdoiplay-review.ts",

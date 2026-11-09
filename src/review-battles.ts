@@ -190,6 +190,8 @@ export function analyseBattles(
   itemLabel: (k: string) => string,
   ultIds: Set<number> = new Set(),
   health?: StratzHealth,
+  /** from the replay (ADR-045): you are stunned / silenced / hexed... at t. */
+  disabled?: (t: number) => boolean,
 ): BattleReport | undefined {
   const pb = me.playbackData as (StratzMe["playbackData"] & {
     playerUpdateHealthEvents?: Array<{ time: number; hp: number; maxHp: number; mp?: number | null; maxMp?: number | null }> | null;
@@ -363,7 +365,7 @@ export function analyseBattles(
       };
       for (let t = from; t < to; t += STEP) {
         const castNow = times.some((x) => x >= t && x < t + STEP);
-        if (deadAt(t) || !availAt(t)) {
+        if (deadAt(t) || !availAt(t) || disabled?.(t)) {
           close(false);
           continue;
         }

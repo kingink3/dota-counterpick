@@ -1,0 +1,126 @@
+// =============================================================================
+//  Replay timeline (ADR-045): what the .dem adds to a match, cut down to what the
+//  review uses. Built in Actions from odota/parser's NDJSON (ADR-043), stored
+//  encrypted inside the match. Pure: no I/O.
+//
+//    heroes[slot]  per second from `start`: x, y (map cells x10, integers), alive (1/0),
+//                  lh (last hits + denies), xp, gold
+//    disables      stuns / silences / hexes / roots / fears ... on heroes, with duration
+// =============================================================================
+
+export interface ReplayHero {
+  hero: string; // npc_dota_hero_*
+  x: number[];
+  y: number[];
+  alive: number[];
+  lh: number[];
+  xp: number[];
+  gold: number[];
+}
+
+export interface ReplayDisable {
+  /** start, seconds of game time. */
+  t: number;
+  /** duration, seconds. */
+  d: number;
+  /** player slot of the hero it landed on (0-4 Radiant, 128-132 Dire). */
+  slot: number;
+  /** the modifier, e.g. modifier_stunned. */
+  kind: string;
+}
+
+export interface ReplayTimeline {
+  v: 1;
+  /** game time (s) of index 0. */
+  start: number;
+  heroes: Record<string, ReplayHero>;
+  disables: ReplayDisable[];
+}
+
+/** modifiers that stop you from acting (casting or moving the way you want). */
+export const DISABLE_RE = /stun|hex|sheep|silence|taunt|fear|cyclone|eul|sleep|nightmare|root|ensnare|bash|frozen|freeze|petrif|banish|disarm|duel|black_hole|chrono|reverse_polarity|fiends_grip|shackle|dream_coil|mute|doom/;
+/** ...except these, which only slow or are positive. */
+const NOT_DISABLE_RE = /slow|immune|_aura|debuff_immune|buff$|charge_counter/;
+
+/** odota/parser `slot` (0-9) -> player slot (0-4, 128-132). */
+export const playerSlot = (s: number): number => (s < 5 ? s : 128 + s - 5);
+
+interface IntervalEvt { type: "interval"; time: number; slot: number; unit?: string; x?: number; y?: number; life_state?: number; lh?: number; denies?: number; xp?: number; gold?: number }
+interface ModEvt { type: string; time: number; targetname?: string; targethero?: boolean; targetillusion?: boolean; inflictor?: string; stun_duration?: number }
+
+/** NDJSON lines of odota/parser -> timeline. Lines that are not JSON are skipped. */
+export function buildTimeline(lines: Iterable<string>): ReplayTimeline | undefined {
+  const rows = new Map<number, IntervalEvt[]>(); // slot -> events
+  const opened = new Map<string, { t: number; slotName: string; kind: string; d?: number }>();
+  const mods: Array<{ t: number; d: number; target: string; kind: string }> = [];
+  let start = Infinity;
+  let end = -Infinity;
+  for (const line of lines) {
+    if (!line || line[0] !== "{") continue;
+    let e: IntervalEvt | ModEvt;
+    try {
+      e = JSON.parse(line) as IntervalEvt | ModEvt;
+    } catch {
+      continue;
+    }
+    if (e.type === "interval") {
+      const iv = e as IntervalEvt;
+      if (iv.time < 0 || iv.x === undefined) continue; // before the horn, or no hero yet
+      start = Math.min(start, iv.time);
+      end = Math.max(end, iv.time);
+      (rows.get(iv.slot) ?? rows.set(iv.slot, []).get(iv.slot)!).push(iv);
+    } else if (e.type === "DOTA_COMBATLOG_MODIFIER_ADD" || e.type === "DOTA_COMBATLOG_MODIFIER_REMOVE") {
+      const m = e as ModEvt;
+      if (!m.targethero || m.targetillusion || !m.targetname || !m.inflictor) continue;
+      if (!DISABLE_RE.test(m.inflictor) || NOT_DISABLE_RE.test(m.inflictor)) continue;
+      const key = `${m.targetname}|${m.inflictor}`;
+      if (e.type === "DOTA_COMBATLOG_MODIFIER_ADD") {
+        if (!opened.has(key)) opened.set(key, { t: m.time, slotName: m.targetname, kind: m.inflictor, ...(m.stun_duration ? { d: m.stun_duration } : {}) });
+      } else {
+        const o = opened.get(key);
+        if (o) {
+          opened.delete(key);
+          const d = m.time - o.t;
+          if (d > 0 && d < 30) mods.push({ t: o.t, d, target: o.slotName, kind: o.kind });
+        }
+      }
+    }
+  }
+  // never closed (died with it, end of the replay): the duration the log gave, if any
+  for (const o of opened.values()) if (o.d && o.d > 0 && o.d < 30) mods.push({ t: o.t, d: o.d, target: o.slotName, kind: o.kind });
+  if (!rows.size || !Number.isFinite(start)) return undefined;
+
+  const n = end - start + 1;
+  const heroes: Record<string, ReplayHero> = {};
+  const slotOfHero = new Map<string, number>();
+  for (const [slot, evs] of rows) {
+    evs.sort((a, b) => a.time - b.time);
+    const h: ReplayHero = { hero: evs.find((x) => x.unit)?.unit ?? "", x: [], y: [], alive: [], lh: [], xp: [], gold: [] };
+    let j = 0;
+    let last = evs[0]!;
+    for (let i = 0; i < n; i++) {
+      const t = start + i;
+      while (j < evs.length && evs[j]!.time <= t) last = evs[j++]!;
+      h.x.push(Math.round((last.x ?? 0) * 10));
+      h.y.push(Math.round((last.y ?? 0) * 10));
+      h.alive.push(last.life_state === undefined || last.life_state === 0 ? 1 : 0);
+      h.lh.push((last.lh ?? 0) + (last.denies ?? 0));
+      h.xp.push(last.xp ?? 0);
+      h.gold.push(last.gold ?? 0);
+    }
+    const ps = playerSlot(slot);
+    heroes[String(ps)] = h;
+    if (h.hero) slotOfHero.set(h.hero, ps);
+  }
+  const disables: ReplayDisable[] = mods
+    .filter((m) => slotOfHero.has(m.target))
+    .map((m) => ({ t: Math.round(m.t * 10) / 10, d: Math.round(m.d * 10) / 10, slot: slotOfHero.get(m.target)!, kind: m.kind }))
+    .sort((a, b) => a.t - b.t);
+  return { v: 1, start, heroes, disables };
+}
+
+/** is the hero in `slot` under a disable at game time t? */
+export function disabledAt(tl: ReplayTimeline, slot: number): (t: number) => boolean {
+  const mine = tl.disables.filter((d) => d.slot === slot);
+  return (t) => mine.some((d) => t >= d.t && t < d.t + d.d);
+}

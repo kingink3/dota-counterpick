@@ -311,7 +311,7 @@ export class ReviewView {
         this.settings = { ...this.settings, account: m.owner };
         saveSettings(this.settings);
       }
-      const base: MatchBase = { summary: m.summary, ...(m.positions ? { positions: m.positions } : {}), ...(m.health ? { health: m.health } : {}), ...(m.vision ? { vision: m.vision } : {}) };
+      const base: MatchBase = { summary: m.summary, ...(m.positions ? { positions: m.positions } : {}), ...(m.health ? { health: m.health } : {}), ...(m.vision ? { vision: m.vision } : {}), ...(m.replay ? { replay: m.replay } : {}) };
       const o = { id: m.id, base, reviews: new Map<number, MatchReview>(), loading: new Set<number>(), failed: new Map<number, string>(), expanded: new Set<number>() };
       for (const [acc, me] of Object.entries(m.players)) {
         try {

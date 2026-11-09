@@ -4,6 +4,7 @@
 //  unlock screen derived (window.__DOTA_KEY). No STRATZ call from the page.
 // =============================================================================
 
+import type { ReplayTimeline } from "../replay.js";
 import type { StratzHealth, StratzMe, StratzPositions, StratzSummary, StratzVision } from "../review.js";
 
 export interface StoreEntry {
@@ -28,6 +29,8 @@ export interface StoredMatch {
   vision?: StratzVision;
   /** Steam account id -> that player's events. */
   players: Record<string, StratzMe>;
+  /** per-second timeline from the .dem (ADR-045), when the replay was parsed. */
+  replay?: ReplayTimeline;
 }
 
 /** owner/repo of this site: kingink3.github.io/dota-counterpick -> kingink3/dota-counterpick. */

@@ -4,7 +4,8 @@
 //  Pure: no fetch, no DOM. Every finding carries its evidence (times, counts).
 // =============================================================================
 
-import { idleRuns, idleTime, type IdleReport } from "./review-idle.js";
+import { idleRuns, idleSeconds, idleTime, type IdleReport } from "./review-idle.js";
+import { disabledAt, type ReplayTimeline } from "./replay.js";
 import { buildPlan, mmss, teamWindow, WINDOW_PP, type ItemPlan, type ItemStats, type ItemTiming } from "./item-plan.js";
 import type { KnowledgeBase } from "./knowledge.js";
 import { archetypeOf, resolve } from "./resolver.js";
@@ -143,6 +144,8 @@ export interface MatchData {
   summary: StratzSummary;
   me: StratzMe;
   positions?: StratzPositions;
+  /** per-second timeline and disables from the .dem (ADR-045), when the replay was parsed. */
+  replay?: ReplayTimeline;
   /** every hero's HP (optional: saves on allied cores need it). */
   health?: StratzHealth;
   /** every player's wards / dewards / stacks (optional: the match overview). */
@@ -823,7 +826,49 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
         ...(position ? { position } : {}),
       })
     : undefined;
-  if (idle && idle.minutes.length >= 3 && idle.minutes.length >= 0.08 * idle.checked) {
+  // with the replay: idle by the second (ADR-045); the minute data still gives the farming pace
+  const myTl = d.replay?.heroes[String(mine.playerSlot)];
+  if (idle && d.replay && myTl) {
+    const sec = idleSeconds({
+      start: d.replay.start,
+      me: myTl,
+      enemies: s.players.filter((p) => p.isRadiant !== mine.isRadiant).map((p) => d.replay!.heroes[String(p.playerSlot)]).filter((h): h is NonNullable<typeof h> => !!h),
+      actions: [
+        ...(pb.abilityUsedEvents ?? []).map((e) => e.time),
+        ...(pb.itemUsedEvents ?? []).map((e) => e.time),
+        ...(pb.runeEvents ?? []).map((e) => e.time),
+        ...(me.stats?.wards ?? []).map((w) => w.time),
+        ...(me.stats?.campStack ?? []).flatMap((v, m, a) => (v > (a[m - 1] ?? 0) ? [m * 60 - 6] : [])),
+      ],
+      duration,
+    });
+    idle.seconds = sec.seconds;
+    idle.checkedSeconds = sec.checked;
+    idle.runs = sec.runs;
+    if (idle.pace !== undefined) idle.goldLost = Math.round((idle.pace * sec.seconds) / 60);
+    if (idle.stackChances !== undefined) idle.stackChances = Math.floor(sec.seconds / 60);
+  }
+  if (idle?.seconds !== undefined && idle.checkedSeconds) {
+    const min = idle.seconds / 60;
+    if (min >= 3 && idle.seconds >= 0.06 * idle.checkedSeconds) {
+      const cost =
+        idle.goldLost !== undefined
+          ? ` - up to ~${idle.goldLost} gold at your farming pace (${idle.pace} per minute)`
+          : idle.stackChances
+            ? ` - about ${idle.stackChances} stack / ward window${idle.stackChances > 1 ? "s" : ""}`
+            : "";
+      findings.push({
+        id: "idle_time",
+        area: position && position >= 4 ? "map" : "farm",
+        severity: clamp(0.1 + 0.03 * min, 0.15, 0.4),
+        confidence: "likely",
+        missingContext: ["causality"],
+        title: `${min.toFixed(1)} idle minutes (${Math.round((idle.seconds / idle.checkedSeconds) * 100)}% of your time out of base)${cost}`,
+        detail: `From the replay: alive, out of base, no last hit, XP, cast, ward, rune, stack or enemy nearby for 30+ s: ${idle.runs!.slice(0, 8).map(([a, b]) => `${mmss(a)}-${mmss(b)}`).join(", ")}${idle.runs!.length > 8 ? "…" : ""}.`,
+        times: idle.runs!.map(([a]) => a),
+      });
+    }
+  } else if (idle && idle.minutes.length >= 3 && idle.minutes.length >= 0.08 * idle.checked) {
     const n = idle.minutes.length;
     const runs = idleRuns(idle.minutes);
     const cost =
@@ -851,8 +896,8 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
   }
 
   // ---- battles: idle spells / items, mana, targets, positioning ---------------
-  const battles = analyseBattles(s, me, d.positions, ids, name, ultIds, d.health);
-  if (battles?.battles.length) findings.push(...battleFindings(battles, position));
+  const battles = analyseBattles(s, me, d.positions, ids, name, ultIds, d.health, d.replay ? disabledAt(d.replay, mine.playerSlot) : undefined);
+  if (battles?.battles.length) findings.push(...battleFindings(battles, position, !!d.replay));
 
   // ---- priorities: a problem is what cost the game, not what differs from the plan ----
   const nwAt = [...farm].reverse().find((f) => f.minute <= 20 && f.nw !== undefined && f.nwBench);
@@ -977,7 +1022,7 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
   };
 }
 
-function battleFindings(b: BattleReport, position?: number): Finding[] {
+function battleFindings(b: BattleReport, position?: number, replay = false): Finding[] {
   const out: Finding[] = [];
   const n = b.battles.length;
   const s = (x: number) => `${Math.round(x)} s`;
@@ -993,8 +1038,9 @@ function battleFindings(b: BattleReport, position?: number): Finding[] {
     const sure = u.missed >= 4 && share >= 0.6;
     out.push({
       id: `idle:${u.name}`,
-      confidence: sure ? "likely" : "possible",
-      missingContext: ["self_disabled", "target_vision", "cdr", "range_approx"],
+      // the replay shows disables on you (ADR-045): those seconds are not chances any more
+      confidence: sure || replay ? "likely" : "possible",
+      missingContext: replay ? ["target_vision", "cdr", "range_approx"] : ["self_disabled", "target_vision", "cdr", "range_approx"],
       area: "battles",
       severity: clamp(0.1 + 0.25 * share + 0.02 * u.missed + (u.ult ? 0.08 : 0) + (u.use === "save" ? 0.05 : 0), 0.15, 0.45),
       title:

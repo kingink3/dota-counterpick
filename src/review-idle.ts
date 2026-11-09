@@ -50,6 +50,10 @@ export interface IdleReport {
   goldLost?: number;
   /** supports: minutes in which a stack / ward was possible. */
   stackChances?: number;
+  /** from the replay (ADR-045): idle seconds and their stretches [from, to) game time. */
+  seconds?: number;
+  checkedSeconds?: number;
+  runs?: Array<[number, number]>;
 }
 
 /** before this minute the lane is on (idle there means something else). */
@@ -144,4 +148,68 @@ export function idleRuns(minutes: number[]): Array<[number, number]> {
     else runs.push([m, m]);
   }
   return runs;
+}
+
+// ---- per second, from the replay (ADR-045) -------------------------------------------
+
+export interface IdleSecondsInput {
+  /** the timeline arrays of your hero and the enemies (see src/replay.ts). */
+  start: number;
+  me: { x: number[]; y: number[]; alive: number[]; lh: number[]; xp: number[] };
+  enemies: Array<{ x: number[]; y: number[]; alive: number[] }>;
+  /** seconds of casts, wards, runes, stacks (minute marks are fine). */
+  actions: number[];
+  duration: number;
+}
+
+/** an event keeps the seconds around it busy (walking to the next camp, the fight's start). */
+export const IDLE_KEEP = 15;
+/** a stretch shorter than this is not idle (a pause, a look at the map). */
+export const IDLE_MIN_RUN = 30;
+
+/** idle seconds: alive, out of base, nothing that pays within ±IDLE_KEEP s. */
+export function idleSeconds(d: IdleSecondsInput): { seconds: number; checked: number; runs: Array<[number, number]> } {
+  const n = d.me.x.length;
+  const cell = (v: number) => v / 10;
+  const fx = cell(d.me.x[0] ?? 0);
+  const fy = cell(d.me.y[0] ?? 0);
+  // the fountain: where you stand at the horn is the base side; use the first second
+  const busy = new Uint8Array(n);
+  const mark = (i: number) => {
+    for (let k = Math.max(0, i - IDLE_KEEP); k <= Math.min(n - 1, i + IDLE_KEEP); k++) busy[k] = 1;
+  };
+  for (let i = 1; i < n; i++) {
+    if (d.me.lh[i]! > d.me.lh[i - 1]! || d.me.xp[i]! > d.me.xp[i - 1]!) mark(i);
+    const x = cell(d.me.x[i]!);
+    const y = cell(d.me.y[i]!);
+    if (d.enemies.some((e) => e.alive[i] && Math.hypot(cell(e.x[i]!) - x, cell(e.y[i]!) - y) <= IDLE_NEAR)) mark(i);
+  }
+  for (const t of d.actions) {
+    const i = Math.round(t - d.start);
+    if (i >= 0 && i < n) mark(i);
+  }
+  const from = Math.max(0, IDLE_START * 60 - d.start);
+  let checked = 0;
+  let seconds = 0;
+  const runs: Array<[number, number]> = [];
+  let run = 0;
+  const close = (i: number) => {
+    if (run >= IDLE_MIN_RUN) {
+      seconds += run;
+      runs.push([d.start + i - run, d.start + i]);
+    }
+    run = 0;
+  };
+  for (let i = from; i < Math.min(n, d.duration - d.start); i++) {
+    const inBase = Math.hypot(cell(d.me.x[i]!) - fx, cell(d.me.y[i]!) - fy) <= IDLE_BASE;
+    if (!d.me.alive[i] || inBase) {
+      close(i);
+      continue;
+    }
+    checked++;
+    if (busy[i]) close(i);
+    else run++;
+  }
+  close(Math.min(n, d.duration - d.start));
+  return { seconds, checked, runs };
 }

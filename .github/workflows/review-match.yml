@@ -5,6 +5,8 @@
 #     plus the list of your last 20 - nothing to click;
 #   - from the site ("Review" button, ADR-044) or by hand: match_id = that match,
 #     empty = your latest parsed match; list_only = only refresh the list.
+#   Each match also gets its replay parsed when OpenDota / Valve have it (per-second
+#   positions, disables on heroes; ADR-045) - optional, the match is stored either way.
 # Note: in a public repository the runs and their inputs are public (the match id).
 # STRATZ allows 2 IP addresses per 15 minutes; STRATZ runs share one queue.
 name: Review a match
@@ -72,6 +74,13 @@ jobs:
           else
             npx tsx scripts/stratz-fetch.ts --mode match --match "$MATCH_ID" --out /tmp/match
           fi
+      - name: Replays (.dem via OpenDota + odota/parser, optional - ADR-045)
+        run: |
+          ls /tmp/match/match*.json >/dev/null 2>&1 || { echo "no matches to add"; exit 0; }
+          docker run -d --name parser -p 5600:5600 odota/parser >/dev/null
+          for i in $(seq 1 60); do curl -s -o /dev/null localhost:5600 && break; sleep 2; done
+          npx tsx scripts/replay-fetch.ts --dir /tmp/match
+          docker rm -f parser >/dev/null || true
       - name: Add to the encrypted store
         env:
           APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
