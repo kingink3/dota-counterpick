@@ -42,6 +42,13 @@ public class Extract {
     Object v = get(e, p);
     return v instanceof Number n ? Math.round(n.floatValue()) : 0;
   }
+  /** 1 = the team sees the entity, 0 = it does not, -1 = no data. */
+  static int visible(Entity team, int index) {
+    Object w = get(team, String.format("m_bNPCVisibleState.%04d", index >> 6));
+    if (!(w instanceof Number n)) return -1;
+    return (n.longValue() >>> (index & 63) & 1L) == 1L ? 1 : 0;
+  }
+
   Entity one(String dt) {
     return es.stream().filter(Entities.byDtName(dt)).findFirst().orElse(null);
   }
@@ -93,10 +100,13 @@ public class Extract {
             it.append(q(name));
             ch.append(charges);
           }
+          // per-team visibility: m_bNPCVisibleState is a bitset of uint64 words by entity index
+          int vr = visible(radiant, h.getIndex());
+          int vd = visible(dire, h.getIndex());
           try {
             out.write("{\"t\":" + t + ",\"s\":" + slot + ",\"lv\":" + num(h, "m_iCurrentLevel") + ",\"hp\":" + num(h, "m_iHealth") + ",\"mhp\":" + num(h, "m_iMaxHealth")
                 + ",\"mp\":" + num(h, "m_flMana") + ",\"mmp\":" + num(h, "m_flMaxMana") + ",\"rg\":" + num(data, d + "m_iReliableGold")
-                + ",\"ug\":" + num(data, d + "m_iUnreliableGold") + ",\"it\":[" + it + "],\"ch\":[" + ch + "]}\n");
+                + ",\"ug\":" + num(data, d + "m_iUnreliableGold") + ",\"vr\":" + vr + ",\"vd\":" + vd + ",\"it\":[" + it + "],\"ch\":[" + ch + "]}\n");
           } catch (Exception ex) {
             throw new RuntimeException(ex);
           }
