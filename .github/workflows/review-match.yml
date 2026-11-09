@@ -1,12 +1,13 @@
-# Review a match (ADR-031, ADR-042, ADR-044): fetches matches with every player from STRATZ
-# and adds them, encrypted with the site password (APP_PASSWORD), to the `review-data`
-# branch. The site (Review) lists and opens them.
+# Review a match (ADR-031, ADR-042, ADR-044, ADR-053): builds matches with every player from
+# their replays (OpenDota -> Valve -> odota/parser), STRATZ only where that fails, and adds
+# them, encrypted with the site password (APP_PASSWORD), to the `review-data` branch.
+# The site (Review) lists and opens them.
 #   - every hour (schedule): your new parsed matches of the last 2 days, at most 3 a run,
 #     plus the list of your last 20 - nothing to click;
 #   - from the site ("Review" button, ADR-044) or by hand: match_id = that match,
 #     empty = your latest parsed match; list_only = only refresh the list.
-#   Each match also gets its replay parsed when OpenDota / Valve have it (per-second
-#   positions, disables on heroes; ADR-045) - optional, the match is stored either way.
+#   The list of your matches comes from OpenDota; the STRATZ token is still read for your
+#   Steam id (no call) and used when a replay is missing or fails.
 # Note: in a public repository the runs and their inputs are public (the match id).
 # STRATZ allows 2 IP addresses per 15 minutes; STRATZ runs share one queue.
 name: Review a match
@@ -58,7 +59,12 @@ jobs:
           git clone -q --depth 1 --branch review-data --single-branch "$url" /tmp/store || {
             mkdir -p /tmp/store && cd /tmp/store && git init -q -b review-data && git remote add origin "$url"; cd -; }
           npx tsx scripts/review-store.ts --dir /tmp/store --ids /tmp/stored-ids.json
-      - name: Query STRATZ
+      - name: Start the replay parser (odota/parser)
+        if: ${{ inputs.list_only != true }}
+        run: |
+          docker run -d --name parser -p 5600:5600 odota/parser >/dev/null
+          for i in $(seq 1 60); do curl -s -o /dev/null localhost:5600 && break; sleep 2; done
+      - name: Matches from their replays (ADR-053)
         env:
           STRATZ_TOKEN: ${{ secrets.STRATZ_TOKEN }}
           MATCH_ID: ${{ inputs.match_id }}
@@ -68,18 +74,41 @@ jobs:
         run: |
           mkdir -p /tmp/match
           if [ "$EVENT" = "schedule" ] || [ "$AUTO" = "true" ]; then
-            npx tsx scripts/stratz-fetch.ts --mode auto --skip /tmp/stored-ids.json --max 3 --out /tmp/match
+            npx tsx scripts/replay-review.ts --mode auto --skip /tmp/stored-ids.json --max 3 --out /tmp/match
           elif [ "$LIST_ONLY" = "true" ]; then
-            npx tsx scripts/stratz-fetch.ts --mode recent --out /tmp/match
+            npx tsx scripts/replay-review.ts --mode recent --out /tmp/match
           else
-            npx tsx scripts/stratz-fetch.ts --mode match --match "$MATCH_ID" --out /tmp/match
+            npx tsx scripts/replay-review.ts --mode match --match "$MATCH_ID" --out /tmp/match
           fi
-      - name: Replays (.dem via OpenDota + odota/parser, optional - ADR-045)
+      - name: STRATZ for what the replays could not do (fallback)
+        env:
+          STRATZ_TOKEN: ${{ secrets.STRATZ_TOKEN }}
+          EVENT: ${{ github.event_name }}
+          AUTO: ${{ inputs.auto }}
         run: |
-          ls /tmp/match/match*.json >/dev/null 2>&1 || { echo "no matches to add"; exit 0; }
-          docker run -d --name parser -p 5600:5600 odota/parser >/dev/null
-          for i in $(seq 1 60); do curl -s -o /dev/null localhost:5600 && break; sleep 2; done
-          npx tsx scripts/replay-fetch.ts --dir /tmp/match
+          todo=/tmp/match/stratz-todo.json
+          [ -f "$todo" ] || { echo "replay step gave no plan: STRATZ does it all"; echo '{"ids":[],"latest":true,"recent":true}' > "$todo"; }
+          ids=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).ids.join(" "))' "$todo")
+          latest=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).latest)' "$todo")
+          recent=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).recent)' "$todo")
+          rflag="--recent no"; [ "$recent" = "true" ] && rflag=""
+          if [ "$latest" = "true" ]; then
+            if [ "$EVENT" = "schedule" ] || [ "$AUTO" = "true" ]; then
+              npx tsx scripts/stratz-fetch.ts --mode auto --skip /tmp/stored-ids.json --max 3 --out /tmp/match
+            else
+              npx tsx scripts/stratz-fetch.ts --mode match --out /tmp/match $rflag
+            fi
+            rflag="--recent no"
+          fi
+          for id in $ids; do
+            npx tsx scripts/stratz-fetch.ts --mode match --match "$id" --name "match-$id.json" --out /tmp/match $rflag || echo "a match failed on STRATZ too"
+            rflag="--recent no"
+          done
+          if [ "$recent" = "true" ] && [ "$rflag" = "" ]; then npx tsx scripts/stratz-fetch.ts --mode recent --out /tmp/match; fi
+      - name: Replays for the STRATZ matches (optional - ADR-045)
+        if: ${{ inputs.list_only != true }}
+        run: |
+          ls /tmp/match/match*.json >/dev/null 2>&1 && npx tsx scripts/replay-fetch.ts --dir /tmp/match || echo "no matches to add"
           docker rm -f parser >/dev/null || true
       - name: Add to the encrypted store
         env:

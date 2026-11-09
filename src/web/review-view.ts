@@ -37,7 +37,7 @@ export class ReviewView {
   private history: MatchReview[] = loadHistory();
   private current?: MatchReview;
   /** the match open in the player switcher: shared data + every player's review so far. */
-  private open?: { id: number; base: MatchBase; reviews: Map<number, MatchReview>; loading: Set<number>; failed: Map<number, string>; expanded: Set<number> };
+  private open?: { id: number; source?: "replay" | "stratz"; base: MatchBase; reviews: Map<number, MatchReview>; loading: Set<number>; failed: Map<number, string>; expanded: Set<number> };
   /** matches the "Review a match" workflow stored (ADR-031). */
   private store?: StoreEntry[];
   /** your last matches, written by every workflow run (ADR-042). */
@@ -237,7 +237,7 @@ export class ReviewView {
       const b = el("button", "g-btn", have ? "Open" : this.copied === m.id ? "ID copied ✓" : m.parsedDateTime ? (direct ? "Review" : "Review ↗") : "Not parsed") as HTMLButtonElement;
       b.type = "button";
       b.disabled = this.busy || (!have && !m.parsedDateTime);
-      b.title = have ? "Already in the store" : m.parsedDateTime ? (direct ? "Fetch all ten players (~1 min)" : `Copies ${m.id} and opens the workflow: paste it as Match ID, Run.`) : "STRATZ has not parsed it yet - try again later";
+      b.title = have ? "Already in the store" : m.parsedDateTime ? (direct ? "Fetch all ten players (~1 min)" : `Copies ${m.id} and opens the workflow: paste it as Match ID, Run.`) : "Older than ~2 weeks (no replay) and not parsed by STRATZ";
       b.addEventListener("click", () => {
         if (have) return void this.openStored(have);
         if (direct) return void this.start(`match ${m.id}`, { matchId: m.id });
@@ -312,7 +312,7 @@ export class ReviewView {
         saveSettings(this.settings);
       }
       const base: MatchBase = { summary: m.summary, ...(m.positions ? { positions: m.positions } : {}), ...(m.health ? { health: m.health } : {}), ...(m.vision ? { vision: m.vision } : {}), ...(m.replay ? { replay: m.replay } : {}) };
-      const o = { id: m.id, base, reviews: new Map<number, MatchReview>(), loading: new Set<number>(), failed: new Map<number, string>(), expanded: new Set<number>() };
+      const o = { id: m.id, ...(m.source ? { source: m.source } : {}), base, reviews: new Map<number, MatchReview>(), loading: new Set<number>(), failed: new Map<number, string>(), expanded: new Set<number>() };
       for (const [acc, me] of Object.entries(m.players)) {
         try {
           const r = reviewMatch({ ...base, me }, Number(acc), ctx);
@@ -573,7 +573,9 @@ export class ReviewView {
     const rel = own || !meP || !them ? "" : meP.isRadiant === them.isRadiant ? "ally" : "opponent";
     const who = own ? "" : `${[r.player, rel].filter(Boolean).join(", ") || "player"} · `;
     t.append(el("h2", "", `${who}${this.d.heroLabel(r.hero)}${r.position ? ` · position ${r.position}` : ""}`));
-    t.append(el("p", "muted", `${r.won ? "Won" : "Lost"} · ${r.kda.join("/")} · ${mmss(r.duration)} · ${r.mode}${r.comparable ? (r.compat?.length ? ` - ${r.compat.join("; ")}: farm and timing verdicts are "check the replay"` : "") : " - timings and averages are from ranked All Pick games, not compared"}`));
+    const src = this.open?.id === r.matchId ? this.open.source : undefined;
+    const srcNote = src === "replay" ? " · from the replay (no HP / mana or STRATZ death flags yet)" : src === "stratz" ? " · from STRATZ" : "";
+    t.append(el("p", "muted", `${r.won ? "Won" : "Lost"} · ${r.kda.join("/")} · ${mmss(r.duration)} · ${r.mode}${srcNote}${r.comparable ? (r.compat?.length ? ` - ${r.compat.join("; ")}: farm and timing verdicts are "check the replay"` : "") : " - timings and averages are from ranked All Pick games, not compared"}`));
     head.append(t);
     const copy = el("button", "g-btn rv-copy", "Copy for Discord / Telegram") as HTMLButtonElement;
     copy.type = "button";

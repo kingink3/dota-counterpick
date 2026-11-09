@@ -820,7 +820,8 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
   }
 
   // --- map and role --------------------------------------------------------------
-  const runes = pb.runeEvents ?? [];
+  // STRATZ logs a bottled rune twice (BOTTLE, then PICKUP when it is used): count pickups only (ADR-053)
+  const runes = (pb.runeEvents ?? []).filter((r) => r.action !== "BOTTLE");
   const power = runes.filter((r) => r.rune && !["BOUNTY", "WATER", "WISDOM"].includes(r.rune)).length;
   const bounty = runes.filter((r) => r.rune === "BOUNTY").length;
   if (position === 2 || position === 4) {

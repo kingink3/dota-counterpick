@@ -282,9 +282,10 @@ async function main(): Promise<void> {
       if (!m) throw new Error("STRATZ returned no parsed match for the token owner (its match list may be down - pass a match id)");
       id = m.id;
     }
-    await fetchMatch(id, owner, join(out, "match.json"));
-    // the owner's recent matches ride along (one call), so the site's list stays fresh (ADR-042)
-    if (owner) await writeRecent(owner).catch((e) => console.log(`recent list failed: ${String(e).slice(0, 120)}`));
+    await fetchMatch(id, owner, join(out, arg("name") ?? "match.json"));
+    // the owner's recent matches ride along (one call), so the site's list stays fresh (ADR-042);
+    // --recent no: the list came from OpenDota already (ADR-053)
+    if (owner && arg("recent") !== "no") await writeRecent(owner).catch((e) => console.log(`recent list failed: ${String(e).slice(0, 120)}`));
   } else {
     throw new Error(`unknown mode ${mode}`);
   }
@@ -323,7 +324,7 @@ async function fetchMatch(id: number, owner: number | undefined, file: string): 
       console.log(`a player failed: ${String(e).slice(0, 120)}`);
     }
   }
-  const data = { id, owner: owner ?? null, fetchedAt: Math.floor(Date.now() / 1000), summary: summary.match, positions, health, vision, players };
+  const data = { id, owner: owner ?? null, fetchedAt: Math.floor(Date.now() / 1000), source: "stratz", summary: summary.match, positions, health, vision, players };
   writeFileSync(file, JSON.stringify(data));
   console.log(`match: ${Object.keys(players).length} of ${summary.match.players?.length ?? 0} players with events, parsed ${summary.match.parsedDateTime ? "yes" : "no"}`);
 }

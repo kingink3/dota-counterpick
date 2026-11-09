@@ -31,6 +31,8 @@ export interface StoredMatch {
   players: Record<string, StratzMe>;
   /** per-second timeline from the .dem (ADR-045), when the replay was parsed. */
   replay?: ReplayTimeline;
+  /** where the players' events came from (ADR-053); older matches: STRATZ. */
+  source?: "replay" | "stratz";
 }
 
 /** owner/repo of this site: kingink3.github.io/dota-counterpick -> kingink3/dota-counterpick. */
