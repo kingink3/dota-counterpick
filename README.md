@@ -263,9 +263,9 @@ sources live in `data/timings.yaml`.
 ### Coach: voice and an overlay (ADR-030)
 
 On the Game tab, **Coach** speaks short English cues ("Power rune in 15", "Tormentor spawns in
-one minute", "Their power window until 25. Avoid even fights.") and chimes for routine ones
+one minute", "Games this long tend to go their way until 25.") and chimes for routine ones
 (stacks for supports), each once, on time. **Overlay** opens a small always-on-top window (Chrome / Edge Document
-Picture-in-Picture) with the next two events, the item target and the power window. Run Dota
+Picture-in-Picture) with the next two events, the item target and the game-length tendency. Run Dota
 in borderless window mode; nothing is injected into the game. Categories are voice / chime /
 off, with defaults per position.
 
@@ -278,7 +278,7 @@ Note: the run and its Match ID are visible in the public repository. Nothing run
 computer and the page holds no STRATZ token (ADR-034). The report shows:
 - the plan the app would have made for that draft vs what you bought and when;
 - last hits, networth and XP vs Crusader-Ancient averages for your hero and position;
-- every death (in their power window? alone? with BKB / Blink ready? with a heal? with
+- every death (in a stretch their lineup tends to win? alone? with BKB / Blink ready? with a heal? with
   unspent gold?), map and role checks, and the top 10 growth areas;
 - **Battles** (2v3 / 3v2 or bigger): per spell / item — chances (ready with the mana and
   usable: an enemy hero in range for spells on enemies, an allied core in range losing HP
@@ -296,7 +296,7 @@ included: use the player switcher above the report (ADR-029c). **Match overview*
 work to do); **Copy for Discord / Telegram** turns a review into a short message for a
 friend. Supports get observers / sentries / enemy wards destroyed / stacks (ADR-029d).
 
-### Item plan and power windows (ADR-027)
+### Item plan and game-length tendency (ADR-027, ADR-037)
 
 Mark the hero you play (★) and your position: the Game tab shows the plan next to the
 timers.
@@ -304,8 +304,11 @@ timers.
 - **For this draft** holds the engine's counter items, each with its reason. A cheap
   counter goes into the lane, an expensive one after the first core item. A late item
   this draft calls for first (BKB vs a disable lineup) moves up into the core.
-- Typical purchase times come with the win rate of fast vs slow timings.
-- **Power windows** compare both lineups' win rate by match length. This is a heuristic.
+- Typical purchase times come with the win rate of fast vs slow timings. This is a link,
+  not the item's effect: players who buy faster are usually also ahead in gold.
+- **Game-length tendency** compares both lineups' win rate by match length in past games.
+  It is not the strength of a lineup at that minute of this match: a quick win can be a
+  snowball from a good start rather than a power spike (ADR-037).
 - Items in your inventory (bottom HUD, your hero selected) get a ✓.
 
 Data: Actions -> "Fetch OpenDota stats" -> `opendota-raw` branch -> `scripts/build-item-stats.ts`

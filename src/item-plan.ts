@@ -397,14 +397,16 @@ function itemSpikes(core: PlanItem[]): Spike[] {
       const delta = t.wrFast !== undefined && t.wrSlow !== undefined ? t.wrFast - t.wrSlow : undefined;
       const why =
         delta !== undefined && delta > 0.02
-          ? `typical ${mmss(t.p50)}; done by ${mmss(t.fastBy ?? t.p25)}: ${pct(t.wrFast!)} wins, after ${mmss(t.slowAfter ?? t.p75)}: ${pct(t.wrSlow!)}`
+          ? `typical ${mmss(t.p50)}; done by ${mmss(t.fastBy ?? t.p25)}: ${pct(t.wrFast!)} wins, after ${mmss(t.slowAfter ?? t.p75)}: ${pct(t.wrSlow!)} (partly because richer games buy faster)`
           : `typical ${mmss(t.p50)}`;
       return { at: t.p50, label: `${c.label} done`, why };
     });
 }
 
 // -----------------------------------------------------------------------------
-//  Power curve: win rate by match length (ADR-026 phase 3, heuristic)
+//  Game-length tendency: win rate by match length (ADR-026 phase 3, ADR-037).
+//  Past games of a given length, NOT the strength of a lineup at that minute of this
+//  match: fast wins can be snowballs from a good start rather than a power spike.
 // -----------------------------------------------------------------------------
 
 /** minute bins used for team comparison. */

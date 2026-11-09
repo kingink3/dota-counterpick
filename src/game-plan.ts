@@ -1,7 +1,7 @@
 // =============================================================================
 //  Match plan for the Game tab (ADR-028): what the enemy draft does to YOU and
 //  what to do about it, by game phase. Pure; built from the engine result, the
-//  item plan and the power windows - no free text beyond fixed sentence frames.
+//  item plan and the game-length tendency (ADR-037) - no free text beyond fixed sentence frames.
 // =============================================================================
 
 import { CURVE_LABELS, mmss, WINDOW_PP, type ItemPlan, type PlanItem, type TeamWindow } from "./item-plan.js";
@@ -150,18 +150,18 @@ function focusLines(inp: MatchPlanInput, threats: Threat[]): MatchPlan["focus"] 
     if (d === undefined) return undefined;
     if (d > WINDOW_PP) {
       const who = drivers(bin, "ally");
-      return `${cap(CURVE_LABELS[bin]!)} your lineup is ahead (+${d.toFixed(1)} pp${who ? `; ${who}` : ""}).`;
+      return `Games ${CURVE_LABELS[bin]!} tend to go your way (+${d.toFixed(1)} pp${who ? `; ${who}` : ""}).`;
     }
     if (d < -WINDOW_PP) {
       const who = drivers(bin, "enemy");
-      return `${cap(CURVE_LABELS[bin]!)} they are ahead (${d.toFixed(1)} pp${who ? `; ${who}` : ""}).`;
+      return `Games ${CURVE_LABELS[bin]!} tend to go their way (${d.toFixed(1)} pp${who ? `; ${who}` : ""}).`;
     }
-    return `${cap(CURVE_LABELS[bin]!)} roughly even.`;
+    return `Games ${CURVE_LABELS[bin]!}: no lean.`;
   };
   const stake = (it: PlanItem) => {
     const t = it.timing;
     return t?.wrFast !== undefined && t.wrSlow !== undefined && t.wrFast - t.wrSlow > 0.05
-      ? `${it.label} by ${mmss(t.fastBy ?? t.p25)}: ${pct(t.wrFast)} wins, after ${mmss(t.slowAfter ?? t.p75)}: ${pct(t.wrSlow)}.`
+      ? `${it.label} by ${mmss(t.fastBy ?? t.p25)}: ${pct(t.wrFast)} wins, after ${mmss(t.slowAfter ?? t.p75)}: ${pct(t.wrSlow)} (richer games buy faster: not all of it is the item).`
       : undefined;
   };
   const gaps = (result.team?.needs ?? [])
@@ -192,7 +192,7 @@ function focusLines(inp: MatchPlanInput, threats: Threat[]): MatchPlan["focus"] 
       ]),
     },
     mid: {
-      title: titleFor([0], "Mid game: your window - take the map before 25:00", "Mid game: their window - farm safely, defend", "Mid game: even - play around your item timings"),
+      title: titleFor([0], "Mid game: short games favour you - take the map before 25:00", "Mid game: short games favour them - farm safely, defend", "Mid game: no lean - play around your item timings"),
       lines: clean([
         windowLine(0),
         windowLine(1),
@@ -201,7 +201,7 @@ function focusLines(inp: MatchPlanInput, threats: Threat[]): MatchPlan["focus"] 
       ]),
     },
     late: {
-      title: titleFor([2, 3], "Late game: your lineup scales - take fights with your items", "Late game: they scale - end it or wait for your timings", "Late game: even"),
+      title: titleFor([2, 3], "Late game: long games favour you - play for your items", "Late game: long games favour them - end it or wait for your timings", "Late game: no lean"),
       lines: clean([
         windowLine(2),
         windowLine(3),

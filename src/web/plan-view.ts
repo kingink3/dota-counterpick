@@ -1,6 +1,6 @@
 // =============================================================================
 //  Game tab rendering (ADR-028): the "Match plan" zone (right) and the item target /
-//  power window line of the "Now" zone (left). Pure DOM from ItemPlan, TeamWindow and
+//  game-length tendency line of the "Now" zone (left). Pure DOM from ItemPlan, TeamWindow and
 //  MatchPlan (src/item-plan.ts, src/game-plan.ts).
 // =============================================================================
 
@@ -177,6 +177,7 @@ export function renderTarget(root: HTMLElement, plan: ItemPlan | undefined, have
   const k = el("span", "gz-tk", "");
   if (tm?.wrFast !== undefined && tm.wrSlow !== undefined && tm.wrFast > tm.wrSlow) {
     k.append(`done by ${mmss(tm.fastBy ?? tm.p25)}: `, el("b", "good", pct(tm.wrFast)), ` wins · after ${mmss(tm.slowAfter ?? tm.p75)}: `, el("b", "bad", pct(tm.wrSlow)));
+    k.title = "Fast buyers are usually also the ones ahead in gold: the gap is a link, not the effect of the item alone (ADR-037).";
   } else if (cur.via?.length) k.append(`via ${cur.via.join(", ")}`);
   box.append(k);
   if (cur.at !== undefined && t !== undefined && t > 0) {
@@ -234,10 +235,10 @@ export function renderWindowLine(root: HTMLElement, w: TeamWindow | undefined, t
     p(
       "gz-sub",
       d > WINDOW_PP
-        ? `You are stronger now (+${d.toFixed(1)} pp${until ? ` until ${until}` : ""})`
+        ? `Games this long tend to go your way (+${d.toFixed(1)} pp${until ? ` until ${until}` : ""})`
         : d < -WINDOW_PP
-          ? `They are stronger now (${d.toFixed(1)} pp${until ? ` until ${until}` : ""})`
-          : `Even right now${until ? ` (until ${until})` : ""}`,
+          ? `Games this long tend to go their way (${d.toFixed(1)} pp${until ? ` until ${until}` : ""})`
+          : `No lean by game length${until ? ` (until ${until})` : ""}`,
     ),
   );
   root.title = windowText(w, heroLabel);

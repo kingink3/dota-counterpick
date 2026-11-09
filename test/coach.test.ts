@@ -37,16 +37,16 @@ test("coach: a carry is not told about stacks; opening late does not replay old 
   assert.ok(!late.some((c) => c.key === "power_rune@360"));
 });
 
-test("coach: power window at the start and at 25:00; overlay lines are short", () => {
+test("coach: game-length tendency at the start and at 25:00; overlay lines are short", () => {
   const window = { diff: [-2, 3, 0, 0], drivers: [], missing: [] };
   const cues = run(1, 0, 1520, { window });
   const w = cues.filter((c) => c.cat === "windows");
   assert.equal(w.length, 2);
-  assert.match(w[0]!.text, /Their power window until 25\. Avoid even fights\./);
-  assert.match(w[1]!.text, /Your power window until 35/);
+  assert.match(w[0]!.text, /Games this long tend to go their way until 25\./);
+  assert.match(w[1]!.text, /tend to go your way until 35/);
   const [l1, l2] = overlayLines({ t: 340, events: upcoming(tm, 340, 4), modes: defaultModes(4), window });
   assert.ok(l1.length <= 40 && /Power rune|Stack|Bounty/.test(l1), l1);
-  assert.equal(l2, "their window");
+  assert.equal(l2, "length favours them");
   assert.equal(spokenIn(60), "in one minute");
   assert.equal(spokenIn(28), "in 30");
   assert.equal(spokenIn(8), "in 8");

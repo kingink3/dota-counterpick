@@ -440,7 +440,7 @@ export class ReviewView {
     const rel = own || !meP || !them ? "" : meP.isRadiant === them.isRadiant ? "ally" : "opponent";
     const who = own ? "" : `${[r.player, rel].filter(Boolean).join(", ") || "player"} · `;
     t.append(el("h2", "", `${who}${this.d.heroLabel(r.hero)}${r.position ? ` · position ${r.position}` : ""}`));
-    t.append(el("p", "muted", `${r.won ? "Won" : "Lost"} · ${r.kda.join("/")} · ${mmss(r.duration)} · ${r.mode}${r.comparable ? "" : " - timings and averages are from ranked games, not comparable"}`));
+    t.append(el("p", "muted", `${r.won ? "Won" : "Lost"} · ${r.kda.join("/")} · ${mmss(r.duration)} · ${r.mode}${r.comparable ? (r.compat?.length ? ` - ${r.compat.join("; ")}: farm and timing verdicts are "check the replay"` : "") : " - timings and averages are from ranked All Pick games, not compared"}`));
     head.append(t);
     const copy = el("button", "g-btn rv-copy", "Copy for Discord / Telegram") as HTMLButtonElement;
     copy.type = "button";
@@ -547,7 +547,8 @@ export class ReviewView {
       tb.append(tr);
     }
     c.append(tb);
-    if (!r.comparable) c.append(el("p", "rv-note", "Turbo: averages are from ranked games."));
+    if (!r.comparable) c.append(el("p", "rv-note", `${r.mode === "turbo" ? "Turbo" : "This mode"}: averages are from ranked All Pick games, not compared.`));
+    else if (r.compat?.length) c.append(el("p", "rv-note", `${r.compat.join("; ")}.`));
     return c;
   }
 
@@ -574,7 +575,7 @@ export class ReviewView {
       if (b?.deep) tags.push(["warn", "their half"]);
       const unused = r.battles ? saves(d.time) : [...d.unused.map((k) => k.replace(/_/g, " ")), ...(d.flags.includes("heal available") ? ["heal"] : []), ...(d.flags.includes("ultimate not used") ? ["ultimate"] : [])];
       if (unused.length) tags.push(["bad", `${unused.join(", ")} ready`]);
-      if (d.inEnemyWindow) tags.push(["warn", "their power window"]);
+      if (d.inEnemyWindow) tags.push(["warn", "their game-length stretch"]);
       if (d.unspent >= 1500) tags.push(["warn", `${d.unspent} gold unspent`]);
       if (d.flags.includes("burst")) tags.push(["", "burst"]);
       for (const [, t] of tags) inc(t.replace(/ \d+v\d+$/, "").replace(/^\d+ gold unspent$/, "gold unspent").replace(/^.+ ready$/, "with a save ready"));

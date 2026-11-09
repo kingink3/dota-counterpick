@@ -38,6 +38,8 @@ export interface StratzSummary {
   didRadiantWin: boolean;
   startDateTime?: number;
   averageRank?: number | null;
+  /** STRATZ rank bracket 1 (Herald) .. 8 (Immortal), when given. */
+  bracket?: number | null;
   players: StratzPlayerLight[];
   bottomLaneOutcome?: string | null;
   midLaneOutcome?: string | null;
@@ -237,7 +239,7 @@ const CONFIDENCE: Record<string, [Confidence, MissingContext[]?]> = {
   good_cs10: ["confirmed"],
   low_nw20: ["confirmed"],
   behind_late: ["confirmed"],
-  slow_core: ["confirmed"],
+  slow_core: ["likely", ["causality"]],
   fast_core: ["confirmed"],
   few_power_runes: ["confirmed"],
   few_wards: ["confirmed"],
@@ -327,8 +329,12 @@ export interface MatchReview {
   position?: number;
   won: boolean;
   mode: "ranked" | "normal" | "turbo" | "other";
-  /** benchmarks and timings are from ranked games: turbo is not comparable. */
+  /** the mode matches the benchmarks (ranked / normal All Pick); turbo and other modes
+   *  get no farm / timing verdicts at all (ADR-038). */
   comparable: boolean;
+  /** what does not match the benchmarks even when comparable: rank outside the
+   *  benchmark brackets. Benchmark findings then become "possible" (ADR-038). */
+  compat?: string[];
   duration: number;
   kda: [number, number, number];
   plan?: ItemPlan;
@@ -370,6 +376,8 @@ export interface BuildItem {
 export const GROWTH = 8;
 const FIX_FIRST = 3;
 const WORK_ON = 5;
+/** kill participation below this is "far from the fights", by position (expert values). */
+const KP_LOW: Record<number, number> = { 1: 0.35, 2: 0.45, 3: 0.4, 4: 0.5, 5: 0.5 };
 /** findings that cost deaths or fights (tier 1); the rest is efficiency (tier 2). */
 const TIER1 = new Set(["many_deaths", "died_alone", "ward_walk", "front_deaths", "outnumbered", "silent_death", "silent_battles", "deep_deaths", "low_kp", "ult_unused", "died_with_item_ready", "heal_unused"]);
 /** plan-conformity findings: problems only with evidence that the game went badly for this player. */
@@ -391,10 +399,30 @@ const posNum = (p?: string | null) => {
   return m ? Number(m[1]) : undefined;
 };
 
+/** brackets the benchmarks and timings were taken from: Crusader-Archon + Legend-Ancient
+ *  (data/benchmarks.json, data/item-stats.json `curveFrom` / `posFrom`). */
+const BENCH_BRACKETS = [3, 4, 5, 6];
+const BRACKET_LABEL = ["", "Herald", "Guardian", "Crusader", "Archon", "Legend", "Ancient", "Divine", "Immortal"];
+
+/** explicit compatibility with the ranked benchmarks (ADR-038): the mode decides whether
+ *  farm / timing verdicts exist at all; the rank only lowers how sure they are. */
+export function compatibility(s: StratzSummary, mode: MatchReview["mode"]): { comparable: boolean; issues: string[] } {
+  const comparable = mode === "ranked" || mode === "normal";
+  const issues: string[] = [];
+  const bracket = s.bracket ?? (s.averageRank ? Math.floor(s.averageRank / 10) : undefined);
+  if (comparable && bracket && bracket >= 1 && bracket <= 8 && !BENCH_BRACKETS.includes(bracket)) {
+    issues.push(`${BRACKET_LABEL[bracket]} game; averages are from Crusader-Ancient`);
+  }
+  return { comparable, issues };
+}
+
 function modeOf(s: StratzSummary): MatchReview["mode"] {
   const g = (s.gameMode ?? "").toUpperCase();
   const l = (s.lobbyType ?? "").toUpperCase();
   if (g.includes("TURBO")) return "turbo";
+  // only regular-pace drafts are compared with the All Pick benchmarks (ADR-038);
+  // Ability Draft, All Random Deathmatch, event modes etc. are "other"
+  if (g && !/^(ALL_PICK|ALL_PICK_RANKED|CAPTAINS_MODE|SINGLE_DRAFT|RANDOM_DRAFT|CAPTAINS_DRAFT|LEAST_PLAYED)$/.test(g)) return "other";
   // "UNRANKED" contains "RANKED": check it first
   if (l.includes("UNRANKED")) return "normal";
   if (l.includes("RANKED")) return "ranked";
@@ -412,7 +440,9 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
   const hero = heroOf(mine.heroId);
   const position = posNum(me.position ?? mine.position);
   const mode = modeOf(s);
-  const comparable = mode !== "turbo";
+  const compat = compatibility(s, mode);
+  const comparable = compat.comparable;
+  const benchSure = comparable && !compat.issues.length;
   const duration = s.durationSeconds;
   const allies = s.players.filter((p) => p.isRadiant === mine.isRadiant).map((p) => heroOf(p.heroId));
   const enemies = s.players.filter((p) => p.isRadiant !== mine.isRadiant).map((p) => heroOf(p.heroId));
@@ -470,9 +500,10 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
       findings.push({
         id: "slow_core",
         area: "plan",
-        severity: clamp(stake * 1.5, 0.15, 0.7),
+        // fast vs slow win rates mix the item with being ahead in gold (ADR-037): a modest weight
+        severity: clamp(0.15 + stake * 0.75, 0.15, 0.45),
         title: `${c.label} late: ${mmss(c.actual!)}`,
-        detail: `Typical ~${mmss(c.planned ?? c.timing.p50)}; done by ${mmss(c.timing.fastBy ?? c.timing.p25)} it wins ${pct(c.timing.wrFast)}, after ${mmss(c.timing.slowAfter ?? c.timing.p75)} ${pct(c.timing.wrSlow)}.`,
+        detail: `Typical ~${mmss(c.planned ?? c.timing.p50)}; done by ${mmss(c.timing.fastBy ?? c.timing.p25)} it wins ${pct(c.timing.wrFast)}, after ${mmss(c.timing.slowAfter ?? c.timing.p75)} ${pct(c.timing.wrSlow)} (partly because richer games buy faster).`,
         times: [c.actual!],
       });
     }
@@ -679,7 +710,7 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
   }
   const windowDeaths = deaths.filter((x) => x.inEnemyWindow);
   if (deaths.length >= 4 && windowDeaths.length / deaths.length >= 0.5) {
-    findings.push({ id: "died_in_their_window", area: "deaths", severity: 0.35, title: `${windowDeaths.length} of ${deaths.length} deaths in the enemy's power window`, detail: "Their lineup wins more games of that length: fights there favour them.", times: windowDeaths.map((x) => x.time) });
+    findings.push({ id: "died_in_their_window", area: "deaths", severity: 0.35, title: `${windowDeaths.length} of ${deaths.length} deaths in a stretch their lineup tends to win`, detail: "In past games of that length their lineup wins more: a tendency, not proof the fights favoured them.", times: windowDeaths.map((x) => x.time) });
   }
   const richDeaths = deaths.filter((x) => x.unspent >= 2000);
   if (richDeaths.length >= 2) {
@@ -697,7 +728,10 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
   const teamKills = s.players.filter((p) => p.isRadiant === mine.isRadiant).reduce((a, p) => a + p.kills, 0);
   if (teamKills >= 10) {
     const kp = (mine.kills + mine.assists) / teamKills;
-    if (kp < 0.4) findings.push({ id: "low_kp", area: "deaths", severity: 0.25, title: `Kill participation ${Math.round(kp * 100)}%`, detail: `In ${mine.kills + mine.assists} of your team's ${teamKills} kills: too far from the fights.` });
+    // by role (ADR-038, expert values): a safe-lane carry farms while others fight,
+    // supports and the mid are expected in most kills
+    const low = KP_LOW[position ?? 0] ?? 0.4;
+    if (kp < low) findings.push({ id: "low_kp", area: "deaths", severity: 0.25, title: `Kill participation ${Math.round(kp * 100)}%`, detail: `In ${mine.kills + mine.assists} of your team's ${teamKills} kills (below ${Math.round(low * 100)}% for ${position ? `position ${position}` : "this role"}): far from the fights.` });
     else if (kp > 0.7) findings.push({ id: "high_kp", area: "deaths", severity: 0.15, good: true, title: `Kill participation ${Math.round(kp * 100)}%`, detail: `In ${mine.kills + mine.assists} of ${teamKills} kills.` });
   }
   // STRATZ IMP: overall and the weakest 5 minutes
@@ -807,6 +841,10 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
     } else if (f.id === "slow_core" && !farmBehind) {
       f.note = true;
       f.detail = `Farm was on track (${evidence}), so other items came first. ${f.detail}`;
+    } else if (f.id === "low_kp" && !farmBehind && position !== undefined && position <= 3) {
+      // a core away from fights but on farm: split push / farming was the job (ADR-038)
+      f.note = true;
+      f.detail = `Farm was on track (${evidence}): away from fights while farming or pushing. ${f.detail}`;
     } else if (f.id === "low_imp" || f.id === "high_imp") {
       f.note = true; // IMP is the summary in the header / overview, not a separate problem
     }
@@ -850,7 +888,7 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
     });
   }
 
-  for (const f of findings) assess(f, comparable);
+  for (const f of findings) assess(f, benchSure);
   const weight = (f: Finding) => f.severity * CONF_WEIGHT[f.confidence ?? "likely"];
   const problems = findings.filter((f) => !f.good && !f.note).sort((a, b) => weight(b) - weight(a));
   // a guess is never the first thing to fix: it waits in Work on with "check the replay"
@@ -869,6 +907,7 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
     won: mine.isVictory,
     mode,
     comparable,
+    ...(compat.issues.length ? { compat: compat.issues } : {}),
     duration,
     kda: [mine.kills, mine.deaths, mine.assists],
     ...(plan ? { plan } : {}),
@@ -1024,7 +1063,7 @@ const TREND_TITLES: Record<string, string> = {
   ult_unused: "Dying without casting the ultimate",
   heal_unused: "Dying with a heal available",
   died_alone: "Dying alone (pick-offs)",
-  died_in_their_window: "Dying in the enemy's power window",
+  died_in_their_window: "Dying in a stretch their lineup tends to win",
   died_with_gold: "Dying with unspent gold",
   many_deaths: "Many deaths",
   few_power_runes: "Few power runes",

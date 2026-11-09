@@ -1,7 +1,7 @@
 // =============================================================================
 //  In-game coach (ADR-030): short English voice cues / chimes and a two-line
 //  overlay, so nothing has to be read during a fight. Pure: game time + the
-//  timers + the item plan + the power window -> the cues due now.
+//  timers + the item plan + the game-length tendency -> the cues due now.
 //
 //  Rules (a voice that talks too much gets muted):
 //    - one cue per event occurrence, said once when its lead time starts;
@@ -26,7 +26,7 @@ export const CUE_CATS: Array<{ id: CueCat; label: string; hint: string }> = [
   { id: "objectives", label: "Tormentor", hint: "first spawn at 20:00, a minute ahead" },
   { id: "neutrals", label: "Neutral items", hint: "next tier" },
   { id: "items", label: "Item targets", hint: "next item of the plan and its typical time; late warning (off by default)" },
-  { id: "windows", label: "Power windows", hint: "who is stronger now: take or avoid fights" },
+  { id: "windows", label: "Game-length tendency", hint: "which lineup tends to win games of this length (past games, not this match)" },
   { id: "daynight", label: "Day / night", hint: "for night heroes" },
 ];
 
@@ -146,9 +146,10 @@ function windowBin(t: number): number {
 function windowText(d: number, bin: number): string {
   const until = BIN_EDGES[bin];
   const u = until ? ` until ${until}` : "";
-  if (d > WINDOW_PP) return `Your power window${u}. Take fights.`;
-  if (d < -WINDOW_PP) return `Their power window${u}. Avoid even fights.`;
-  return `Even game${u}.`;
+  // a tendency of past games of this length, not this match's strength (ADR-037)
+  if (d > WINDOW_PP) return `Games this long tend to go your way${u}.`;
+  if (d < -WINDOW_PP) return `Games this long tend to go their way${u}.`;
+  return `No lean by game length${u}.`;
 }
 
 export class Coach {
@@ -185,7 +186,7 @@ export class Coach {
       push({ key: `${e.id}@${e.at}`, cat, text: NOW_CUES.has(e.id) ? name : `${name} ${spokenIn(lead)}`, at: t, ttl: 4 });
     }
 
-    // power windows: at 0:30 (the start) and at each bin edge
+    // game-length tendency: at 0:30 (the start) and at each bin edge
     if (x.window && t >= 30) {
       const bin = windowBin(t);
       const edge = bin === 0 ? 30 : BIN_EDGES[bin - 1]! * 60;
@@ -223,7 +224,7 @@ export function overlayLines(x: Omit<CoachInput, "modes"> & { modes: Record<CueC
   if (cur) parts.push(`${cur.label}${cur.at !== undefined ? ` ~${clock(cur.at)}` : ""}`);
   if (x.window && x.t >= 0) {
     const d = x.window.diff[windowBin(x.t)]!;
-    parts.push(d > WINDOW_PP ? "your window" : d < -WINDOW_PP ? "their window" : "even");
+    parts.push(d > WINDOW_PP ? "length favours you" : d < -WINDOW_PP ? "length favours them" : "no lean");
   }
   return [ev.join(" · ") || "-", parts.join(" · ") || "-"];
 }

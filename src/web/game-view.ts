@@ -135,7 +135,7 @@ export class GameView {
           <ol id="game-events" class="game-events" aria-label="Next map events"></ol>
           <h3 class="game-h">Item target</h3>
           <div id="game-target" class="gz-target"></div>
-          <h3 class="game-h">Power window</h3>
+          <h3 class="game-h" title="Win rate of both lineups by match length in past games: a tendency, not this match's strength (ADR-037)">Game-length tendency</h3>
           <div id="game-wline" class="gz-wline"></div>
           <h3 class="game-h">Coach · voice &amp; overlay</h3>
           <div id="game-coach" class="gz-coach"></div>

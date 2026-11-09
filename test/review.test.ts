@@ -137,6 +137,26 @@ test("review: turbo is not compared with ranked timings and averages", () => {
   assert.ok(ids.includes("died_with_item_ready") || ids.some((x) => x.startsWith("idle:")) || ids.includes("died_alone"), "execution checks still apply");
 });
 
+// ADR-038: explicit compatibility with the ranked Crusader-Ancient benchmarks.
+test("review: other modes are not compared; a rank outside the benchmarks lowers confidence", () => {
+  const other = match();
+  other.summary.gameMode = "ABILITY_DRAFT";
+  other.summary.lobbyType = "UNRANKED";
+  assert.equal(reviewMatch(other, ACC, ctx).comparable, false, "Ability Draft is not compared with All Pick");
+  const base = reviewMatch(match(), ACC, ctx);
+  assert.equal(base.compat, undefined);
+  const imm = match();
+  imm.summary.bracket = 8;
+  const r = reviewMatch(imm, ACC, ctx);
+  assert.equal(r.comparable, true);
+  assert.ok(r.compat?.[0]?.startsWith("Immortal"));
+  const low = r.findings.find((f) => f.id === "low_cs10");
+  assert.ok(low, "still checked");
+  assert.equal(low!.confidence, "possible");
+  assert.ok(low!.missingContext?.includes("benchmark_mode"));
+  assert.equal(base.findings.find((f) => f.id === "low_cs10")!.confidence, "confirmed");
+});
+
 test("trends: a problem in 3 of 4 matches recurs; a one-off does not", () => {
   const base = reviewMatch(match(), ACC, ctx);
   const clone = (id: number, keep: (f: string) => boolean): MatchReview => ({ ...base, matchId: id, findings: base.findings.filter((f) => keep(f.id)) });

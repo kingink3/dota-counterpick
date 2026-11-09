@@ -228,7 +228,7 @@ export class CoachView {
     set(".ov-clock", x.clock);
     const soon = x.events.some((e) => e.state === "soon");
     set(".ov-l1", l1, soon ? "soon" : "");
-    set(".ov-l2", l2, /their window/.test(l2) ? "their" : /your window/.test(l2) ? "yours" : "");
+    set(".ov-l2", l2, /favours them/.test(l2) ? "their" : /favours you/.test(l2) ? "yours" : "");
   }
 
   private async openOverlay(): Promise<void> {
@@ -276,7 +276,7 @@ export class CoachView {
       this.build();
     });
     const ov = btn(this.pip && !this.pip.closed ? "Close overlay" : "Overlay", `g-btn${this.pip && !this.pip.closed ? " on" : ""}`);
-    ov.title = "A small always-on-top window: next events, item target, power window. Run Dota in borderless window mode.";
+    ov.title = "A small always-on-top window: next events, item target, game-length tendency. Run Dota in borderless window mode.";
     ov.addEventListener("click", () => void this.openOverlay());
     const test = btn("Test", "g-btn");
     test.addEventListener("click", () => {
