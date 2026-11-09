@@ -57,6 +57,9 @@ public class Extract {
     if (!(st instanceof Float start) || start <= 0) return;
     int t = (int) Math.floor(ctx.getTick() / 30f - start);
     if (t == last) return;
+    if (last == Integer.MIN_VALUE || t % 600 == 0) {
+      for (String line : rules.toString().split("\n")) if (line.matches("(?i).*(paus|tick|gametime|starttime).*")) System.err.println("rules@" + ctx.getTick() + " " + line.replaceAll("\\s+", " "));
+    }
     last = t;
     if (radiant == null) radiant = one("CDOTA_DataRadiant");
     if (dire == null) dire = one("CDOTA_DataDire");

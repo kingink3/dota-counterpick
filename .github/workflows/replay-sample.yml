@@ -28,7 +28,7 @@ jobs:
       - name: Extract
         working-directory: tools/clarity
         run: |
-          time java -cp "target/classes:target/dependency/*" app.Extract ../../r.dem > ../../extract.ndjson
+          time java -cp "target/classes:target/dependency/*" app.Extract ../../r.dem > ../../extract.ndjson 2> ../../rules.txt; grep -v SLF4J ../../rules.txt | head -60
           wc -l ../../extract.ndjson; ls -la ../../extract.ndjson
           grep '"t":968,' ../../extract.ndjson | head -3
           grep '"t":-60,' ../../extract.ndjson | head -1
