@@ -94,7 +94,7 @@ public class Extract {
             ch.append(charges);
           }
           try {
-            out.write("{\"t\":" + t + ",\"s\":" + slot + ",\"hp\":" + num(h, "m_iHealth") + ",\"mhp\":" + num(h, "m_iMaxHealth")
+            out.write("{\"t\":" + t + ",\"s\":" + slot + ",\"lv\":" + num(h, "m_iCurrentLevel") + ",\"hp\":" + num(h, "m_iHealth") + ",\"mhp\":" + num(h, "m_iMaxHealth")
                 + ",\"mp\":" + num(h, "m_flMana") + ",\"mmp\":" + num(h, "m_flMaxMana") + ",\"rg\":" + num(data, d + "m_iReliableGold")
                 + ",\"ug\":" + num(data, d + "m_iUnreliableGold") + ",\"it\":[" + it + "],\"ch\":[" + ch + "]}\n");
           } catch (Exception ex) {

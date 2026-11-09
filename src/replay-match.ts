@@ -55,6 +55,19 @@ const RUNE = ["DOUBLE_DAMAGE", "HASTE", "ILLUSION", "INVISIBILITY", "REGEN", "BO
 /** bought and used up: not kept in the rebuilt inventory. */
 const CONSUMABLE = /^(aghanims_shard|ultimate_scepter_2|tango|tango_single|flask|clarity|faerie_fire|enchanted_mango|tpscroll|ward_observer|ward_sentry|ward_dispenser|smoke_of_deceit|dust|bottle_refill|famango|great_famango|greater_famango|blood_grenade|cheese|refresher_shard|aghanims_shard_roshan|royal_jelly|food_of|courier)/;
 const STEAM64 = 76561197960265728n;
+/** items that heal on use; Wand / Stick count from WAND_HEAL_CHARGES charges (~150+ HP). */
+const HEAL_ITEMS = /^item_(flask|faerie_fire|enchanted_mango|cheese|greater_faerie_fire|royal_jelly|famango|great_famango|greater_famango)$/;
+const WAND_HEAL_CHARGES = 5;
+/** Observer Ward: vision 1600, 360 s (Liquipedia, checked 2026-11-09). */
+const OBS_RADIUS = 1600;
+const OBS_LIFE = 360;
+/** world units per map cell (positions are cells). */
+const CELL = 64;
+/** "right before the death": the last 20 s. */
+const WARD_WALK_WINDOW = 20;
+/** cells from the fountain: inside / away (the fountain area is ~10 cells across). */
+const FOUNTAIN_IN = 8;
+const FOUNTAIN_AWAY = 30;
 /** a hero alive again this soon after dying reincarnated (Aegis, Reincarnation). */
 const REINCARNATION = 8;
 
@@ -62,6 +75,7 @@ interface Ev {
   type: string;
   time: number;
   slot?: number;
+  ehandle?: number;
   unit?: string;
   hero_id?: number;
   x?: number;
@@ -167,6 +181,63 @@ export interface ReplayMatchCtx {
   /** item -> its components and gold cost (item-stats.json), to rebuild the inventory. */
   components?: Record<string, string[] | undefined>;
   costs?: Record<string, number | undefined>;
+  /** our clarity extractor's lines (tools/clarity, ADR-055): HP, mana, gold, items per second. */
+  extract?: Iterable<string>;
+}
+
+/** one second of one hero from the clarity extractor. */
+export interface ExtractRow {
+  t: number;
+  s: number;
+  lv?: number;
+  hp: number;
+  mhp: number;
+  mp: number;
+  mmp: number;
+  rg: number;
+  ug: number;
+  it: Array<string | null>;
+  ch: number[];
+}
+
+export function readExtract(lines: Iterable<string>): Map<number, ExtractRow[]> {
+  const by = new Map<number, ExtractRow[]>();
+  for (const line of lines) {
+    if (!line || line[0] !== "{") continue;
+    try {
+      const r = JSON.parse(line) as ExtractRow;
+      (by.get(r.s) ?? by.set(r.s, []).get(r.s)!).push(r);
+    } catch {
+      /* skip */
+    }
+  }
+  for (const rows of by.values()) rows.sort((a, b) => a.t - b.t);
+  return by;
+}
+
+/** seconds to add to the extractor's clock to get the parser's: the extractor counts from
+ *  the game-start time, the parser a few seconds differently (8 s on the sample, constant
+ *  through pauses). Matched on hero level-ups and deaths; median of the nearest pairs. */
+export function extractOffset(ex: Map<number, ExtractRow[]>, intervals: Map<number, Array<{ time: number; level?: number; life_state?: number }>>): number {
+  const diffs: number[] = [];
+  const near = (a: number[], b: number[]) => {
+    for (const x of a) {
+      let best: number | undefined;
+      for (const y of b) if (Math.abs(y - x) <= 30 && (best === undefined || Math.abs(y - x) < Math.abs(best))) best = y - x;
+      if (best !== undefined) diffs.push(best);
+    }
+  };
+  for (const [s, rows] of ex) {
+    const iv = intervals.get(s);
+    if (!iv) continue;
+    const mine = (f: (r: ExtractRow) => number) => rows.filter((r, i) => i > 0 && f(r) !== f(rows[i - 1]!)).map((r) => r.t);
+    const theirs = (f: (r: { level?: number; life_state?: number }) => number) => iv.filter((r, i) => i > 0 && f(r) !== f(iv[i - 1]!)).map((r) => r.time);
+    near(mine((r) => r.lv ?? 0), theirs((r) => r.level ?? 0));
+    near(mine((r) => (r.hp > 0 ? 0 : 1)), theirs((r) => ((r.life_state ?? 0) === 0 ? 0 : 1)));
+  }
+  if (!diffs.length) return 0;
+  diffs.sort((a, b) => a - b);
+  return diffs[diffs.length >> 1]!;
 }
 
 /** NDJSON lines of odota/parser (+ OpenDota's match, optional) -> the review's input. */
@@ -433,6 +504,91 @@ export function matchFromReplay(lines: Iterable<string>, od: OdMatch | undefined
     for (let i = 1; i < r.length; i++) r[i]! += r[i - 1]!;
   }
 
+  // --- walked into an enemy Observer's vision before dying (geometry, ADR-055) ----------
+  // a ward sees a circle of OBS_RADIUS for OBS_LIFE s or until destroyed; trees and cliffs
+  // are not counted, so this says "in range", not "seen"
+  const wards = evs.filter((e) => e.type === "obs" && e.slot !== undefined).map((e) => {
+    const gone = evs.find((x) => x.type === "obs_left" && x.ehandle !== undefined && x.ehandle === e.ehandle && x.time >= e.time);
+    return { radiant: radiant(e.slot!), x: e.x ?? 0, y: e.y ?? 0, from: e.time, to: gone ? gone.time : e.time + OBS_LIFE };
+  });
+  const inEnemyWard = (s: number, t: number, x: number, y: number) =>
+    wards.some((w) => w.radiant !== radiant(s) && t >= w.from && t < w.to && Math.hypot(w.x - x, w.y - y) <= OBS_RADIUS / CELL);
+  for (const [s, m] of me) {
+    const rows = intervals.get(s)!;
+    for (const d of m.playbackData.deathEvents!) {
+      const near = rows.filter((r) => r.time >= d.time - WARD_WALK_WINDOW && r.time <= d.time);
+      d.isWardWalkThrough = near.some((r, i) => i > 0 && inEnemyWard(s, r.time, r.x!, r.y!) && !inEnemyWard(s, near[i - 1]!.time, near[i - 1]!.x!, near[i - 1]!.y!));
+    }
+  }
+
+  // --- fountain trips: back in your fountain, alive, from away (not a respawn) ----------
+  const spawn = (side: boolean) => {
+    const pts = slots.filter((s) => radiant(s) === side).map((s) => intervals.get(s)![0]!).filter((r) => r.x !== undefined);
+    return pts.length ? { x: pts.reduce((a, r) => a + r.x!, 0) / pts.length, y: pts.reduce((a, r) => a + r.y!, 0) / pts.length } : undefined;
+  };
+  const fountain = new Map([true, false].map((side) => [side, spawn(side)]));
+  for (const [s, m] of me) {
+    const f = fountain.get(radiant(s));
+    if (!f) continue;
+    const trips = new Array<number>(minutes).fill(0);
+    let away = false;
+    let aliveFor = 0;
+    for (const r of intervals.get(s)!) {
+      const alive = (r.life_state ?? 0) === 0;
+      aliveFor = alive ? aliveFor + 1 : 0;
+      const dist = Math.hypot(r.x! - f.x, r.y! - f.y);
+      if (dist > FOUNTAIN_AWAY) away = true;
+      if (away && alive && aliveFor > 10 && dist <= FOUNTAIN_IN && r.time > 0) {
+        trips[minuteOf(r.time)]!++;
+        away = false;
+      }
+      if (!alive) away = false; // dying is not a trip; the respawn starts at home
+    }
+    m.stats.tripsFountainPerMinute = trips;
+  }
+
+  // --- HP, mana, gold, items from our extractor (ADR-055) -----------------------------
+  let health: StratzHealth | undefined;
+  if (ctx.extract) {
+    const ex = readExtract(ctx.extract);
+    const off = extractOffset(ex, intervals);
+    health = { players: [] };
+    const keys = ["item0", "item1", "item2", "item3", "item4", "item5", "backPack0", "backPack1", "backPack2", "neutral0"] as const;
+    for (const [s, rows0] of ex) {
+      const m = me.get(s);
+      if (!m) continue;
+      const rows = rows0.map((r) => ({ ...r, t: r.t + off }));
+      const hp: Array<{ time: number; hp: number; maxHp: number; mp: number; maxMp: number }> = [];
+      const inv: StratzInventory[] = [];
+      let lastInv = "";
+      for (const r of rows) {
+        const p = hp[hp.length - 1];
+        if (!p || p.hp !== r.hp || p.maxHp !== r.mhp || Math.abs(p.mp - r.mp) >= 5 || p.maxMp !== r.mmp) hp.push({ time: r.t, hp: r.hp, maxHp: r.mhp, mp: r.mp, maxMp: r.mmp });
+        const sig = r.it.join(",") + "|" + r.ch.join(",");
+        if (sig !== lastInv) {
+          lastInv = sig;
+          const ev: StratzInventory = { time: r.t };
+          r.it.forEach((name, i) => {
+            const id = name ? itemId.get(name.replace(/^item_/, "")) : undefined;
+            if (id && keys[i]) (ev as unknown as Record<string, unknown>)[keys[i]!] = { itemId: id, charges: r.ch[i] ?? 0 };
+          });
+          inv.push(ev);
+        }
+      }
+      (m.playbackData as Record<string, unknown>).playerUpdateHealthEvents = hp;
+      m.playbackData.inventoryEvents = inv;
+      health.players.push({ playerSlot: playerSlot(s), playbackData: { playerUpdateHealthEvents: hp } });
+      // gold on hand a second before each death; a heal in the bag (our rule, not STRATZ's)
+      for (const d of m.playbackData.deathEvents!) {
+        const r = at(rows.map((x) => ({ ...x, time: x.t })), d.time - 1);
+        if (!r) continue;
+        d.reliableGold = r.rg;
+        d.unreliableGold = r.ug;
+        d.hasHealAvailable = r.it.some((k, i) => !!k && (HEAL_ITEMS.test(k) || (/^item_magic_(wand|stick)$/.test(k) && (r.ch[i] ?? 0) >= WAND_HEAL_CHARGES)));
+      }
+    }
+  }
+
   // --- positions (map cells), on change ---------------------------------------------
   const positions: StratzPositions = {
     players: slots.map((s) => {
@@ -496,5 +652,5 @@ export function matchFromReplay(lines: Iterable<string>, od: OdMatch | undefined
     const acc = accountOf.get(s);
     if (acc) players[String(acc)] = me.get(s)!;
   }
-  return { summary, players, positions, vision, source: "replay" };
+  return { summary, players, positions, vision, ...(health ? { health } : {}), source: "replay" };
 }

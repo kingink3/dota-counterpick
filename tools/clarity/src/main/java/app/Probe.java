@@ -1,75 +1,56 @@
 package app;
 
-import java.util.List;
-import java.util.regex.Pattern;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeSet;
 import skadistats.clarity.event.Insert;
+import skadistats.clarity.model.CombatLogEntry;
 import skadistats.clarity.model.Entity;
-import skadistats.clarity.model.StringTable;
+import skadistats.clarity.model.s2.S2CombatLogEntry;
 import skadistats.clarity.processor.entities.Entities;
 import skadistats.clarity.processor.entities.UsesEntities;
+import skadistats.clarity.processor.gameevents.OnCombatLogEntry;
 import skadistats.clarity.processor.reader.OnTickEnd;
 import skadistats.clarity.processor.runner.Context;
 import skadistats.clarity.processor.runner.SimpleRunner;
-import skadistats.clarity.processor.stringtables.StringTables;
-import skadistats.clarity.processor.stringtables.UsesStringTable;
 import skadistats.clarity.source.MappedFileSource;
 
-/** Temporary: prints the property names we need, from one replay (ADR-055). */
+/** Temporary (ADR-055): is there per-hero visibility in a 7.41 replay? */
 @UsesEntities
-@UsesStringTable("EntityNames")
 public class Probe {
-  static final Pattern KEEP = Pattern.compile("(?i)GameStartTime|GameEndTime|health|mana|visib|lifestate|hitems|charges|playerid|gold|gametime|gamestart|replicat|nameStringable|cellx|celly|vecorigin|selectedhero|teamnum|level|cooldown|neutral");
-  boolean done;
   @Insert private Context ctx;
   @Insert private Entities es;
-  @Insert private StringTables tables;
-
-  boolean rulesShown;
-  static Object get(Entity e, String p) {
-    return e != null && e.hasProperty(p) ? e.getProperty(p) : null;
-  }
-
-  Entity one(String dt) {
-    return es.stream().filter(Entities.byDtName(dt)).findFirst().orElse(null);
-  }
-
-  void dump(String what, Entity e) {
-    if (e == null) { System.out.println("== " + what + ": none"); return; }
-    System.out.println("== " + what + " " + e.getDtClass().getDtName());
-    for (String line : e.toString().split("\n")) if (KEEP.matcher(line).find()) System.out.println(line);
-  }
+  boolean scanned;
+  final Map<String, int[]> vis = new HashMap<>();
 
   @OnTickEnd
   public void onTickEnd(boolean synthetic) {
-    if (done) return;
-    Entity rules = one("CDOTAGamerulesProxy");
-    if (rules == null) return;
-    if (ctx.getTick() < 30 * 60 * 30) return; // ~30 min into the file: past the horn
-    done = true;
-    System.out.println("tick " + ctx.getTick() + " -> game time " + (ctx.getTick() / 30f - (Float) get(rules, "m_pGameRules.m_flGameStartTime")));
-    dump("rules", rules);
-    List<Entity> heroes = es.stream().filter(e -> e.getDtClass().getDtName().startsWith("CDOTA_Unit_Hero_")).toList();
-    int n = 0;
-    for (Entity h : heroes) {
-      if (n++ == 0) { System.out.println("== HERO FULL"); System.out.println(h.toString()); }
-      Integer item = (Integer) get(h, "m_hItems.0000");
-      if (n == 1 && item != null) {
-        Entity it = es.getByHandle(item);
-        System.out.println("== ITEM FULL"); System.out.println(it);
-        if (it != null) {
-          Integer idx = (Integer) get(it, "m_pEntity.m_nameStringableIndex");
-          System.out.println("item0 name: " + (idx == null ? null : tables.forName("EntityNames").getNameByIndex(idx)));
-        }
+    if (scanned || ctx.getTick() < 60000) return;
+    scanned = true;
+    TreeSet<String> hits = new TreeSet<>();
+    es.stream().forEach(e -> {
+      for (String line : e.toString().split("\n")) {
+        String[] c = line.split("\\|");
+        if (c.length > 2 && c[2].matches("(?i).*(visib|tagged|fog|seen|reveal|spotted).*")) hits.add(e.getDtClass().getDtName().replaceAll("_Hero_.*", "_Hero_*") + " " + c[2].trim());
       }
-      System.out.println("hero " + h.getDtClass().getDtName() + " hp " + get(h, "m_iHealth") + " visible " + get(h, "m_iTaggedAsVisibleByTeam") + " pid " + get(h, "m_iPlayerID") + " active " + h.isActive());
-    }
-    es.stream().filter(e -> e.getDtClass().getDtName().contains("Item") && !e.getDtClass().getDtName().equals("CDOTA_Item_WindLace")).limit(3).forEach(e -> System.out.println("item class " + e.getDtClass().getDtName()));
-    System.out.println("item classes: " + es.stream().map(e -> e.getDtClass().getDtName()).filter(d -> d.startsWith("CDOTA_Item")).distinct().count() + " distinct, generic CDOTA_Item: " + es.stream().filter(Entities.byDtName("CDOTA_Item")).count());
-    StringTable names = tables.forName("EntityNames");
-    System.out.println("EntityNames: " + (names == null ? "none" : names.getEntryCount() + " entries, e.g. " + names.getNameByIndex(1) + ", " + names.getNameByIndex(100)));
+    });
+    hits.forEach(h -> System.out.println("field " + h));
+  }
+
+  @OnCombatLogEntry
+  public void onCombatLog(CombatLogEntry e) {
+    if (!(e instanceof S2CombatLogEntry s)) return;
+    String k = s.getType().name();
+    int[] c = vis.computeIfAbsent(k, x -> new int[4]);
+    c[0]++;
+    if (s.hasVisibleRadiant()) c[1]++;
+    if (s.hasVisibleRadiant() && s.isVisibleRadiant()) c[2]++;
+    if (s.hasVisibleDire() && s.isVisibleDire()) c[3]++;
   }
 
   public static void main(String[] args) throws Exception {
-    new SimpleRunner(new MappedFileSource(args[0])).runWith(new Probe());
+    Probe p = new Probe();
+    new SimpleRunner(new MappedFileSource(args[0])).runWith(p);
+    p.vis.forEach((k, c) -> System.out.println("combatlog " + k + " n=" + c[0] + " hasVisR=" + c[1] + " visR=" + c[2] + " visD=" + c[3]));
   }
 }

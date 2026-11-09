@@ -755,7 +755,7 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
   }
   const healDeaths = deaths.filter((x) => x.flags.includes("heal available"));
   if (healDeaths.length >= 3 && healDeaths.length >= deaths.length / 2) {
-    findings.push({ id: "heal_unused", area: "execution", severity: 0.2, title: `${healDeaths.length} of ${deaths.length} deaths with a heal available`, detail: "STRATZ marks a heal (Wand / Stick charges, Salve, Mango, a healing ability) that was not used before dying.", times: healDeaths.map((x) => x.time) });
+    findings.push({ id: "heal_unused", area: "execution", severity: 0.2, title: `${healDeaths.length} of ${deaths.length} deaths with a heal available`, detail: "A heal was in the inventory and not used before dying (STRATZ: Wand / Stick charges, Salve, Mango, a healing ability; from the replay: a healing item or a Wand / Stick with 5+ charges).", times: healDeaths.map((x) => x.time) });
   }
   const aloneDeaths = deaths.filter((x) => x.alone);
   if (aloneDeaths.length >= 2) {

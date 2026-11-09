@@ -24,7 +24,7 @@ jobs:
           curl -s -o r.pack "$url"; zstd -q -d r.pack -o r.dem; ls -la r.dem
       - name: Probe
         working-directory: tools/clarity
-        run: java -cp "target/classes:target/dependency/*" app.Probe ../../r.dem 2>&1 | head -1500
+        run: java -cp "target/classes:target/dependency/*" app.Probe ../../r.dem 2>&1 | grep -v SLF4J | head -300
       - name: Extract
         working-directory: tools/clarity
         run: |

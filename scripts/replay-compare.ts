@@ -1,6 +1,6 @@
 // Dev check (ADR-053): one match reviewed from STRATZ and from the replay, finding by finding.
 //   npx tsx scripts/replay-compare.ts --dir <folder with opendota.json, parsed.ndjson.gz, stratz.json.gz>
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
 import { join } from "node:path";
 import { loadKB } from "../src/kb.js";
@@ -21,7 +21,9 @@ const st = JSON.parse(gunzipSync(readFileSync(join(dir, "stratz.json.gz"))).toSt
 const replay = buildTimeline(lines)!;
 const comps = Object.fromEntries(Object.entries(stats.items).map(([k, v]) => [k, v.components]));
 const costs = Object.fromEntries(Object.entries(stats.items).map(([k, v]) => [k, v.cost]));
-const rm = matchFromReplay(lines, od, { ids, components: comps, costs })!;
+const extract = existsSync(join(dir, "extract.ndjson.gz")) && !process.argv.includes("--no-extract") ? gunzipSync(readFileSync(join(dir, "extract.ndjson.gz"))).toString().split("\n") : undefined;
+const rm = matchFromReplay(lines, od, { ids, components: comps, costs, ...(extract ? { extract } : {}) })!;
+console.log("extract", extract ? "yes" : "no");
 console.log("accounts", Object.keys(rm.players).length, "stratz", Object.keys(st.players).length, "same", Object.keys(rm.players).filter((a) => st.players[a]).length);
 for (const p of rm.summary.players) {
   const q = st.summary.players.find((x) => x.playerSlot === p.playerSlot)!;
@@ -33,7 +35,7 @@ for (const acc of Object.keys(st.players)) {
   const a = reviewMatch({ summary: st.summary, me: st.players[acc]!, ...(st.positions ? { positions: st.positions } : {}), ...(st.health ? { health: st.health } : {}), ...(st.vision ? { vision: st.vision } : {}), replay }, Number(acc), ctx);
   const me = rm.players[acc];
   if (!me) { console.log(acc, "missing in replay"); continue; }
-  const b = reviewMatch({ summary: rm.summary, me, positions: rm.positions, vision: rm.vision, replay }, Number(acc), ctx);
+  const b = reviewMatch({ summary: rm.summary, me, positions: rm.positions, vision: rm.vision, ...(rm.health ? { health: rm.health } : {}), replay }, Number(acc), ctx);
   const fa = new Map(a.findings.map((f) => [f.id, f]));
   const fb = new Map(b.findings.map((f) => [f.id, f]));
   console.log(`\n== slot ${st.players[acc]!.playerSlot} pos ${a.position}/${b.position} deaths ${a.deaths?.length ?? "?"}/${b.deaths?.length ?? "?"}`);
