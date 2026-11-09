@@ -685,3 +685,35 @@ test("params: each has a kind, an argument and a range around its value", async 
   // coupled: an occasional item must pass the plan filter
   assert.ok(PARAM_DOCS.BUY_FIT_SOME.range[0] >= PARAM_DOCS.PLAN_BUY_FIT_MIN.value);
 });
+
+test("ADR-059: a counter reason weighs more against their carry than against their position 5", async () => {
+  const { targetWeight } = await import("../src/resolver.js");
+  assert.equal(targetWeight(1), 1);
+  assert.ok(targetWeight(3) < targetWeight(2) && targetWeight(5) < targetWeight(4));
+  assert.equal(targetWeight(undefined), 1);
+  // Crystal Maiden (their 5) and Sniper (their 1) are both squishy: the same burst counts more on Sniper
+  const r = engine.recommend({ enemyHeroes: ["sniper", "storm_spirit", "axe", "lion", "crystal_maiden"], myRole: 2 });
+  const withBoth = r.heroes.find((h) => h.reasons.some((x) => x.enemy === "crystal_maiden" && x.factors.targetWeight !== undefined));
+  assert.ok(withBoth, "a pick with a weighted reason against their position 5");
+  const cm = withBoth.reasons.find((x) => x.enemy === "crystal_maiden" && x.factors.targetWeight !== undefined)!;
+  assert.equal(cm.factors.targetWeight, 0.5);
+  assert.ok(withBoth.reasons.filter((x) => x.enemy === "sniper" && x.contribution > 0 && (x.basis === "edge" || x.basis === "hero_edge")).every((x) => x.factors.targetWeight === undefined));
+});
+
+test("ADR-059: reasons against one enemy saturate (best in full, the next halved)", () => {
+  const r = engine.recommend({ enemyHeroes: ["medusa", "sniper", "drow_ranger", "crystal_maiden", "shadow_shaman"], myRole: 5 });
+  for (const h of r.heroes.slice(0, 10)) {
+    const byEnemy = new Map<string, typeof h.reasons>();
+    for (const x of h.reasons) {
+      if ((x.basis !== "edge" && x.basis !== "hero_edge") || x.contribution <= 0) continue;
+      byEnemy.set(x.enemy, [...(byEnemy.get(x.enemy) ?? []), x]);
+    }
+    for (const list of byEnemy.values()) {
+      const full = list.filter((x) => x.factors.stackWeight === undefined);
+      assert.equal(full.length, 1, `${h.code}: exactly one full-weight reason per enemy`);
+      assert.ok(list.every((x) => x.contribution <= full[0]!.contribution + 1e-9));
+    }
+  }
+  // a pick made of many generic edges no longer tops this draft
+  assert.notEqual(r.heroes[0]!.code, "tusk");
+});

@@ -320,6 +320,10 @@ export interface Reason {
     resistWeight?: number;
     /** resist/risk basis: weight of the ENEMY's tool, reliance or resistance. */
     enemyWeight?: number;
+    /** hero picks (ADR-059): weight of the target by its position (1 = their carry). */
+    targetWeight?: number;
+    /** hero picks (ADR-059): 2nd, 3rd ... reason against the same enemy counts less. */
+    stackWeight?: number;
   };
   /** any guard notes (e.g. "BKB-pierced via bkb_piercing_disable"). */
   notes?: string[];

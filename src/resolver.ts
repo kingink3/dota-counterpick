@@ -95,6 +95,8 @@ interface TeamContext {
   magic: number;
   allies: number;
   lane: Set<string>;
+  /** each enemy's assumed position (assignPositions). */
+  enemyPos: Map<string, number>;
 }
 
 function readTeam(kb: KnowledgeBase, draft: DraftState): TeamContext {
@@ -115,7 +117,8 @@ function readTeam(kb: KnowledgeBase, draft: DraftState): TeamContext {
     physical += schoolDamage(tagsOf(a)!, "physical");
     magic += schoolDamage(tagsOf(a)!, "magic");
   }
-  const lane = laneOpponents(kb, draft);
+  const enemyPos = assignPositions(kb, draft.enemyHeroes);
+  const lane = laneOpponents(draft, enemyPos);
   const read: TeamRead | undefined =
     allyCodes.length || lane.size
       ? {
@@ -133,6 +136,7 @@ function readTeam(kb: KnowledgeBase, draft: DraftState): TeamContext {
     magic,
     allies: allyCodes.length,
     lane,
+    enemyPos,
   };
 }
 
@@ -142,37 +146,44 @@ function capability(tools: Record<string, number>, factors: Record<string, numbe
   return c;
 }
 
-/** Enemies you face in lane: each enemy gets a distinct position (cheapest by its
- *  position list, index 0 = main role), then your role picks the opposing lane. */
-const LANE_OPPOSITION: Record<number, number[]> = { 1: [3, 4], 5: [3, 4], 2: [2], 3: [1, 5], 4: [1, 5] };
-function laneOpponents(kb: KnowledgeBase, draft: DraftState): Set<string> {
-  const out = new Set<string>();
-  if (draft.myRole === undefined) return out;
-  const enemies = draft.enemyHeroes.filter((e) => kb.taxonomy.hero_tags[e]);
-  if (!enemies.length) return out;
+/** A distinct position for each hero of one team: the cheapest assignment by the
+ *  heroes' position lists (index 0 = main role; a position the hero does not play
+ *  costs 4). `fixed` pins a known one (the hero you play on your role). */
+export function assignPositions(kb: KnowledgeBase, heroes: string[], fixed?: { hero: string; pos: number }): Map<string, number> {
+  const out = new Map<string, number>();
+  const list = [...new Set(heroes)].filter((e) => kb.taxonomy.hero_tags[e]).slice(0, 5);
+  if (!list.length) return out;
   const cost = (e: string, p: number) => {
+    if (fixed && fixed.hero === e) return p === fixed.pos ? 0 : 100;
     const i = kb.taxonomy.hero_tags[e]!.pos.indexOf(p);
     return i < 0 ? 4 : i;
   };
   let best: { cost: number; pos: number[] } | undefined;
   const walk = (i: number, used: number[], acc: number) => {
     if (best && acc >= best.cost) return;
-    if (i === enemies.length) {
+    if (i === list.length) {
       best = { cost: acc, pos: [...used] };
       return;
     }
     for (let p = 1; p <= 5; p++) {
       if (used.includes(p)) continue;
       used.push(p);
-      walk(i + 1, used, acc + cost(enemies[i]!, p));
+      walk(i + 1, used, acc + cost(list[i]!, p));
       used.pop();
     }
   };
   walk(0, [], 0);
+  list.forEach((e, i) => out.set(e, best!.pos[i]!));
+  return out;
+}
+
+/** Enemies you face in lane: by their assigned positions, your role picks the opposing lane. */
+const LANE_OPPOSITION: Record<number, number[]> = { 1: [3, 4], 5: [3, 4], 2: [2], 3: [1, 5], 4: [1, 5] };
+function laneOpponents(draft: DraftState, enemyPos: Map<string, number>): Set<string> {
+  const out = new Set<string>();
+  if (draft.myRole === undefined) return out;
   const opp = LANE_OPPOSITION[draft.myRole] ?? [];
-  enemies.forEach((e, i) => {
-    if (opp.includes(best!.pos[i]!)) out.add(e);
-  });
+  for (const [e, p] of enemyPos) if (opp.includes(p)) out.add(e);
   return out;
 }
 
@@ -557,12 +568,15 @@ function rankSubjects(
 ): Recommendation[] {
   const recs: Recommendation[] = [];
   for (const subject of subjects) {
-    const reasons = scoreSubject(subject, kb, census).map((r) =>
+    const reasons: Reason[] = scoreSubject(subject, kb, census).map((r) =>
       team.lane.has(r.enemy)
         ? { ...r, contribution: r.contribution * P.LANE_WEIGHT, notes: [...(r.notes ?? []), "lane opponent"] }
         : r,
     );
-    if (subject.kind === "hero") reasons.push(...teamReasons(team, subject.tags));
+    if (subject.kind === "hero") {
+      focusReasons(reasons, team.enemyPos);
+      reasons.push(...teamReasons(team, subject.tags));
+    }
     // synergy with allied team (only when picking a hero)
     for (const s of synergy.get(subject.code) ?? []) {
       reasons.push({
@@ -583,6 +597,42 @@ function rankSubjects(
     recs.push(rec);
   }
   return recs.sort(rankCompare);
+}
+
+// P.TARGET_FLOOR, P.STACK_DECAY: src/params.ts (ADR-059)
+
+/** How much a counter reason against a hero on this position counts: 1 for their
+ *  position 1, falling linearly to TARGET_FLOOR for their position 5. */
+export function targetWeight(pos: number | undefined): number {
+  if (pos === undefined) return 1;
+  return 1 - ((Math.min(5, Math.max(1, pos)) - 1) / 4) * (1 - P.TARGET_FLOOR);
+}
+
+/** Hero picks (ADR-059): what a pick does to the enemy is weighted by who the enemy is
+ *  and saturates per enemy. In place, on the counter reasons (edge / hero_edge, > 0):
+ *    - target weight: an answer to their carry outweighs the same answer to their
+ *      position 5;
+ *    - stacking: against one enemy the strongest reason counts in full, the next
+ *      x STACK_DECAY, the third x STACK_DECAY^2 ... so one decisive counter is not
+ *      outvoted by many generic ones against the same target.
+ *  Risks, resistances, team and synergy reasons are untouched. */
+function focusReasons(reasons: Reason[], enemyPos: Map<string, number>): void {
+  const byEnemy = new Map<string, number[]>();
+  reasons.forEach((r, i) => {
+    if ((r.basis !== "edge" && r.basis !== "hero_edge") || r.contribution <= 0) return;
+    const w = targetWeight(enemyPos.get(r.enemy));
+    if (w !== 1) reasons[i] = { ...r, contribution: r.contribution * w, factors: { ...r.factors, targetWeight: round(w) } };
+    byEnemy.set(r.enemy, [...(byEnemy.get(r.enemy) ?? []), i]);
+  });
+  for (const idx of byEnemy.values()) {
+    idx.sort((a, b) => reasons[b]!.contribution - reasons[a]!.contribution);
+    idx.forEach((i, rank) => {
+      if (rank === 0) return;
+      const k = Math.pow(P.STACK_DECAY, rank);
+      const r = reasons[i]!;
+      reasons[i] = { ...r, contribution: r.contribution * k, factors: { ...r.factors, stackWeight: round(k) } };
+    });
+  }
 }
 
 /** Build a Recommendation from raw reasons: score, coverage, synergy, school, sorted reasons. */

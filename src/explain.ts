@@ -156,6 +156,8 @@ function factorText(reason: Reason): string {
   const parts: string[] = [];
   if (f.toolWeight !== undefined) parts.push(`tool ${f.toolWeight}`);
   if (f.edgeWeight !== undefined) parts.push(`edge ${f.edgeWeight}`);
+  if (f.targetWeight !== undefined) parts.push(`target ${f.targetWeight}`);
+  if (f.stackWeight !== undefined) parts.push(`stack ${f.stackWeight}`);
   if (f.relianceWeight !== undefined) parts.push(`reliance ${f.relianceWeight}`);
   if (f.threatWeight !== undefined) parts.push(`threat ${f.threatWeight}`);
   if (f.defenseWeight !== undefined) parts.push(`defense ${f.defenseWeight}`);

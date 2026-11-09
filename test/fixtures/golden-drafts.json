@@ -20,9 +20,9 @@
         "heroes": [
           "bloodseeker",
           "juggernaut",
-          "ursa",
-          "chaos_knight",
-          "slark"
+          "slark",
+          "medusa",
+          "viper"
         ],
         "items": [
           "bloodthorn",
@@ -57,8 +57,8 @@
           "rattletrap",
           "pudge",
           "axe",
-          "bloodseeker",
-          "magnus"
+          "spirit_breaker",
+          "bloodseeker"
         ],
         "items": [
           "abyssal_blade",
@@ -93,8 +93,8 @@
           "outworld_destroyer",
           "skywrath_mage",
           "huskar",
-          "pugna",
-          "sniper"
+          "sniper",
+          "pugna"
         ],
         "items": [
           "euls_scepter",
@@ -126,10 +126,10 @@
       },
       "expect": {
         "heroes": [
-          "tusk",
-          "skywrath_mage",
           "lion",
           "bane",
+          "skywrath_mage",
+          "tusk",
           "techies"
         ],
         "items": [
@@ -165,8 +165,8 @@
           "medusa",
           "sven",
           "kunkka",
-          "luna",
-          "juggernaut"
+          "juggernaut",
+          "ursa"
         ],
         "items": [
           "battlefury",
@@ -198,11 +198,11 @@
       },
       "expect": {
         "heroes": [
-          "silencer",
           "treant",
+          "silencer",
           "batrider",
-          "grimstroke",
-          "rattletrap"
+          "rattletrap",
+          "shadow_demon"
         ],
         "items": [
           "scythe_of_vyse",
@@ -266,9 +266,9 @@
         "heroes": [
           "ursa",
           "juggernaut",
+          "phantom_assassin",
           "chaos_knight",
-          "meepo",
-          "storm_spirit"
+          "visage"
         ],
         "items": [
           "gem_of_true_sight",

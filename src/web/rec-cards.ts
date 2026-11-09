@@ -245,6 +245,8 @@ export function reasonItem(reason: Reason, rec: Recommendation): HTMLElement {
     const parts = [
       f.toolWeight !== undefined ? `tool ${f.toolWeight}` : "",
       f.edgeWeight !== undefined ? `edge ${f.edgeWeight}` : "",
+      f.targetWeight !== undefined ? `target ${f.targetWeight}` : "",
+      f.stackWeight !== undefined ? `stack ${f.stackWeight}` : "",
       f.relianceWeight !== undefined ? `reliance ${f.relianceWeight}` : "",
       f.threatWeight !== undefined ? `threat ${f.threatWeight}` : "",
       f.defenseWeight !== undefined ? `defense ${f.defenseWeight}` : "",

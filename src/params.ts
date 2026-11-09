@@ -47,6 +47,20 @@ export const PARAM_DOCS = {
     why: "Reasons against your lane opponents count 25% more: the first 10 minutes are spent against them, and a lost lane delays the core items every other reason assumes. Kept small because lanes swap and rotate; at 1.5+ the lane would dominate a five-hero draft.",
     range: [1.0, 1.5],
   },
+  TARGET_FLOOR: {
+    value: 0.5,
+    kind: "expert",
+    area: "counter",
+    why: "Hero picks: a counter reason is weighted by the target's position, 1 for their position 1 falling linearly to this value for their position 5 (0.875 / 0.75 / 0.625 between). Shutting down the hero the enemy plays around decides more fights than the same answer to a ward-buyer, but supports with one key spell still matter, so the floor stays well above zero. At 1 every target counts alike (the behaviour before ADR-059); below ~0.35 answers to supports would stop showing.",
+    range: [0.35, 0.75],
+  },
+  STACK_DECAY: {
+    value: 0.5,
+    kind: "expert",
+    area: "counter",
+    why: "Hero picks: against one enemy the strongest counter reason counts in full, the next x this, the third x this squared. Several generic edges onto the same target (pickoff -> no escape, pickoff -> low HP, burst -> low HP) describe one kill, not three; without the decay a hero with many generic tools outranks one with a single decisive answer. 0.5 bounds what one enemy can add at twice its best reason. At 1 reasons add up freely (before ADR-059).",
+    range: [0.35, 0.75],
+  },
   // ---- two-sided (ADR-020/022) ---------------------------------------------
   RESIST_WEIGHT: {
     value: 1.0,
