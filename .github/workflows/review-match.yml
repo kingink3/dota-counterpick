@@ -2,25 +2,28 @@
 # their replays (OpenDota -> Valve -> odota/parser), STRATZ only where that fails, and adds
 # them, encrypted with the site password (APP_PASSWORD), to the `review-data` branch.
 # The site (Review) lists and opens them.
-#   - every 5 minutes (schedule): matches of your last-20 list not stored yet, newest first,
-#     at most 3 a run, from their replays only (no STRATZ); a run with nothing new stops after
-#     one OpenDota call (~30 s) - nothing to click;
-#   - from the site ("Review" button, ADR-044) or by hand: match_id = that match,
-#     empty = your latest parsed match; list_only = only refresh the list.
+#   - "Check for new matches" (auto): matches of your last-20 list not stored yet, newest
+#     first, at most 5, from their replays only (no STRATZ); with nothing new it stops after
+#     one OpenDota call;
+#   - a match ("Review" / "Try STRATZ" on the page, ADR-044/058): match_sealed = its id sealed
+#     with the site password, so the id is not public; by hand: match_id;
+#   - list_only = only refresh the list.
 #   The list of your matches comes from OpenDota; the STRATZ token is still read for your
 #   Steam id (no call) and used when a replay is missing or fails.
-# Note: in a public repository the runs and their inputs are public (the match id).
+# Note: in a public repository the runs and their inputs are public: the page seals the id.
 # STRATZ allows 2 IP addresses per 15 minutes; STRATZ runs share one queue.
 name: Review a match
 
+# only on demand (the page's buttons, or by hand): no schedule
 on:
-  schedule:
-    # GitHub's shortest schedule; runs can start late when GitHub is busy
-    - cron: "2-59/5 * * * *"
   workflow_dispatch:
     inputs:
       match_id:
-        description: "Match ID (empty = your latest parsed match)"
+        description: "Match ID (empty = your latest match)"
+        required: false
+        default: ""
+      match_sealed:
+        description: "Set by the page: the match id sealed with the site password (not public)"
         required: false
         default: ""
       list_only:
@@ -29,7 +32,7 @@ on:
         required: false
         default: false
       auto:
-        description: "Like the scheduled run: my listed matches not stored yet"
+        description: "Check for new: my listed matches not stored yet"
         type: boolean
         required: false
         default: false
@@ -63,12 +66,18 @@ jobs:
           git clone -q --depth 1 --branch review-data --single-branch "$url" /tmp/store || {
             mkdir -p /tmp/store && cd /tmp/store && git init -q -b review-data && git remote add origin "$url"; cd -; }
           npx tsx scripts/review-store.ts --dir /tmp/store --ids /tmp/stored-ids.json --missed /tmp/missed.json --prev /tmp/prev-recent.json
-      - name: Anything to do? (scheduled runs)
+      - name: Open the sealed match id (masked)
+        if: ${{ inputs.match_sealed != '' }}
+        env:
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+          SEALED: ${{ inputs.match_sealed }}
+        run: npx tsx scripts/open-input.ts MATCH_ID
+      - name: Anything to do? ("check for new")
         id: plan
-        if: ${{ github.event_name == 'schedule' || inputs.auto == true }}
+        if: ${{ inputs.auto == true }}
         env:
           STRATZ_TOKEN: ${{ secrets.STRATZ_TOKEN }}
-        run: npx tsx scripts/replay-review.ts --mode auto --plan --skip /tmp/stored-ids.json --missed /tmp/missed.json --prev /tmp/prev-recent.json --max 3 --out /tmp/plan
+        run: npx tsx scripts/replay-review.ts --mode auto --plan --skip /tmp/stored-ids.json --missed /tmp/missed.json --prev /tmp/prev-recent.json --max 5 --out /tmp/plan
       - uses: actions/setup-java@v4
         if: ${{ inputs.list_only != true && steps.plan.outputs.work != 'false' }}
         with:
@@ -88,21 +97,21 @@ jobs:
         if: ${{ steps.plan.outputs.store != 'false' }}
         env:
           STRATZ_TOKEN: ${{ secrets.STRATZ_TOKEN }}
-          MATCH_ID: ${{ inputs.match_id }}
+          MATCH_ID_IN: ${{ inputs.match_id }}
           LIST_ONLY: ${{ inputs.list_only }}
           EVENT: ${{ github.event_name }}
           AUTO: ${{ inputs.auto }}
         run: |
           mkdir -p /tmp/match
-          if [ "$EVENT" = "schedule" ] || [ "$AUTO" = "true" ]; then
-            npx tsx scripts/replay-review.ts --mode auto --skip /tmp/stored-ids.json --missed /tmp/missed.json --max 3 --out /tmp/match
+          if [ "$AUTO" = "true" ]; then
+            npx tsx scripts/replay-review.ts --mode auto --skip /tmp/stored-ids.json --missed /tmp/missed.json --max 5 --out /tmp/match
           elif [ "$LIST_ONLY" = "true" ]; then
             npx tsx scripts/replay-review.ts --mode recent --missed /tmp/missed.json --out /tmp/match
           else
-            npx tsx scripts/replay-review.ts --mode match --match "$MATCH_ID" --missed /tmp/missed.json --out /tmp/match
+            npx tsx scripts/replay-review.ts --mode match --match "${MATCH_ID:-$MATCH_ID_IN}" --missed /tmp/missed.json --out /tmp/match
           fi
-      - name: STRATZ for what the replays could not do (fallback; not on scheduled runs)
-        if: ${{ github.event_name != 'schedule' && inputs.auto != true }}
+      - name: STRATZ for what the replays could not do (fallback; not for "check for new")
+        if: ${{ inputs.auto != true }}
         env:
           STRATZ_TOKEN: ${{ secrets.STRATZ_TOKEN }}
           EVENT: ${{ github.event_name }}

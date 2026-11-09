@@ -121,10 +121,25 @@ async function gh(path: string, init: RequestInit = {}): Promise<Response> {
 }
 
 /** start "Review a match": a match id, the latest (no id), or only the list. */
-export async function dispatchReview(opts: { matchId?: number; listOnly?: boolean } = {}): Promise<void> {
+/** a text the workflow can open with the site password and nobody else can read: AES-GCM
+ *  with the site key, iv(12) + ciphertext, base64 (scripts/seal.ts openInput). The match id
+ *  of a run would otherwise be public in a public repository's Actions. */
+async function sealInput(text: string): Promise<string> {
+  const k = key();
+  if (!k) throw new Error("Unlock the site first");
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, k, new TextEncoder().encode(text)));
+  const out = new Uint8Array(12 + ct.length);
+  out.set(iv);
+  out.set(ct, 12);
+  return btoa(String.fromCharCode(...out));
+}
+
+export async function dispatchReview(opts: { matchId?: number; listOnly?: boolean; auto?: boolean } = {}): Promise<void> {
   const inputs: Record<string, string> = {};
-  if (opts.matchId) inputs.match_id = String(opts.matchId);
+  if (opts.matchId) inputs.match_sealed = await sealInput(String(opts.matchId));
   if (opts.listOnly) inputs.list_only = "true";
+  if (opts.auto) inputs.auto = "true";
   const r = await gh("/actions/workflows/review-match.yml/dispatches", { method: "POST", body: JSON.stringify({ ref: "main", inputs }) });
   if (r.status !== 204) throw new Error(`GitHub: HTTP ${r.status} ${(await r.text()).slice(0, 120)}`);
 }

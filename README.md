@@ -280,10 +280,11 @@ Note: the run and its Match ID are visible in the public repository. Every run a
 encrypted list of your last 20 matches (tick "Only refresh the list" for just that); Review ->
 **Your recent matches** opens stored ones or copies an ID for the next run (ADR-042).
 
-**Without leaving the site (ADR-044).** Your own new matches arrive by themselves: the
-workflow runs every 5 minutes (GitHub may start it late) and reviews up to 3 matches of your recent list not stored yet,
-newest first, from replays only (a match a day old without a replay shows "Try STRATZ"). To review any
-match by its ID straight from the page, add one secret once:
+**Without leaving the site (ADR-044, ADR-058).** Nothing runs on a schedule: Review ->
+**Your matches** -> **Check for new matches** reviews your listed matches not stored yet (from
+their replays), **Review** / **Try STRATZ** on a row does that match, **A match by ID** any
+other. The page seals the match id with the site password, so it is not public in the run.
+For the buttons to start the workflow from the page, add one secret once:
 1. GitHub -> Settings -> Developer settings -> Personal access tokens -> **Fine-grained
    tokens** -> Generate new token. Repository access: **Only select repositories** ->
    `dota-counterpick`. Permissions -> Repository -> **Actions: Read and write** (nothing else).

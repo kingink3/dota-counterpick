@@ -35,3 +35,11 @@ export async function unseal(key: Key, bin: Uint8Array): Promise<string> {
   const plain = await webcrypto.subtle.decrypt({ name: "AES-GCM", iv: bin.slice(0, 12) }, key, bin.slice(12));
   return gunzipSync(Buffer.from(plain)).toString("utf8");
 }
+
+/** a workflow input the page sealed (github-store.ts sealInput): base64 iv(12) + AES-GCM of
+ *  the plain text, no gzip. */
+export async function openInput(key: Key, b64: string): Promise<string> {
+  const bin = Uint8Array.from(Buffer.from(b64, "base64"));
+  const plain = await webcrypto.subtle.decrypt({ name: "AES-GCM", iv: bin.slice(0, 12) }, key, bin.slice(12));
+  return new TextDecoder().decode(plain);
+}

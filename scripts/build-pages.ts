@@ -157,7 +157,7 @@ function gateScript(): string {
   async function derive(pw) {
     const base = await crypto.subtle.importKey("raw", enc.encode(pw), "PBKDF2", false, ["deriveKey"]);
     return crypto.subtle.deriveKey({ name: "PBKDF2", salt: enc.encode(SALT), iterations: ITER, hash: "SHA-256" },
-      base, { name: "AES-GCM", length: 256 }, true, ["decrypt"]);
+      base, { name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);
   }
   async function open(key) {
     const buf = new Uint8Array(await (await fetch("./app.bin", { cache: "no-cache" })).arrayBuffer());
@@ -174,7 +174,7 @@ function gateScript(): string {
     try {
       const raw = localStorage.getItem(STORE);
       if (!raw) return false;
-      const key = await crypto.subtle.importKey("raw", Uint8Array.from(atob(raw), (c) => c.charCodeAt(0)), "AES-GCM", false, ["decrypt"]);
+      const key = await crypto.subtle.importKey("raw", Uint8Array.from(atob(raw), (c) => c.charCodeAt(0)), "AES-GCM", false, ["encrypt", "decrypt"]);
       await open(key);
       return true;
     } catch {

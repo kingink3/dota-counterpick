@@ -80,22 +80,20 @@ export class ReviewView {
     const wrap = el("section", "rv");
     const left = el("aside", "rv-side");
     const main = el("main", "rv-main");
-    left.append(this.githubCard());
-    const rc = this.recentCard();
-    if (rc) left.append(rc);
+    left.append(this.recentCard());
     if (this.status) main.append(el("p", "rv-status", this.status));
     if (this.open) main.append(this.switcher(this.open), this.storyCard(this.open), this.overviewCard(this.open));
     if (this.current) main.append(this.report(this.current));
     else if (this.open) main.append(el("p", "muted", "Pick a player above."));
     // trends are off (the user plays several roles: cross-match trends said little, 2026-11-05)
-    else main.append(el("p", "muted", "Run the workflow on GitHub with a Match ID, then open the match on the left."));
+    else main.append(el("p", "muted", "Open a match on the left."));
     wrap.append(left, main);
     root.append(wrap);
   }
 
   /** matches fetched on GitHub: run the workflow, then open them here. */
   /** start the workflow from the page (ADR-044) and follow it: queued -> running -> stored. */
-  private async start(label: string, opts: { matchId?: number; listOnly?: boolean }): Promise<void> {
+  private async start(label: string, opts: { matchId?: number; listOnly?: boolean; auto?: boolean }): Promise<void> {
     this.run = { label, since: Date.now() / 1000 - 5, state: "Starting…", ...(opts.matchId ? { matchId: opts.matchId } : {}) };
     this.render();
     try {
@@ -137,94 +135,112 @@ export class ReviewView {
     }, 8000);
   }
 
-  private githubCard(): HTMLElement {
-    const c = card("Review a match");
-    if (canDispatch() && storeAvailable()) {
-      const inp = document.createElement("input");
-      inp.type = "text";
-      inp.inputMode = "numeric";
-      inp.placeholder = "Match ID (empty = your latest)";
-      inp.className = "rv-in";
-      inp.value = this.idInput;
-      inp.addEventListener("input", () => (this.idInput = inp.value));
-      const go = el("button", "g-btn", "Review") as HTMLButtonElement;
-      go.type = "button";
-      const busy = !!this.run && !this.run.failed && this.run.state !== "Done ✓";
-      go.disabled = busy;
-      const send = () => {
-        const id = Number(this.idInput.replace(/\D/g, "")) || undefined;
-        void this.start(id ? `match ${id}` : "your latest match", id ? { matchId: id } : {});
-      };
-      go.addEventListener("click", send);
-      inp.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && !busy) send();
-      });
-      const list = el("button", "g-btn", "Refresh my list") as HTMLButtonElement;
-      list.type = "button";
-      list.disabled = busy;
-      list.addEventListener("click", () => void this.start("your recent matches", { listOnly: true }));
-      const row = el("div", "game-row", "");
-      row.append(inp, go, list);
-      c.append(row);
-      if (this.run) c.append(el("p", this.run.failed ? "rv-note bad" : "rv-sub", `${this.run.label}: ${this.run.state}`));
-      c.append(el("p", "rv-note", "Your new matches also arrive by themselves: every hour the workflow adds your parsed matches of the last 2 days."));
+  /** the controls on top of "Your matches": check for new ones, a match by ID, the run state. */
+  private controls(c: HTMLElement): void {
+    const busy = !!this.run && !this.run.failed && this.run.state !== "Done ✓";
+    const row = el("div", "game-row", "");
+    if (canDispatch()) {
+      const check = el("button", "g-btn", "Check for new matches") as HTMLButtonElement;
+      check.type = "button";
+      check.disabled = busy;
+      check.title = "Refreshes the list and reviews your matches not stored yet (from their replays), ~1-2 min";
+      check.addEventListener("click", () => void this.start("new matches", { auto: true }));
+      row.append(check);
+    } else {
+      const gh = document.createElement("a");
+      gh.className = "g-btn";
+      gh.href = workflowUrl();
+      gh.target = "_blank";
+      gh.rel = "noopener";
+      gh.textContent = "Run on GitHub ↗";
+      gh.addEventListener("click", () => this.pollStore());
+      row.append(gh);
     }
-    const run = document.createElement("a");
-    run.className = canDispatch() ? "link" : "g-btn";
-    run.href = workflowUrl();
-    run.target = "_blank";
-    run.rel = "noopener";
-    run.textContent = canDispatch() ? "Runs on GitHub ↗" : "Run on GitHub ↗";
-    run.title = 'Actions -> "Review a match" -> Run workflow (Match ID, or empty = your latest). Takes ~1-1.5 min.';
-    run.addEventListener("click", () => this.pollStore());
     const ref = el("button", "g-btn", "Refresh") as HTMLButtonElement;
     ref.type = "button";
+    ref.title = "Reload what is stored (no new run)";
     ref.addEventListener("click", () => void this.loadStore());
-    const row = el("div", "game-row", "");
-    row.append(run, ref);
+    row.append(ref);
     c.append(row);
+    if (this.run) c.append(el("p", this.run.failed ? "rv-note bad" : "rv-sub", `${this.run.label}: ${this.run.state}`));
+    if (this.storeMsg) c.append(el("p", "rv-note", this.storeMsg));
+    if (!canDispatch()) {
+      c.append(el("p", "rv-note", "The buttons open GitHub until the DISPATCH_TOKEN secret is set (README); then they start the review from here."));
+      return;
+    }
+    // any match by its ID (a friend's, an older one) - folded: the list covers your own
+    const by = el("details", "rv-by");
+    by.append(el("summary", "", "A match by ID"));
+    const inp = document.createElement("input");
+    inp.type = "text";
+    inp.inputMode = "numeric";
+    inp.placeholder = "Match ID";
+    inp.className = "rv-in";
+    inp.value = this.idInput;
+    inp.addEventListener("input", () => (this.idInput = inp.value));
+    const go = el("button", "g-btn", "Review") as HTMLButtonElement;
+    go.type = "button";
+    go.disabled = busy;
+    const send = () => {
+      const id = Number(this.idInput.replace(/\D/g, ""));
+      if (id) void this.start(`match ${id}`, { matchId: id });
+    };
+    go.addEventListener("click", send);
+    inp.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !busy) send();
+    });
+    const r2 = el("div", "game-row", "");
+    r2.append(inp, go);
+    by.append(r2);
+    c.append(by);
+  }
+
+  /** stored matches that are not in your list (by ID, or dropped out of the last 20). */
+  private otherStored(c: HTMLElement, inList: Set<number>): void {
+    const others = (this.store ?? []).filter((e) => !inList.has(e.id));
+    if (!others.length) return;
+    const d = el("details", "rv-by");
+    d.append(el("summary", "", `Other stored matches (${others.length})`));
+    const ul = el("ul", "rv-list");
+    for (const e of others) {
+      const li = el("li", `rv-m${this.open?.id === e.id ? " on" : ""}`);
+      const info = el("span", "rv-mi", "");
+      const when = new Date((e.start ?? e.at) * 1000);
+      info.append(el("b", "", when.toLocaleDateString(undefined, { day: "numeric", month: "short" })), el("span", "muted", ` · ${e.duration ? mmss(e.duration) : ""} · ${e.id}`));
+      const b = el("button", "g-btn", "Open") as HTMLButtonElement;
+      b.type = "button";
+      b.disabled = this.busy;
+      b.addEventListener("click", () => void this.openStored(e));
+      li.append(info, b);
+      ul.append(li);
+    }
+    d.append(ul);
+    c.append(d);
+  }
+
+  /** your last 20 matches from the latest workflow run (ADR-042): open a stored one, or
+   *  copy the ID and open the workflow page (GitHub cannot prefill the input from a link). */
+  private recentCard(): HTMLElement {
+    const c = card("Your matches");
     if (!storeAvailable()) {
       c.append(el("p", "rv-note", "Works in the published site (it opens the stored matches with the site password)."));
       return c;
     }
     if (this.store === undefined && !this.storeMsg) void this.loadStore();
-    if (this.storeMsg) c.append(el("p", "rv-note", this.storeMsg));
-    const ul = el("ul", "rv-list");
-    for (const e of this.store ?? []) {
-      const li = el("li", `rv-m${this.open?.id === e.id ? " on" : ""}`);
-      const info = el("span", "rv-mi", "");
-      const when = new Date((e.start ?? e.at) * 1000);
-      info.append(el("b", "", `${when.toLocaleDateString(undefined, { day: "numeric", month: "short" })} ${when.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}`), el("span", "muted", ` · ${e.duration ? mmss(e.duration) : ""} · ${e.id}`));
-      li.append(info);
-      const b = el("button", "g-btn", "Open") as HTMLButtonElement;
-      b.type = "button";
-      b.disabled = this.busy;
-      b.addEventListener("click", () => void this.openStored(e));
-      li.append(b);
-      ul.append(li);
-    }
-    c.append(ul);
-    if (!canDispatch()) c.append(el("p", "rv-note", "Run the workflow with a Match ID (or empty for your latest); it fetches all ten players in ~1-1.5 min and stores them encrypted. To start it from this page, add the DISPATCH_TOKEN secret (README)."));
-    return c;
-  }
-
-  /** your last 20 matches from the latest workflow run (ADR-042): open a stored one, or
-   *  copy the ID and open the workflow page (GitHub cannot prefill the input from a link). */
-  private recentCard(): HTMLElement | undefined {
-    if (!storeAvailable()) return undefined;
-    const c = card("Your recent matches");
+    this.controls(c);
     const list = this.recent;
     if (list === undefined) {
       c.append(el("p", "muted", "Loading…"));
       return c;
     }
     if (list === null || !list.matches.length) {
-      c.append(el("p", "rv-note", 'No list yet. Run "Review a match" once (any match, or tick "Only refresh the list"): every run refreshes it.'));
+      c.append(el("p", "rv-note", "No list yet: press Check for new matches."));
+      this.otherStored(c, new Set());
       return c;
     }
     const stored = new Map((this.store ?? []).map((e) => [e.id, e]));
     const ago = Math.round((Date.now() / 1000 - list.fetchedAt) / 60);
-    c.append(el("p", "rv-sub", `As of ${ago < 90 ? `${ago} min` : `${Math.round(ago / 60)} h`} ago. Every 5 minutes up to 3 new matches from this list are reviewed by themselves (GitHub may start a run a few minutes late) - no need to press anything.`));
+    c.append(el("p", "rv-sub", `List as of ${ago < 90 ? `${ago} min` : `${Math.round(ago / 60)} h`} ago.`));
     const ul = el("ul", "rv-list");
     for (const m of list.matches) {
       const p = m.players?.[0];
@@ -260,6 +276,7 @@ export class ReviewView {
       ul.append(li);
     }
     c.append(ul);
+    this.otherStored(c, new Set(list.matches.map((m) => m.id)));
     return c;
   }
 
@@ -271,7 +288,7 @@ export class ReviewView {
       const [idx, recent] = await Promise.all([loadIndex(), loadRecent().catch(() => undefined)]);
       this.store = idx;
       this.recent = recent ?? null;
-      this.storeMsg = this.store.length ? "" : "Nothing fetched yet.";
+      this.storeMsg = "";
     } catch (e) {
       this.store = [];
       this.recent = await loadRecent().catch(() => null) ?? null;
