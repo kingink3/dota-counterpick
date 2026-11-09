@@ -157,3 +157,26 @@ test("tracker: 10 'empty' slots without the draft bars (loading, black frame, me
   t.push(newDraft);
   assert.equal(t.push(newDraft)?.reset, true, "the real empty draft still resets");
 });
+
+// e54ba88 dropped a closing brace of a @media block: every rule after it (the unlock
+// screen's styles and its "hide after unlock") stopped applying on wide screens.
+test("web/index.html: the stylesheet's braces balance and no @media is nested by accident", async () => {
+  const { readFileSync } = await import("node:fs");
+  const html = readFileSync("web/index.html", "utf8");
+  const css = html.slice(html.indexOf("<style>"), html.indexOf("</style>")).replace(/\/\*[\s\S]*?\*\//g, "").replace(/"[^"]*"/g, '""');
+  let depth = 0;
+  let mediaOpen = false;
+  for (const line of css.split("\n")) {
+    if (/@media/.test(line)) {
+      assert.equal(depth, 0, `@media inside another block: ${line.trim()}`);
+      mediaOpen = true;
+    }
+    for (const ch of line) {
+      if (ch === "{") depth++;
+      else if (ch === "}") depth--;
+      assert.ok(depth >= 0, `extra } near: ${line.trim()}`);
+    }
+    if (mediaOpen && depth === 0) mediaOpen = false;
+  }
+  assert.equal(depth, 0, "unclosed { in the stylesheet");
+});
