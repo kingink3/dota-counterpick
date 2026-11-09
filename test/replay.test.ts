@@ -1,11 +1,11 @@
 // ADR-045: the replay timeline (odota/parser NDJSON -> per-second arrays + disables).
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { buildTimeline, disabledAt } from "../src/replay.js";
+import { buildTimeline, disabledAt, heroKey } from "../src/replay.js";
 import { idleSeconds } from "../src/review-idle.js";
 
 const iv = (time: number, slot: number, o: Record<string, unknown> = {}) =>
-  JSON.stringify({ type: "interval", time, slot, unit: slot === 0 ? "npc_dota_hero_axe" : "npc_dota_hero_lina", x: 100, y: 100, life_state: 0, lh: 0, denies: 0, xp: 0, gold: 600, ...o });
+  JSON.stringify({ type: "interval", time, slot, unit: slot === 0 ? "CDOTA_Unit_Hero_Axe" : "CDOTA_Unit_Hero_Lina", x: 100, y: 100, life_state: 0, lh: 0, denies: 0, xp: 0, gold: 600, ...o });
 
 test("replay: interval rows become per-second arrays; disables pair add/remove on heroes only", () => {
   const lines = [
@@ -22,7 +22,7 @@ test("replay: interval rows become per-second arrays; disables pair add/remove o
   const tl = buildTimeline(lines)!;
   assert.equal(tl.start, 0);
   const axe = tl.heroes["0"]!;
-  assert.equal(axe.hero, "npc_dota_hero_axe");
+  assert.equal(axe.hero, "CDOTA_Unit_Hero_Axe", "interval rows use the class name; the combat log the npc name");
   assert.deepEqual(axe.lh, [0, 1, 1, 1], "second 2 carries second 1 forward");
   assert.deepEqual(axe.x, [1000, 1013, 1013, 1000]);
   assert.deepEqual(axe.alive, [1, 1, 1, 0]);
@@ -48,4 +48,9 @@ test("replay idle: 30+ s stretches with nothing; last hits, XP, casts and enemie
   // a cast at 6:00 keeps 345..375 busy: 316..344 and 376..404 are both under 30 s
   const withCast = idleSeconds({ start: 0, me, enemies: [enemy], actions: [360], duration: n });
   assert.deepEqual(withCast.runs, []);
+});
+
+test("replay: both spellings of a hero name meet", () => {
+  for (const [a, b] of [["CDOTA_Unit_Hero_DarkWillow", "npc_dota_hero_dark_willow"], ["CDOTA_Unit_Hero_Obsidian_Destroyer", "npc_dota_hero_obsidian_destroyer"], ["CDOTA_Unit_Hero_EarthSpirit", "npc_dota_hero_earth_spirit"]] as const)
+    assert.equal(heroKey(a), heroKey(b));
 });

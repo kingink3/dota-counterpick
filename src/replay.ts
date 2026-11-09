@@ -42,6 +42,11 @@ export const DISABLE_RE = /stun|hex|sheep|silence|taunt|fear|cyclone|eul|sleep|n
 /** ...except these, which only slow or are positive. */
 const NOT_DISABLE_RE = /slow|immune|_aura|debuff_immune|buff$|charge_counter/;
 
+/** one key for both spellings of a hero: interval rows say CDOTA_Unit_Hero_DarkWillow, the
+ *  combat log npc_dota_hero_dark_willow (checked on a real parse, ADR-045). */
+export const heroKey = (name: string): string =>
+  name.toLowerCase().replace(/^cdota_unit_hero_|^npc_dota_hero_/, "").replace(/[^a-z0-9]/g, "");
+
 /** odota/parser `slot` (0-9) -> player slot (0-4, 128-132). */
 export const playerSlot = (s: number): number => (s < 5 ? s : 128 + s - 5);
 
@@ -110,11 +115,11 @@ export function buildTimeline(lines: Iterable<string>): ReplayTimeline | undefin
     }
     const ps = playerSlot(slot);
     heroes[String(ps)] = h;
-    if (h.hero) slotOfHero.set(h.hero, ps);
+    if (h.hero) slotOfHero.set(heroKey(h.hero), ps);
   }
   const disables: ReplayDisable[] = mods
-    .filter((m) => slotOfHero.has(m.target))
-    .map((m) => ({ t: Math.round(m.t * 10) / 10, d: Math.round(m.d * 10) / 10, slot: slotOfHero.get(m.target)!, kind: m.kind }))
+    .filter((m) => slotOfHero.has(heroKey(m.target)))
+    .map((m) => ({ t: Math.round(m.t * 10) / 10, d: Math.round(m.d * 10) / 10, slot: slotOfHero.get(heroKey(m.target))!, kind: m.kind }))
     .sort((a, b) => a.t - b.t);
   return { v: 1, start, heroes, disables };
 }
