@@ -2,7 +2,7 @@
 # Professional match = public data; nothing personal. Artifact kept 1 day.
 name: Replay sample
 on: { workflow_dispatch: {} }
-permissions: { contents: read }
+permissions: { contents: write }
 concurrency: { group: stratz, cancel-in-progress: false }
 jobs:
   s:
@@ -26,5 +26,8 @@ jobs:
       - name: STRATZ form
         env: { STRATZ_TOKEN: "${{ secrets.STRATZ_TOKEN }}" }
         run: npx tsx scripts/stratz-fetch.ts --mode match --match 9081380063 --out /tmp/m && gzip -c /tmp/m/match.json > out/stratz.json.gz
-      - uses: actions/upload-artifact@v4
-        with: { name: sample, path: out, retention-days: 1 }
+      - name: Push to the dev-sample branch (public pro match; delete after ADR-053)
+        run: |
+          cd out && git init -q -b dev-sample && git add -A
+          git -c user.name=github-actions -c user.email=41898282+github-actions[bot]@users.noreply.github.com commit -q -m "replay sample (public pro match)"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" dev-sample
