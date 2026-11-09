@@ -656,7 +656,7 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
       severity: won ? 0.2 : stomp ? 0.4 : 0.25,
       ...(won ? { good: true } : {}),
       title: `Lane ${won ? "won" : "lost"}${stomp ? " hard" : ""} (${(mine.lane ?? "").replace("_LANE", "").toLowerCase()} lane)`,
-      detail: won ? "STRATZ lane outcome for your lane." : "STRATZ lane outcome for your lane: look at the first 10 minutes - trades, pulls, rotations.",
+      detail: `${d.source === "replay" ? "Net worth + XP of your lane vs theirs at 10:00 (STRATZ's rule, refitted)" : "STRATZ lane outcome for your lane"}${won ? "." : ": look at the first 10 minutes - trades, pulls, rotations."}`,
     });
   }
 

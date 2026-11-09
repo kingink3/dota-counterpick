@@ -63,6 +63,11 @@ const FOUNTAIN_IN = 8;
 const FOUNTAIN_AWAY = 30;
 /** a hero alive again this soon after dying reincarnated (Aegis, Reincarnation). */
 const REINCARNATION = 8;
+/** ADR-057: lane outcome = (NW + XP) gap at 10:00 relative to the mean; thresholds fitted to
+ *  STRATZ's labels (80% exact, 87% win / tie / loss on 1905 lanes of public ranked games). */
+const LANE_AT = 600;
+const LANE_WIN = 0.07;
+const LANE_STOMP = 0.37;
 
 interface Ev {
   type: string;
@@ -642,7 +647,22 @@ export function matchFromReplay(lines: Iterable<string>, od: OdMatch | undefined
   const tiers = (od?.players ?? []).map((p) => p.rank_tier ?? 0).filter((t) => t > 0);
   const avgTier = tiers.length ? tiers.reduce((a, b) => a + b, 0) / tiers.length : undefined;
   const mode = od?.game_mode ?? gameMode;
+  // lane outcomes the way STRATZ labels them (ADR-057): net worth + XP of the lane's players
+  // at 10:00, Radiant vs Dire, relative to their mean; fitted on 1905 STRATZ-labelled lanes
+  const outcome = (rl: string, dl: string): string | null => {
+    if (duration < LANE_AT) return null;
+    const sum = (rad: boolean, lane: string) =>
+      slots.filter((s) => radiant(s) === rad && laneOf(posOf.get(s)) === lane).reduce((a, s) => a + val(s, LANE_AT, "networth") + val(s, LANE_AT, "xp"), 0);
+    const r = sum(true, rl);
+    const d = sum(false, dl);
+    if (!r || !d) return null;
+    const x = (r - d) / ((r + d) / 2);
+    return x >= LANE_STOMP ? "RADIANT_STOMP" : x >= LANE_WIN ? "RADIANT_VICTORY" : x > -LANE_WIN ? "TIE" : x > -LANE_STOMP ? "DIRE_VICTORY" : "DIRE_STOMP";
+  };
   const summary: StratzSummary = {
+    bottomLaneOutcome: outcome("SAFE_LANE", "OFF_LANE"),
+    midLaneOutcome: outcome("MID_LANE", "MID_LANE"),
+    topLaneOutcome: outcome("OFF_LANE", "SAFE_LANE"),
     id: od?.match_id ?? 0,
     durationSeconds: duration,
     gameMode: mode !== undefined && Number.isFinite(mode) ? (GAME_MODE[mode] ?? `MODE_${mode}`) : null,

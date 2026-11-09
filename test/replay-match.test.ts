@@ -50,6 +50,7 @@ test("replay match: players, per-minute stats and events in the STRATZ shape", (
   assert.ok(m);
   assert.equal(m.summary.didRadiantWin, false);
   assert.equal(m.summary.gameMode, "ALL_PICK_RANKED");
+  assert.equal(m.summary.midLaneOutcome, null, "no lane outcome before 10:00");
   assert.equal(Object.keys(m.players).length, 10, "accounts from the epilogue's 64-bit steam ids");
   const axe = m.players["1000"]!;
   assert.equal(axe.playerSlot, 0);

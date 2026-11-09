@@ -294,7 +294,8 @@ status shows queued / running / done, and the match opens from the list. Nothing
 computer and the page holds no STRATZ token (ADR-034). Matches are built from their replays
 (OpenDota -> Valve -> odota/parser + our clarity extractor in `tools/clarity`: HP, mana, gold,
 items; ADR-053, ADR-055); STRATZ is the fallback when there is no replay (older than ~2 weeks)
-and still the only source of IMP, lane outcomes and "walked into enemy vision". The header of a
+and still the only source of IMP and "walked into enemy vision" (the replay path shows deaths to
+enemies your team could not see instead, ADR-056; lane outcomes use STRATZ's rule refitted, ADR-057). The header of a
 review says which source it used. The report shows:
 - the plan the app would have made for that draft vs what you bought and when;
 - last hits, networth and XP vs Crusader-Ancient averages for your hero and position;

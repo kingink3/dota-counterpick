@@ -1,4 +1,5 @@
-// Temporary (ADR-057): what STRATZ's lane outcome is, fitted on public ranked matches.
+// ADR-057: what STRATZ's lane outcome is, fitted on public ranked matches (run in Actions
+// with STRATZ_TOKEN: npx tsx scripts/lane-fit.ts <ids> [ids back from the newest]).
 // OpenDota /publicMatches -> ids; STRATZ matches(ids) -> lane outcomes + per-minute
 // networth / XP of the lane players. Prints aggregates only.
 const OD = "https://api.opendota.com/api";
