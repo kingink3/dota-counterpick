@@ -1,8 +1,8 @@
 // =============================================================================
-//  Review tab (ADR-029): your recent matches from STRATZ (or any match by ID) ->
+//  Review tab (ADR-029): matches stored by the "Review a match" workflow (ADR-031) ->
 //  pick any player, allies or opponents -> plan vs fact, farm
 //  vs Crusader-Ancient, deaths, battles, map & role, execution, the top growth
-//  areas; trends over your reviewed matches. Token + history stay local.
+//  areas. History stays in this browser; no STRATZ token here (ADR-034).
 // =============================================================================
 
 import { mmss } from "../item-plan.js";
@@ -10,19 +10,7 @@ import { reviewMatch, type Finding, type MatchReview, type ReviewContext } from 
 import type { BattleReport, UseStat } from "../review-battles.js";
 import { adviceText, GRADE_LABEL, matchOverview, matchStory, type MatchOverview, type OverviewRow } from "../review-match.js";
 import { resolve } from "../resolver.js";
-import {
-  accountFromToken,
-  loadHistory,
-  loadSettings,
-  openPlayer,
-  saveReview,
-  saveSettings,
-  StratzClient,
-  StratzError,
-  type MatchBase,
-  type RecentMatch,
-  type StratzSettings,
-} from "./stratz-client.js";
+import { loadHistory, loadSettings, openPlayer, saveReview, saveSettings, type MatchBase, type ReviewSettings } from "./review-local.js";
 import { loadIndex, loadMatch, storeAvailable, workflowUrl, type StoreEntry } from "./github-store.js";
 
 const posOf = (p?: string | null) => Number(/(\d)/.exec(p ?? "")?.[1] ?? 0);
@@ -45,13 +33,11 @@ const AREA_LABEL: Record<Finding["area"], string> = {
 
 export class ReviewView {
   private root: HTMLElement;
-  private settings: StratzSettings = loadSettings();
-  private recent: RecentMatch[] = [];
+  private settings: ReviewSettings = loadSettings();
   private history: MatchReview[] = loadHistory();
   private current?: MatchReview;
   /** the match open in the player switcher: shared data + every player's review so far. */
   private open?: { id: number; base: MatchBase; reviews: Map<number, MatchReview>; loading: Set<number>; failed: Map<number, string>; expanded: Set<number> };
-  private matchInput = "";
   /** matches the "Review a match" workflow stored (ADR-031). */
   private store?: StoreEntry[];
   private storeMsg = "";
@@ -65,26 +51,6 @@ export class ReviewView {
 
   show(): void {
     this.render();
-    if (this.settings.token && !this.recent.length && !this.busy) void this.loadRecent();
-  }
-
-  private client(): StratzClient {
-    return new StratzClient(this.settings);
-  }
-
-  private async loadRecent(): Promise<void> {
-    if (!this.settings.account) return;
-    this.busy = true;
-    this.status = "Loading your matches…";
-    this.render();
-    try {
-      this.recent = await this.client().recent(20);
-      this.status = this.recent.length ? "" : "No matches found for this account (is \"Expose Public Match Data\" on?).";
-    } catch (e) {
-      this.status = errText(e);
-    }
-    this.busy = false;
-    this.render();
   }
 
   /** your trends: only your own reviews. */
@@ -92,73 +58,11 @@ export class ReviewView {
     return this.history.filter((r) => r.account === undefined || r.account === this.settings.account);
   }
 
-  /** from the list: open the match and review you in it. */
-  private async analyse(id: number): Promise<void> {
-    await this.openMatch(id, this.settings.account);
-  }
-
-  /** load what all players share (3 requests), then the player asked for. */
-  private async openMatch(id: number, account?: number, known?: MatchReview): Promise<void> {
-    if (!this.d.ctx() || !this.settings.token) {
-      this.status = "Save your STRATZ token first.";
-      this.render();
-      return;
-    }
-    this.busy = true;
-    this.status = `Reading match ${id} from STRATZ…`;
+  /** show a player of the open match: every review was computed when it opened. */
+  private selectPlayer(account: number): void {
+    const r = this.open?.reviews.get(account);
+    if (r) this.current = r;
     this.render();
-    try {
-      const base = await this.client().base(id);
-      this.open = { id, base, reviews: new Map(), loading: new Set(), failed: new Map(), expanded: new Set() };
-      if (known?.account) this.open.reviews.set(known.account, known);
-      this.status = "";
-      this.busy = false;
-      if (known) this.current = known;
-      else if (account && base.summary.players.some((p) => p.steamAccountId === account)) await this.selectPlayer(account);
-      else this.current = undefined;
-    } catch (e) {
-      this.status = errText(e);
-    }
-    this.busy = false;
-    this.render();
-  }
-
-  /** review one player of the open match (4 requests the first time). */
-  private async selectPlayer(account: number, show = true): Promise<void> {
-    const o = this.open;
-    const ctx = this.d.ctx();
-    if (!o || !ctx) return;
-    const done = o.reviews.get(account);
-    if (done) {
-      if (show) this.current = done;
-      this.render();
-      return;
-    }
-    if (o.loading.has(account)) return;
-    o.loading.add(account);
-    o.failed.delete(account);
-    this.render();
-    try {
-      const me = await this.client().player(o.id, account);
-      const r = reviewMatch({ ...o.base, me }, account, ctx);
-      o.reviews.set(account, r);
-      if (account === this.settings.account) this.history = saveReview(r);
-      if (show) this.current = r;
-    } catch (e) {
-      o.failed.set(account, errText(e));
-    }
-    o.loading.delete(account);
-    this.render();
-  }
-
-  /** every open player, one after another (4 requests each). */
-  private async analyseAll(): Promise<void> {
-    const o = this.open;
-    if (!o) return;
-    for (const p of o.base.summary.players) {
-      if (this.open !== o) return; // another match was opened meanwhile
-      if (p.steamAccountId && openPlayer(p) && !o.reviews.has(p.steamAccountId)) await this.selectPlayer(p.steamAccountId, false);
-    }
   }
 
   // ------------------------------------------------------------- render ----
@@ -169,55 +73,18 @@ export class ReviewView {
     const wrap = el("section", "rv");
     const left = el("aside", "rv-side");
     const main = el("main", "rv-main");
-    left.append(this.githubCard(), this.settingsCard(), this.byIdCard(), this.matchList());
+    left.append(this.githubCard());
     if (this.status) main.append(el("p", "rv-status", this.status));
     if (this.open) main.append(this.switcher(this.open), this.storyCard(this.open), this.overviewCard(this.open));
-    else if (this.current) main.append(this.otherPlayersButton(this.current));
     if (this.current) main.append(this.report(this.current));
     else if (this.open) main.append(el("p", "muted", "Pick a player above."));
     // trends are off (the user plays several roles: cross-match trends said little, 2026-11-05)
-    else main.append(el("p", "muted", "Pick a match on the left, open one from GitHub, or open any match by its ID."));
+    else main.append(el("p", "muted", "Run the workflow on GitHub with a Match ID, then open the match on the left."));
     wrap.append(left, main);
     root.append(wrap);
   }
 
-  private settingsCard(): HTMLElement {
-    const c = card("STRATZ");
-    const s = this.settings;
-    const tok = document.createElement("input");
-    tok.type = "password";
-    tok.placeholder = "STRATZ API token";
-    tok.value = s.token ?? "";
-    tok.autocomplete = "off";
-    tok.className = "rv-in";
-    const acc = document.createElement("input");
-    acc.type = "text";
-    acc.inputMode = "numeric";
-    acc.placeholder = "Steam account id";
-    acc.value = s.account ? String(s.account) : "";
-    acc.className = "rv-in";
-    const save = el("button", "g-btn", "Save & load matches") as HTMLButtonElement;
-    save.type = "button";
-    save.addEventListener("click", () => {
-      const token = tok.value.trim();
-      const account = Number(acc.value.trim()) || accountFromToken(token);
-      this.settings = { ...(token ? { token } : {}), ...(account ? { account } : {}) };
-      saveSettings(this.settings);
-      this.recent = [];
-      void this.loadRecent();
-    });
-    tok.addEventListener("change", () => {
-      if (!acc.value) {
-        const a = accountFromToken(tok.value.trim());
-        if (a) acc.value = String(a);
-      }
-    });
-    c.append(tok, acc, save);
-    c.append(el("p", "rv-note", "Needs the local companion running (npm run companion): STRATZ does not accept calls from a web page. Token and history stay in this browser; get a token at stratz.com/api."));
-    return c;
-  }
-
-  /** matches fetched on GitHub (no companion): run the workflow, then open them here. */
+  /** matches fetched on GitHub: run the workflow, then open them here. */
   private githubCard(): HTMLElement {
     const c = card("From GitHub");
     const run = document.createElement("a");
@@ -255,7 +122,7 @@ export class ReviewView {
       ul.append(li);
     }
     c.append(ul);
-    c.append(el("p", "rv-note", "Run the workflow with a Match ID (or empty for your latest); it fetches all ten players in ~1-1.5 min and stores them encrypted. No companion needed."));
+    c.append(el("p", "rv-note", "Run the workflow with a Match ID (or empty for your latest); it fetches all ten players in ~1-1.5 min and stores them encrypted."));
     return c;
   }
 
@@ -332,39 +199,6 @@ export class ReviewView {
     this.render();
   }
 
-  private byIdCard(): HTMLElement {
-    const c = card("Match by ID");
-    const inp = document.createElement("input");
-    inp.type = "text";
-    inp.inputMode = "numeric";
-    inp.placeholder = "e.g. 8123456789";
-    inp.className = "rv-in";
-    inp.value = this.matchInput;
-    const go = el("button", "g-btn", "Open") as HTMLButtonElement;
-    go.type = "button";
-    go.disabled = this.busy;
-    const run = () => {
-      const id = Number(inp.value.trim().replace(/\D/g, ""));
-      this.matchInput = inp.value;
-      if (id > 0) void this.openMatch(id, this.settings.account);
-    };
-    go.addEventListener("click", run);
-    inp.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") run();
-    });
-    c.append(inp, go, el("p", "rv-note", "Any parsed match: pick any player, allies and opponents."));
-    return c;
-  }
-
-  /** a review from the history, without the match loaded: offer the others. */
-  private otherPlayersButton(r: MatchReview): HTMLElement {
-    const b = el("button", "g-btn rv-others", "Other players in this match…") as HTMLButtonElement;
-    b.type = "button";
-    b.disabled = this.busy;
-    b.addEventListener("click", () => void this.openMatch(r.matchId, r.account, r));
-    return b;
-  }
-
   /** Radiant / Dire rows: a chip per player; private profiles are disabled. */
   private switcher(o: NonNullable<ReviewView["open"]>): HTMLElement {
     const box = el("div", "rv-sw");
@@ -393,19 +227,14 @@ export class ReviewView {
         const name = acc === me && me ? "you" : !ok ? "no id" : p.steamAccount?.isAnonymous ? "private profile" : p.steamAccount?.name ?? "player";
         t.append(el("span", "rv-sw-n", `${name}${state === " loading" ? " · loading…" : state === " done" ? " · ✓" : state === " failed" ? " · failed" : ""}`));
         b.append(img, t);
-        if (ok && acc) b.addEventListener("click", () => void this.selectPlayer(acc));
+        if (ok && acc) b.addEventListener("click", () => this.selectPlayer(acc));
         row.append(b);
       }
       box.append(row);
     }
     const open = s.players.filter((p) => openPlayer(p) && p.steamAccountId);
-    const left = open.filter((p) => !o.reviews.has(p.steamAccountId!)).length;
-    const all = el("button", "g-btn", left ? `Analyse all (${left} left · ${left * 4} requests)` : `All ${open.length} players analysed`) as HTMLButtonElement;
-    all.type = "button";
-    all.disabled = !left || o.loading.size > 0;
-    all.addEventListener("click", () => void this.analyseAll());
     const foot = el("div", "rv-sw-foot", "");
-    foot.append(all, el("span", "muted", ` ${open.length} of ${s.players.length} players readable · match ${o.id}`));
+    foot.append(el("span", "muted", `${open.length} of ${s.players.length} players readable · match ${o.id}`));
     box.append(foot);
     return box;
   }
@@ -547,8 +376,6 @@ export class ReviewView {
       if (o.expanded.has(x.slot)) o.expanded.delete(x.slot);
       else {
         o.expanded.add(x.slot);
-        // the build and main points need the player's events (4 requests, once)
-        if (x.account && !o.reviews.has(x.account)) void this.selectPlayer(x.account, false);
       }
       this.render();
     });
@@ -596,44 +423,6 @@ export class ReviewView {
     });
     td.append(open);
     return tr;
-  }
-
-  private matchList(): HTMLElement {
-    const c = card("Recent matches");
-    if (!this.recent.length) {
-      c.append(el("p", "muted", this.settings.token ? (this.busy ? "Loading…" : "No matches loaded.") : "Save your token first."));
-      return c;
-    }
-    const reviewed = new Set(this.mine().map((r) => r.matchId));
-    const ul = el("ul", "rv-list");
-    for (const m of this.recent) {
-      const p = m.players?.[0];
-      const hero = p ? this.d.heroOf(p.heroId) : "";
-      const li = el("li", `rv-m${p?.isVictory ? " win" : " loss"}${this.current?.matchId === m.id ? " on" : ""}`);
-      const img = document.createElement("img");
-      img.src = this.d.heroImg(hero);
-      img.alt = "";
-      li.append(img);
-      const info = el("span", "rv-mi", "");
-      info.append(el("b", "", this.d.heroLabel(hero)), el("span", "muted", ` ${p ? `${p.kills}/${p.deaths}/${p.assists}` : ""} · ${modeLabel(m)} · ${m.durationSeconds ? mmss(m.durationSeconds) : ""}`));
-      li.append(info);
-      const b = el("button", "g-btn", reviewed.has(m.id) ? "Open" : "Analyse") as HTMLButtonElement;
-      b.type = "button";
-      b.disabled = this.busy || !m.parsedDateTime;
-      if (!m.parsedDateTime) b.title = "STRATZ has not parsed this match yet - try again in a few minutes";
-      b.addEventListener("click", () => {
-        const old = this.mine().find((r) => r.matchId === m.id);
-        if (old) {
-          this.current = old;
-          if (this.open?.id !== m.id) this.open = undefined;
-          this.render();
-        } else void this.analyse(m.id);
-      });
-      li.append(b);
-      ul.append(li);
-    }
-    c.append(ul);
-    return c;
   }
 
   private report(r: MatchReview): HTMLElement {
@@ -926,23 +715,9 @@ function findingRow(f: Finding, area = true, n?: number): HTMLElement {
   return r;
 }
 
-function modeLabel(m: RecentMatch): string {
-  const g = (m.gameMode ?? "").toUpperCase();
-  const l = (m.lobbyType ?? "").toUpperCase();
-  if (g.includes("TURBO")) return "turbo";
-  if (l.includes("UNRANKED")) return "normal"; // contains "RANKED"
-  return l.includes("RANKED") ? "ranked" : "normal";
-}
 function pctDelta(v: number, b: number): string {
   const d = Math.round((v / b - 1) * 100);
   return `${d >= 0 ? "+" : ""}${d}%`;
-}
-function errText(e: unknown): string {
-  if (e instanceof StratzError) {
-    if (e.kind === "network") return `${e.message}. Start it in the app folder: npm run companion`;
-    return e.message;
-  }
-  return String(e);
 }
 function el(tag: string, cls: string, text = ""): HTMLElement {
   const e = document.createElement(tag);

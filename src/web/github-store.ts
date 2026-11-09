@@ -1,7 +1,7 @@
 // =============================================================================
 //  Matches fetched by the "Review a match" workflow (ADR-031): encrypted files on
 //  the public `review-data` branch, opened in the browser with the site key the
-//  unlock screen derived (window.__DOTA_KEY). No companion, no STRATZ call here.
+//  unlock screen derived (window.__DOTA_KEY). No STRATZ call from the page.
 // =============================================================================
 
 import type { StratzHealth, StratzMe, StratzPositions, StratzSummary, StratzVision } from "../review.js";

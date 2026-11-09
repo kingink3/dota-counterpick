@@ -1,6 +1,6 @@
 # Review a match (ADR-031): fetches one match with every player from STRATZ and adds
 # it, encrypted with the site password (APP_PASSWORD), to the `review-data` branch.
-# The site (Review -> From GitHub) lists and opens it - no local companion needed.
+# The site (Review -> From GitHub) lists and opens it - the only way a match reaches the page.
 # Run it by hand: Actions -> "Review a match" -> Run workflow.
 #   match_id empty = the token owner's latest parsed match.
 # Note: in a public repository the run and its inputs are public (the match id).

@@ -15,8 +15,6 @@ import { archetypeOf, resolve as resolveDraft } from "../resolver.js";
 import { genericCombos, roleFit, type RoleFit } from "../combos.js";
 import { heroLabel } from "../explain.js";
 import { heroImageUrlByValve, heroValveName } from "./hero-art.js";
-import { AutoInputAdapter, defaultBridgeUrl, type AutoStatus, type DraftPatch } from "./auto-input.js";
-import type { GamePhase, GsiSnapshot } from "../gsi.js";
 import { buildItemTemplates, buildTemplates, ScreenReader, type ScreenStatus } from "./screen-reader.js";
 import { GameView } from "./game-view.js";
 import { ReviewView } from "./review-view.js";
@@ -75,7 +73,7 @@ const state: UIState = {
 let kb: KnowledgeBase;
 let grid: GridHero[] = [];
 const byEngineId = new Map<string, GridHero>();
-/** roster valve (== GSI npc name minus prefix) -> engineId, for the auto-input adapter. */
+/** roster valve name -> engineId (screen reading). */
 const byValve = new Map<string, string>();
 
 /** Pages build (scripts/build-pages.ts): data arrives decrypted in memory, not by fetch. */
@@ -133,7 +131,6 @@ async function boot(): Promise<void> {
   buildModeNav();
   buildGameView();
   buildReviewView();
-  buildAutoInput();
   buildScreenInput();
   render();
 }
@@ -1271,161 +1268,16 @@ function reasonItem(reason: Reason, rec: Recommendation): HTMLElement {
 }
 
 // ---------------------------------------------------------------------------
-//  Auto-input (ADR-013): GSI bridge -> DraftPatch -> same UI state as the grid.
-//  GSI (player mode) only sees YOUR hero, so it fills "My team" + the ★ myHero;
-//  enemies stay manual. Every auto change remains editable by hand.
-// ---------------------------------------------------------------------------
-
-const AUTO_KEY = "dotaapp.autoInput";
-let auto: AutoInputAdapter | undefined;
-let autoStatus: AutoStatus = { kind: "off" };
-let lastSnap: GsiSnapshot | undefined;
-/** valve name last applied from GSI - re-apply only when the game says something new,
- *  so a manual un-star / removal is not immediately overridden. */
-let lastAutoHero: string | undefined;
-/** engineId the adapter itself added to allies (removed again on a repick/swap). */
-let autoAddedAlly: string | undefined;
-
-const PHASE_LABEL: Record<GamePhase, string> = {
-  idle: "in menus",
-  loading: "loading",
-  hero_selection: "hero pick",
-  strategy: "strategy time",
-  pre_game: "pre-game",
-  in_progress: "in game",
-  post_game: "post-game",
-  unknown: "in match",
-};
-
-function readAutoPref(): boolean | undefined {
-  try {
-    const v = localStorage.getItem(AUTO_KEY);
-    return v === null ? undefined : v === "1";
-  } catch {
-    return undefined;
-  }
-}
-function writeAutoPref(on: boolean): void {
-  try {
-    localStorage.setItem(AUTO_KEY, on ? "1" : "0");
-  } catch {
-    /* storage unavailable - preference just isn't remembered */
-  }
-}
-
-function buildAutoInput(): void {
-  const btn = document.querySelector<HTMLElement>("#auto-btn");
-  if (!btn) return; // markup without the auto-input chip
-  if (BUNDLE?.pages) {
-    // hosted build: no local bridge, and the CSP blocks 127.0.0.1 anyway
-    for (const sel of ["#auto-btn", "#auto-status", ".auto-box .sep"]) {
-      document.querySelector<HTMLElement>(sel)?.remove();
-    }
-    return;
-  }
-  const url = defaultBridgeUrl();
-  auto = new AutoInputAdapter(url, {
-    onPatch: applyAutoPatch,
-    onStatus: (st) => {
-      autoStatus = st;
-      if (st.kind === "live" && st.snap) lastSnap = st.snap;
-      renderAutoStatus();
-    },
-  });
-  btn.addEventListener("click", () => {
-    if (auto!.running) auto!.stop();
-    else auto!.start();
-    writeAutoPref(auto!.running);
-    renderAutoStatus();
-  });
-  // default ON when the page is served by the bridge itself (same origin)
-  const pref = readAutoPref();
-  const servedByBridge = url === window.location.origin;
-  if (pref ?? servedByBridge) auto.start();
-  renderAutoStatus();
-}
-
-function applyAutoPatch(p: DraftPatch): void {
-  lastSnap = p.snap;
-  let changed = false;
-  if (p.team && sideSource !== "manual") {
-    const side: Side = p.team === "radiant" ? "left" : "right";
-    sideSource = "gsi";
-    if (screenSide !== side) {
-      screenSide = side;
-      syncScreen(true);
-      changed = true;
-    }
-  }
-  if (p.newMatch) {
-    state.enemies.clear();
-    state.allies.clear();
-    state.myHero = undefined;
-    lastAutoHero = undefined;
-    autoAddedAlly = undefined;
-    changed = true;
-  }
-  if (p.myHeroValve && p.myHeroValve !== lastAutoHero) {
-    const id = byValve.get(p.myHeroValve);
-    if (id) {
-      lastAutoHero = p.myHeroValve;
-      // repick / swap: drop the hero we auto-added before
-      if (autoAddedAlly && autoAddedAlly !== id) {
-        state.allies.delete(autoAddedAlly);
-        if (state.myHero === autoAddedAlly) state.myHero = undefined;
-        autoAddedAlly = undefined;
-      }
-      state.enemies.delete(id); // can't be on both sides
-      if (!state.allies.has(id) && state.allies.size < MAX_TEAM) {
-        state.allies.add(id);
-        autoAddedAlly = id;
-      }
-      if (state.allies.has(id)) state.myHero = id;
-      changed = true;
-    }
-  }
-  if (changed) render();
-  renderAutoStatus();
-}
-
-function renderAutoStatus(): void {
-  const btn = document.querySelector<HTMLElement>("#auto-btn");
-  const txt = document.querySelector<HTMLElement>("#auto-status");
-  if (!btn || !txt) return;
-  const on = auto?.running ?? false;
-  btn.classList.toggle("on", on);
-  btn.textContent = on ? "GSI: on" : "GSI: off";
-  const st = on ? autoStatus : ({ kind: "off" } as AutoStatus);
-  txt.dataset.kind = st.kind;
-  if (st.kind === "off") {
-    txt.textContent = "manual input";
-    txt.title = "Turn on to read your hero from Dota (GSI) via the local bridge";
-  } else if (st.kind === "connecting") {
-    txt.textContent = "bridge offline - run npm run gsi";
-    txt.title = `Connecting to ${st.url}`;
-  } else if (st.kind === "waiting") {
-    txt.textContent = "bridge up - waiting for Dota";
-    txt.title = "No GSI data yet: is -gamestateintegration set and the cfg installed (npm run gsi -- --install)?";
-  } else {
-    const s = lastSnap;
-    const hero = s?.myHeroValve ? labelFor(byValve.get(s.myHeroValve) ?? s.myHeroValve) : "no hero yet";
-    const bits = [hero, s ? PHASE_LABEL[s.phase] : "", s?.team ?? ""].filter(Boolean);
-    txt.textContent = "live - " + bits.join(" - ");
-    txt.title = s?.matchId ? `match ${s.matchId}` : "GSI connected";
-  }
-}
-
-// ---------------------------------------------------------------------------
 //  Screen reading (ADR-013 P1): screen share -> top-bar portraits -> draft.
 //  Radiant is always the LEFT block of the top bar, Dire the RIGHT one; which
-//  block is "your team" comes from the side buttons (or GSI team, if on).
+//  block is "your team" comes from the side buttons.
 // ---------------------------------------------------------------------------
 
 let screen: ScreenReader | undefined;
 let screenStatus: ScreenStatus = { kind: "off" };
 let screenSide: Side | undefined;
-/** where the side came from: the preview ghost (auto), GSI, or a click (manual wins). */
-let sideSource: "auto" | "gsi" | "manual" | undefined;
+/** where the side came from: the preview ghost (auto) or a click (manual wins). */
+let sideSource: "auto" | "manual" | undefined;
 /** your slot from the preview ghost; its hero becomes the ★ once. */
 let mineSlot: { side: Side; index: number } | undefined;
 let mineApplied: string | undefined;
@@ -1550,13 +1402,11 @@ function applyScreen(c: ScreenChange): void {
     state.myHero = undefined;
     myItems = undefined;
     screenOwned.clear();
-    lastAutoHero = undefined;
-    autoAddedAlly = undefined;
     lastScreen = undefined;
     mineSlot = c.mine;
     mineApplied = undefined;
-    // a new match can put you on the other side: forget a side not given by GSI
-    if (sideSource !== "gsi") {
+    // a new match can put you on the other side: forget a side not set by hand
+    {
       screenSide = c.mine?.side;
       sideSource = c.mine ? "auto" : undefined;
     }
@@ -1566,7 +1416,7 @@ function applyScreen(c: ScreenChange): void {
   const prevSide = screenSide;
   if (c.mine) {
     mineSlot = c.mine;
-    if (sideSource !== "manual" && sideSource !== "gsi") {
+    if (sideSource !== "manual") {
       screenSide = c.mine.side;
       sideSource = "auto";
     }

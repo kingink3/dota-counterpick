@@ -14,7 +14,7 @@
 //
 //  A Content-Security-Policy (meta) pins the page to its own origin: connect-src
 //  'self', no third-party scripts, so the screen-reading code can never send frames
-//  anywhere. GSI (needs a local bridge on 127.0.0.1) is off in this build.
+//  anywhere. Nothing local is called: no GSI, no companion (ADR-034).
 // =============================================================================
 
 import { createHash, webcrypto } from "node:crypto";
@@ -86,8 +86,8 @@ async function main(): Promise<void> {
     "style-src 'unsafe-inline'",
     "img-src 'self' blob:",
     "font-src 'self'",
-    // the local companion (match review proxy, ADR-029) on this PC; GitHub raw: encrypted matches (ADR-031)
-    "connect-src 'self' http://127.0.0.1:5174 https://raw.githubusercontent.com",
+    // GitHub raw: encrypted matches (ADR-031); nothing on 127.0.0.1 (ADR-034)
+    "connect-src 'self' https://raw.githubusercontent.com",
     "base-uri 'none'",
     "form-action 'none'",
   ].join("; ");

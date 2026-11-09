@@ -43,10 +43,7 @@
       .mode-btn:hover { color: var(--text); }
       .mode-btn.active { color: var(--text); border-bottom-color: var(--gold); }
       .auto-box { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 13px; }
-      #auto-btn { background: var(--panel); border: 1px solid var(--line); color: var(--muted);
-        border-radius: 3px; padding: 4px 10px; font: 600 14px/1.2 var(--cond); cursor: pointer; }
-      #auto-btn.on { color: var(--text); border-color: var(--ally); }
-      #auto-status, #screen-status { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 26vw; }
+      #screen-status { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 26vw; }
       #screen-btn { background: var(--panel); border: 1px solid var(--line); color: var(--text);
         border-radius: 3px; padding: 4px 10px; font: 600 14px/1.2 var(--cond); cursor: pointer; }
       #screen-btn.on { border-color: var(--ally); background: #26341b; }
@@ -58,12 +55,6 @@
       .link { background: none; border: 0; color: var(--muted); font-size: 13px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 0; }
       .link:hover { color: var(--text); }
       .sep { width: 1px; height: 20px; background: var(--line); }
-      #auto-status::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%;
-        margin-right: 6px; background: var(--line2); }
-      #auto-status[data-kind="connecting"]::before { background: var(--enemy); }
-      #auto-status[data-kind="waiting"]::before { background: var(--gold); }
-      #auto-status[data-kind="live"]::before { background: var(--good); box-shadow: 0 0 6px var(--good); }
-
       /* ---------- game tab: a dense second-monitor panel ---------- */
       .game { margin: 0 auto; padding: 18px; }
       .game-head { display: flex; gap: 28px; align-items: center; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
@@ -491,9 +482,7 @@
         .team.enemy .team-l { justify-content: flex-start; }
         .team.enemy .slots { margin-left: 0; }
         .combo-grid { grid-template-columns: 1fr; }
-        #auto-status, #screen-status, #screen-test, .sep { display: none; }
-      }
-      @media (max-width: 560px) {
+        @media (max-width: 560px) {
         .top { gap: 10px; padding: 0 12px; } .brand h1 { display: none; }
         .team, .picker, .recs { padding-left: 12px; padding-right: 12px; }
         .roster { grid-template-columns: 1fr; }
@@ -536,9 +525,6 @@
         <span id="screen-status" data-kind="off"></span>
         <button id="screen-test" type="button" class="link" title="Check recognition on a saved screenshot of the draft">Test a screenshot</button>
         <input id="screen-file" type="file" accept="image/*" hidden />
-        <span class="sep" aria-hidden="true"></span>
-        <button id="auto-btn" type="button" title="Optional: Dota Game State Integration via the local bridge">GSI: off</button>
-        <span id="auto-status" data-kind="off">manual input</span>
       </div>
     </header>
 

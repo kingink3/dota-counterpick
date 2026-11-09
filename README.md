@@ -269,9 +269,11 @@ off, with defaults per position.
 
 ### Review: plan vs fact (ADR-029)
 
-Run the local companion (`npm run companion`), open **Review**, paste your STRATZ token
-(stratz.com/api; the Steam account id is read from it) and press **Analyse** on a match.
-The report shows:
+On GitHub, Actions -> **Review a match** -> Run workflow (a Match ID, or empty for your
+latest). In ~1-1.5 min it fetches all ten players and stores them encrypted with the site
+password on the `review-data` branch; open them in Review -> **From GitHub** (ADR-031).
+Note: the run and its Match ID are visible in the public repository. Nothing runs on your
+computer and the page holds no STRATZ token (ADR-034). The report shows:
 - the plan the app would have made for that draft vs what you bought and when;
 - last hits, networth and XP vs Crusader-Ancient averages for your hero and position;
 - every death (in their power window? alone? with BKB / Blink ready? with a heal? with
@@ -283,18 +285,9 @@ The report shows:
   outnumbered / deep deaths (ADR-029b);
 
 Any player of the match can be reviewed - your allies and the opponents, private profiles
-included: use the player switcher above the report, or **Match by ID** for any parsed match
-(ADR-029c). One token is enough. **Match overview** grades all ten (who played well, who has
+included: use the player switcher above the report (ADR-029c). **Match overview** grades all ten (who played well, who has
 work to do); **Copy for Discord / Telegram** turns a review into a short message for a
 friend. Supports get observers / sentries / enemy wards destroyed / stacks (ADR-029d).
-
-**Without the companion (ADR-031):** on GitHub, Actions -> **Review a match** -> Run workflow
-(a Match ID, or empty for your latest). In ~1-1.5 min it fetches all ten players and stores
-them encrypted with the site password on the `review-data` branch; open them in Review ->
-**From GitHub**. Note: the run and its Match ID are visible in the public repository.
-
-STRATZ does not accept calls from a web page, so the companion forwards them. The token
-and the history stay in your browser.
 
 ### Item plan and power windows (ADR-027)
 
@@ -311,26 +304,6 @@ timers.
 Data: Actions -> "Fetch OpenDota stats" -> `opendota-raw` branch -> `scripts/build-item-stats.ts`
 -> `data/item-stats.json`.
 
-## Auto-input: local companion (ADR-013, optional)
-
-Reads **your** hero, game phase, team and match id from Dota 2 Game State
-Integration and fills "My team" + ★ automatically. Enemies stay manual (GSI in
-player mode does not expose them; screen capture is P1).
-
-```bash
-npm run gsi -- --install          # once: writes the GSI cfg into your Dota install
-                                  #   (or: --install "D:\SteamLibrary\steamapps\common\dota 2 beta")
-# Steam → Dota 2 → Properties → Launch options:  -gamestateintegration   (restart Dota)
-npm run companion                 # build web + bridge → open http://127.0.0.1:5174
-```
-
-- The page served by the bridge turns auto-input on by default; the header chip
-  shows `bridge offline` / `waiting for Dota` / `live - <hero> - <phase>`.
-- `npm run serve` (:5173) still works; the chip then connects to `127.0.0.1:5174`.
-  Other port: `npm run gsi -- --port 5200` (re-run `--install`), page `?gsi=http://127.0.0.1:5200`.
-- A new match id clears the draft; manual edits always win until the game reports a change.
-- Debug: `http://127.0.0.1:5174/health`. The auth token lives in `.gsi-token` (gitignored).
-
 ## Hosted build (GitHub Pages, password-protected) — ADR-019
 
 Every push to `main` runs `.github/workflows/pages.yml`: tests → `npm run build:pages`
@@ -340,7 +313,7 @@ PBKDF2-SHA256(password, 600k)); the site serves only an unlock screen + `app.bin
 - Password: repo secret **`APP_PASSWORD`** (≥ 12 chars; the build refuses without it).
   Use a long passphrase - `app.bin` is public and can be attacked offline.
 - "Remember on this device" keeps the derived key in localStorage (per browser).
-- GSI is disabled in the hosted build; screen reading works (HTTPS).
+- Nothing local is called (no GSI, no companion, ADR-034); screen reading works (HTTPS).
 - CSP pins the page to its own origin (`connect-src 'self'`, no third-party scripts).
 - The **repository is public**: source, KB and data are readable there - the password
   protects the hosted app, not the code.
