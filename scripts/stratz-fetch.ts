@@ -48,6 +48,16 @@ async function gql<T>(query: string, variables: Record<string, unknown> = {}): P
       await new Promise((r) => setTimeout(r, attempt * 20_000));
       continue;
     }
+    // "more than 2 IP Addresses every 15 minutes ... frees up ... at 2026-11-09 10:32:28 UTC":
+    // Actions runners change IP, so back-to-back runs hit it - wait for the slot once (ADR-044)
+    const ipFree = res.status === 403 ? /IP Address[\s\S]*?at (\d{4}-\d\d-\d\d \d\d:\d\d:\d\d) UTC/.exec(text) : null;
+    if (ipFree && attempt < 3) {
+      const until = Date.parse(`${ipFree[1]!.replace(" ", "T")}Z`) + 10_000;
+      const ms = Math.min(16 * 60_000, Math.max(5_000, until - Date.now()));
+      console.log(`STRATZ: 2 IPs per 15 min in use, waiting ${Math.round(ms / 1000)} s for a slot`);
+      await new Promise((r) => setTimeout(r, ms));
+      continue;
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status}: ${text.slice(0, 400)}`);
     const body = JSON.parse(text) as { data?: T; errors?: Array<{ message: string }> };
     if (body.errors?.length && !body.data) throw new Error(body.errors.map((e) => e.message).join("; "));
