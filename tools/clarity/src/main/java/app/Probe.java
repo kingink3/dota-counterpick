@@ -17,7 +17,7 @@ import skadistats.clarity.source.MappedFileSource;
 @UsesEntities
 @UsesStringTable("EntityNames")
 public class Probe {
-  static final Pattern KEEP = Pattern.compile("(?i)time|health|mana|visib|lifestate|hitems|charges|playerid|gold|gametime|gamestart|replicat|nameStringable|cellx|celly|vecorigin|selectedhero|teamnum|level|cooldown|neutral");
+  static final Pattern KEEP = Pattern.compile("(?i)GameStartTime|GameEndTime|health|mana|visib|lifestate|hitems|charges|playerid|gold|gametime|gamestart|replicat|nameStringable|cellx|celly|vecorigin|selectedhero|teamnum|level|cooldown|neutral");
   boolean done;
   @Insert private Context ctx;
   @Insert private Entities es;
@@ -43,10 +43,9 @@ public class Probe {
     if (done) return;
     Entity rules = one("CDOTAGamerulesProxy");
     if (rules == null) return;
-    if (!rulesShown) { rulesShown = true; dump("rules (first)", rules); }
     if (ctx.getTick() < 30 * 60 * 30) return; // ~30 min into the file: past the horn
     done = true;
-    System.out.println("tick " + ctx.getTick());
+    System.out.println("tick " + ctx.getTick() + " -> game time " + (ctx.getTick() / 30f - (Float) get(rules, "m_pGameRules.m_flGameStartTime")));
     dump("rules", rules);
     List<Entity> heroes = es.stream().filter(e -> e.getDtClass().getDtName().startsWith("CDOTA_Unit_Hero_")).toList();
     int n = 0;
