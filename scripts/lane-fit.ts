@@ -50,7 +50,7 @@ async function main() {
   for (const m of ms) {
     const side = (rad: boolean, lane: string) => (m.players ?? []).filter((p) => p.isRadiant === rad && p.lane === lane);
     for (const [name, rl, dl, key] of [["bottom", "SAFE_LANE", "OFF_LANE", "bottomLaneOutcome"], ["mid", "MID_LANE", "MID_LANE", "midLaneOutcome"], ["top", "OFF_LANE", "SAFE_LANE", "topLaneOutcome"]] as const) {
-      const lab = (m as unknown as Record<string, string>)[key];
+      const lab = (m as unknown as Record<string, string | undefined>)[key] ?? "";
       if (!(lab in CLS)) continue;
       const R = side(true, rl), D = side(false, dl);
       if (!R.length || !D.length) continue;
