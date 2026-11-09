@@ -225,7 +225,7 @@ export function adviceText(r: MatchReview, label: (hero: string) => string, opts
   }
   if (rest.length) {
     lines.push("", fix.length ? "**Also:**" : "**Work on:**");
-    for (const g of rest) lines.push(`${++n}. ${g.title} - ${first(g.detail)}`);
+    for (const g of rest) lines.push(`${++n}. ${g.title}${g.confidence === "possible" ? " (check the replay)" : ""} - ${first(g.detail)}`);
   }
   if (!growth.length) lines.push("", "Nothing in the checks cost this game.");
   const good = r.strengths ?? r.findings.filter((f) => f.good).sort((a, b) => b.severity - a.severity).slice(0, 3);

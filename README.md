@@ -286,6 +286,11 @@ computer and the page holds no STRATZ token (ADR-034). The report shows:
   idle seconds; who your disables went on and whether the target died; front-most /
   outnumbered / deep deaths (ADR-029b);
 
+Every finding carries a **confidence** (ADR-036): *confirmed* (straight from the events),
+*likely* (strong indirect evidence) or *possible* (a heuristic - "check the replay"); the
+badge's tooltip says what the data could not see (stuns on you, vision, cooldown reduction…).
+A *possible* finding never goes to **Fix first**.
+
 Any player of the match can be reviewed - your allies and the opponents, private profiles
 included: use the player switcher above the report (ADR-029c). **Match overview** grades all ten (who played well, who has
 work to do); **Copy for Discord / Telegram** turns a review into a short message for a

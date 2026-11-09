@@ -192,6 +192,99 @@ export interface Finding {
   tier?: 1 | 2;
   /** a deviation with no sign it cost anything: shown in its section, not as a problem. */
   note?: boolean;
+  /** how sure the finding is (ADR-036) - separate from severity (what it costs):
+   *  confirmed = the events show it directly; likely = strong indirect evidence;
+   *  possible = a heuristic, check the moment in the replay. Possible never goes to Fix first. */
+  confidence?: Confidence;
+  /** what the data could not see, for likely / possible findings. */
+  missingContext?: MissingContext[];
+}
+export type Confidence = "confirmed" | "likely" | "possible";
+/** self_disabled: stuns / silences / hexes on you are not in the data; target_vision: whether the
+ *  target was visible; cdr: cooldown reduction; range_approx: cast range + walking distance;
+ *  position_sampling: positions are sampled, not continuous; causality: a correlation, the cause
+ *  is not shown; role_context: role, split push, objectives; historical_stat: a statistic over
+ *  other games, not this one; benchmark_mode: averages from ranked games, this is another mode. */
+export type MissingContext =
+  | "self_disabled"
+  | "target_vision"
+  | "cdr"
+  | "range_approx"
+  | "position_sampling"
+  | "causality"
+  | "role_context"
+  | "historical_stat"
+  | "benchmark_mode";
+export const MISSING_LABEL: Record<MissingContext, string> = {
+  self_disabled: "stuns / silences on you are not in the data",
+  target_vision: "whether the target was visible is unknown",
+  cdr: "cooldown reduction is not counted",
+  range_approx: "cast range is approximate (+ walking distance)",
+  position_sampling: "positions are sampled, not continuous",
+  causality: "a link, not a proven cause",
+  role_context: "role, split push and objectives are not weighed",
+  historical_stat: "based on other games' statistics, not this match",
+  benchmark_mode: "averages are from ranked games, this match is another mode",
+};
+
+/** default confidence per finding id (prefix before ':' for per-spell ids), ADR-036. */
+const CONFIDENCE: Record<string, [Confidence, MissingContext[]?]> = {
+  time_dead: ["confirmed"],
+  many_deaths: ["confirmed"],
+  died_with_gold: ["confirmed"],
+  ward_walk: ["confirmed"],
+  low_cs10: ["confirmed"],
+  good_cs10: ["confirmed"],
+  low_nw20: ["confirmed"],
+  behind_late: ["confirmed"],
+  slow_core: ["confirmed"],
+  fast_core: ["confirmed"],
+  few_power_runes: ["confirmed"],
+  few_wards: ["confirmed"],
+  good_wards: ["confirmed"],
+  few_stacks: ["confirmed"],
+  no_dewards: ["confirmed"],
+  good_dewards: ["confirmed"],
+  fountain_trips: ["confirmed"],
+  no_bounties: ["confirmed"],
+  own_build: ["confirmed"],
+  high_kp: ["confirmed"],
+  counter_late: ["likely", ["causality"]],
+  counter_missing: ["likely", ["causality"]],
+  farm_stall: ["likely", ["position_sampling"]],
+  died_alone: ["likely", ["position_sampling"]],
+  died_with_item_ready: ["likely", ["self_disabled", "target_vision"]],
+  ult_unused: ["likely", ["self_disabled", "cdr"]],
+  heal_unused: ["likely", ["self_disabled"]],
+  silent_death: ["likely", ["self_disabled"]],
+  silent_battles: ["likely", ["self_disabled", "target_vision"]],
+  front_deaths: ["likely", ["position_sampling"]],
+  outnumbered: ["likely", ["position_sampling"]],
+  deep_deaths: ["likely", ["position_sampling"]],
+  battle_mana: ["likely", ["cdr"]],
+  targets: ["likely", ["causality"]],
+  convert: ["likely", ["causality"]],
+  idle: ["possible", ["self_disabled", "target_vision", "cdr", "range_approx"]],
+  low_kp: ["possible", ["role_context"]],
+  died_in_their_window: ["possible", ["historical_stat"]],
+  low_imp: ["possible", ["role_context"]],
+  high_imp: ["possible", ["role_context"]],
+};
+/** findings judged against ranked averages: only possible when the mode does not match. */
+const BENCH_IDS = new Set(["low_cs10", "good_cs10", "low_nw20", "behind_late", "slow_core", "fast_core", "many_deaths", "farm_stall"]);
+/** problems are ranked by severity x this weight: a cheap sure thing can beat a costly guess. */
+const CONF_WEIGHT: Record<Confidence, number> = { confirmed: 1, likely: 0.85, possible: 0.55 };
+
+function assess(f: Finding, comparable: boolean): void {
+  if (!f.confidence) {
+    const [c, m] = CONFIDENCE[f.id] ?? CONFIDENCE[f.id.split(":")[0]!] ?? ["likely", ["causality"]];
+    f.confidence = c;
+    if (m?.length) f.missingContext = [...m];
+  }
+  if (!comparable && BENCH_IDS.has(f.id)) {
+    f.confidence = "possible";
+    f.missingContext = [...new Set([...(f.missingContext ?? []), "benchmark_mode" as const])];
+  }
 }
 export interface PlanCheck {
   key: string;
@@ -757,8 +850,11 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
     });
   }
 
-  const problems = findings.filter((f) => !f.good && !f.note).sort((a, b) => b.severity - a.severity);
-  const fixFirst = problems.filter((f) => f.tier === 1).slice(0, FIX_FIRST);
+  for (const f of findings) assess(f, comparable);
+  const weight = (f: Finding) => f.severity * CONF_WEIGHT[f.confidence ?? "likely"];
+  const problems = findings.filter((f) => !f.good && !f.note).sort((a, b) => weight(b) - weight(a));
+  // a guess is never the first thing to fix: it waits in Work on with "check the replay"
+  const fixFirst = problems.filter((f) => f.tier === 1 && f.confidence !== "possible").slice(0, FIX_FIRST);
   const workOn = problems.filter((f) => !fixFirst.includes(f)).slice(0, WORK_ON);
   const strengths = findings.filter((f) => f.good).sort((a, b) => b.severity - a.severity).slice(0, 3);
   const growth = [...fixFirst, ...workOn];
@@ -804,8 +900,12 @@ function battleFindings(b: BattleReport, position?: number): Finding[] {
     const cd = u.cd ? (u.cd[0] === u.cd[1] ? `${u.cd[0]} s` : `${u.cd[1]}-${u.cd[0]} s`) : "?";
     const what =
       u.use === "enemy" ? `with an enemy hero within ${u.reach} range` : u.use === "ally" ? "with an allied core in range losing HP (or in your last 5 s)" : "in your last 5 s before dying";
+    // many repeated chances: unlikely that you were stunned / blind every time (ADR-036)
+    const sure = u.missed >= 4 && share >= 0.6;
     out.push({
       id: `idle:${u.name}`,
+      confidence: sure ? "likely" : "possible",
+      missingContext: ["self_disabled", "target_vision", "cdr", "range_approx"],
       area: "battles",
       severity: clamp(0.1 + 0.25 * share + 0.02 * u.missed + (u.ult ? 0.08 : 0) + (u.use === "save" ? 0.05 : 0), 0.15, 0.45),
       title:

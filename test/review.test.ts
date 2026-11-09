@@ -106,7 +106,25 @@ test("review: plan vs fact, farm, deaths and execution checks", () => {
   assert.ok(ids.includes("died_alone"));
   assert.ok(ids.includes("died_with_gold"));
   assert.ok(r.growth.length > 0 && r.growth.length <= GROWTH);
-  for (const part of [r.fixFirst, r.workOn]) assert.ok(part.every((g, i) => i === 0 || part[i - 1]!.severity >= g.severity), "each tier sorted by severity");
+  const W = { confirmed: 1, likely: 0.85, possible: 0.55 } as const;
+  const w = (f: (typeof r.findings)[number]) => f.severity * W[f.confidence!];
+  for (const part of [r.fixFirst, r.workOn]) assert.ok(part.every((g, i) => i === 0 || w(part[i - 1]!) >= w(g)), "each tier sorted by severity x confidence");
+});
+
+// ADR-036: confidence is separate from severity; a guess is never the first thing to fix.
+test("review: every finding has a confidence; possible ones never reach Fix first", () => {
+  const r = reviewMatch(match(), ACC, ctx);
+  assert.ok(r.findings.every((f) => f.confidence === "confirmed" || f.confidence === "likely" || f.confidence === "possible"));
+  assert.ok(r.fixFirst.every((f) => f.confidence !== "possible"));
+  const byId = new Map(r.findings.map((f) => [f.id, f]));
+  assert.equal(byId.get("died_with_gold")?.confidence, "confirmed", "gold at death is in the events");
+  const alone = byId.get("died_alone");
+  assert.equal(alone?.confidence, "likely");
+  assert.deepEqual(alone?.missingContext, ["position_sampling"]);
+  for (const f of r.findings.filter((x) => x.id.startsWith("idle:"))) {
+    assert.ok(f.confidence === "possible" || f.confidence === "likely");
+    assert.ok(f.missingContext?.includes("self_disabled"), "stuns on you are not in the data");
+  }
 });
 
 test("review: turbo is not compared with ranked timings and averages", () => {

@@ -6,7 +6,7 @@
 // =============================================================================
 
 import { mmss } from "../item-plan.js";
-import { reviewMatch, type Finding, type MatchReview, type ReviewContext } from "../review.js";
+import { MISSING_LABEL, reviewMatch, type Finding, type MatchReview, type ReviewContext } from "../review.js";
 import type { BattleReport, UseStat } from "../review-battles.js";
 import { adviceText, GRADE_LABEL, matchOverview, matchStory, type MatchOverview, type OverviewRow } from "../review-match.js";
 import { resolve } from "../resolver.js";
@@ -688,6 +688,8 @@ function pointRow(f: Finding, n?: number): HTMLElement {
   r.append(el("span", "rv-n", n ? String(n) : "+"));
   const t = el("span", "rv-pt", "");
   t.append(el("b", "", f.title));
+  const tag = confTag(f);
+  if (tag) t.append(tag);
   const first = /^(.+?[.!?])(\s|$)/.exec(f.detail)?.[1] ?? f.detail;
   if (!f.good) t.append(el("span", "rv-det", ` - ${first}`));
   r.append(t);
@@ -708,11 +710,23 @@ function findingRow(f: Finding, area = true, n?: number): HTMLElement {
   const r = el("div", `rv-f${f.good ? " good" : ""}${area ? "" : " flat"}${n ? " num" : ""}`, "");
   if (n) r.append(el("span", "rv-n", String(n)));
   if (area) r.append(el("span", "rv-area", AREA_LABEL[f.area]));
-  r.append(el("b", "", f.title));
+  const head = el("b", "", f.title);
+  const tag = confTag(f);
+  if (tag) head.append(tag);
+  r.append(head);
   const det = el("span", "rv-det", f.detail);
   if (f.times?.length) det.append(el("span", "muted", ` (${f.times.map(mmss).join(", ")})`));
   r.append(det);
   return r;
+}
+
+/** likely / possible badge with what the data could not see (ADR-036); confirmed has none. */
+function confTag(f: Finding): HTMLElement | undefined {
+  if (f.good || !f.confidence || f.confidence === "confirmed") return undefined;
+  const t = el("span", `rv-conf ${f.confidence}`, f.confidence === "likely" ? "likely" : "check the replay");
+  const miss = (f.missingContext ?? []).map((m) => MISSING_LABEL[m]);
+  t.title = (f.confidence === "likely" ? "Strong indirect evidence." : "A heuristic: look at the moment before acting on it.") + (miss.length ? `\nNot in the data: ${miss.join("; ")}.` : "");
+  return t;
 }
 
 function pctDelta(v: number, b: number): string {
