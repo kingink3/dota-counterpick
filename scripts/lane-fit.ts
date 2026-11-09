@@ -42,8 +42,9 @@ async function main() {
   let got = 0, withOutcome = 0, withStats = 0;
   for (let i = 0; i < ids.length; i += 10) {
     try {
-      const d = await gql<{ matches: M[] }>(`{ matches(ids: [${ids.slice(i, i + 10).join(",")}]) { id bottomLaneOutcome midLaneOutcome topLaneOutcome players { isRadiant lane stats { networthPerMinute experiencePerMinute } } } }`);
-      const list = (d.matches ?? []).filter(Boolean);
+      const q = ids.slice(i, i + 10).map((id, k) => `m${k}: match(id: ${id}) { id bottomLaneOutcome midLaneOutcome topLaneOutcome players { isRadiant lane stats { networthPerMinute experiencePerMinute } } }`).join(" ");
+      const d = await gql<Record<string, M | null>>(`{ ${q} }`);
+      const list = Object.values(d).filter((m): m is M => !!m);
       got += list.length;
       withOutcome += list.filter((m) => m.bottomLaneOutcome).length;
       withStats += list.filter((m) => m.players?.every((p) => (p.stats?.networthPerMinute?.length ?? 0) > 12)).length;
