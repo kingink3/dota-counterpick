@@ -673,3 +673,15 @@ test("stat tilt: a hero strong vs everyone gains ~nothing; a real counter gains"
     engine.kb.matchups = real;
   }
 });
+
+// ADR-039: every engine parameter is documented and sits inside its own range.
+test("params: each has a kind, an argument and a range around its value", async () => {
+  const { PARAM_DOCS, P } = await import("../src/params.js");
+  for (const [name, d] of Object.entries(PARAM_DOCS)) {
+    assert.ok(d.why.length >= 40, `${name}: argument`);
+    assert.ok(d.range[0] <= d.value && d.value <= d.range[1], `${name}: ${d.value} in ${d.range}`);
+    assert.equal(P[name as keyof typeof P], d.value, `${name}: live value is the documented one`);
+  }
+  // coupled: an occasional item must pass the plan filter
+  assert.ok(PARAM_DOCS.BUY_FIT_SOME.range[0] >= PARAM_DOCS.PLAN_BUY_FIT_MIN.value);
+});

@@ -11,6 +11,7 @@
 //  Nothing scores without an explanation - that asymmetry IS the product (ADR-012 §4).
 // =============================================================================
 
+import { P } from "./params.js";
 import { buildCensus, type Census } from "./census.js";
 import { evaluateConditions } from "./conditions.js";
 import { TOOL_SCHOOL, type KnowledgeBase } from "./knowledge.js";
@@ -83,13 +84,7 @@ export function resolve(kb: KnowledgeBase, draft: DraftState): EngineResult {
 //  Composition (ADR-023): what YOUR lineup still lacks, and who you face in lane
 // ---------------------------------------------------------------------------
 
-/** gap bonuses are scaled by how much of the allied draft is known. */
-const TEAM_FULL_AT = 3;
-/** damage-mix bonus: max bonus when your team deals (almost) only one school. */
-const DAMAGE_MIX_WEIGHT = 0.3;
-const DAMAGE_MIX_MIN_SHARE = 0.3;
-/** reasons against the enemies you lane against count a little more. */
-const LANE_WEIGHT = 1.25;
+// P.TEAM_FULL_AT, P.DAMAGE_MIX_WEIGHT, P.DAMAGE_MIX_MIN_SHARE, LANE_WEIGHT: src/params.ts (ADR-039)
 
 interface TeamContext {
   read?: TeamRead;
@@ -133,7 +128,7 @@ function readTeam(kb: KnowledgeBase, draft: DraftState): TeamContext {
   return {
     ...(read ? { read } : {}),
     gaps,
-    scale: Math.min(1, allyCodes.length / TEAM_FULL_AT),
+    scale: Math.min(1, allyCodes.length / P.TEAM_FULL_AT),
     physical,
     magic,
     allies: allyCodes.length,
@@ -206,7 +201,7 @@ function teamReasons(team: TeamContext, tags: HeroTags | undefined): Reason[] {
   if (team.allies >= 2 && total > 0) {
     for (const school of ["magic", "physical"] as const) {
       const share = (school === "magic" ? team.magic : team.physical) / total;
-      if (share >= DAMAGE_MIX_MIN_SHARE) continue;
+      if (share >= P.DAMAGE_MIX_MIN_SHARE) continue;
       const c = schoolDamage(tags, school);
       if (c <= 0) continue;
       const other = school === "magic" ? "physical" : "magic";
@@ -215,8 +210,8 @@ function teamReasons(team: TeamContext, tags: HeroTags | undefined): Reason[] {
         basis: "team",
         need: "damage_mix",
         mechanism: `your team deals ${Math.round((1 - share) * 100)}% ${other} damage - one armor or magic-resistance item answers all of it; this pick adds ${school}`,
-        contribution: DAMAGE_MIX_WEIGHT * team.scale * ((DAMAGE_MIX_MIN_SHARE - share) / DAMAGE_MIX_MIN_SHARE) * Math.min(1, c),
-        factors: { edgeWeight: DAMAGE_MIX_WEIGHT, toolWeight: round(c) },
+        contribution: P.DAMAGE_MIX_WEIGHT * team.scale * ((P.DAMAGE_MIX_MIN_SHARE - share) / P.DAMAGE_MIX_MIN_SHARE) * Math.min(1, c),
+        factors: { edgeWeight: P.DAMAGE_MIX_WEIGHT, toolWeight: round(c) },
       });
     }
   }
@@ -303,8 +298,7 @@ const GRANTS: Record<string, string> = {
   manta_style: "self_dispel",
 };
 
-/** the hero's own tool weight at or above this makes an item for the same tool redundant (ADR-027c). */
-const SELF_TOOL = 0.5;
+// SELF_TOOL, SELF_TOOL_FLOOR, MID_CARRY_ATTACK: src/params.ts (ADR-039)
 
 /** Archetype of the hero you play: your selected position wins, else the hero's
  *  first listed position (2 splits into right-click mid vs caster), with curated
@@ -319,7 +313,7 @@ export function archetypeOf(kb: KnowledgeBase, myHero?: string, myRole?: number)
   if (pos === 3) return "offlane";
   if (pos === 2) {
     if (!tags) return undefined; // a mid we know nothing about: don't guess
-    return (tags.reliance.attack_reliant ?? 0) >= 0.6 ? "carry" : "caster";
+    return (tags.reliance.attack_reliant ?? 0) >= P.MID_CARRY_ATTACK ? "carry" : "caster";
   }
   return undefined;
 }
@@ -356,7 +350,7 @@ function finalizeItem(code: string, label: string, reasons: Reason[], fit: ItemF
   const granted = GRANTS[code] ? fit.selfResist?.[GRANTS[code]!] ?? 0 : 0;
   const deduped = reasons.map((r) => {
     const w = Math.max(own(r), r.contribution > 0 ? granted : 0);
-    return w >= SELF_TOOL ? { ...r, contribution: r.contribution * Math.max(0.25, 1 - w), selfHas: true, ...(granted >= SELF_TOOL ? { selfGrant: GRANTS[code] } : {}) } : r;
+    return w >= P.SELF_TOOL ? { ...r, contribution: r.contribution * Math.max(P.SELF_TOOL_FLOOR, 1 - w), selfHas: true, ...(granted >= P.SELF_TOOL ? { selfGrant: GRANTS[code] } : {}) } : r;
   });
   const rec = finalizeRec("item", code, label, undefined, scaleReasons(deduped, m));
   if (fit.info) rec.fit = { ...fit.info, mult: m };
@@ -469,8 +463,7 @@ function rankItems(
 //  Scoring
 // ---------------------------------------------------------------------------
 
-/** synergy contribution per allied combo (modest, so counters still lead). */
-const SYNERGY_WEIGHT = 0.6;
+// SYNERGY_WEIGHT: src/params.ts (ADR-039)
 
 /** Attach the candidate's public-match win rate vs the selected enemies (stat layer,
  *  ADR-005) and its tilt on the rank (ADR-035).
@@ -513,8 +506,8 @@ function attachWinrate(rec: Recommendation, kb: KnowledgeBase, census: Census): 
   if (gapGames === 0) return;
 
   const advantage = gap / gapGames;
-  const confidence = Math.min(1, gapGames / WINRATE_FULL_CONF);
-  const factor = clamp(1 + WINRATE_TILT * advantage * confidence, 0.94, 1.06);
+  const confidence = Math.min(1, gapGames / P.WINRATE_FULL_CONF);
+  const factor = clamp(1 + P.WINRATE_TILT * advantage * confidence, 1 - P.WINRATE_CAP, 1 + P.WINRATE_CAP);
   const kbScore = rec.score;
   rec.score = round(rec.score * factor);
   rec.stat = {
@@ -527,10 +520,7 @@ function attachWinrate(rec: Recommendation, kb: KnowledgeBase, census: Census): 
   };
 }
 
-// Light tiebreaker: the matchup gap only nudges near-tied counters; KB mechanics lead.
-// With a +5 pp gap at full confidence: 1 + 1.2 * 0.05 = x1.06 (the cap).
-const WINRATE_TILT = 1.2;
-const WINRATE_FULL_CONF = 150; // games for full confidence in the tilt
+// WINRATE_TILT / WINRATE_CAP / WINRATE_FULL_CONF: src/params.ts (ADR-035, ADR-039)
 
 /** each hero's games-weighted win rate over all its recorded matchups (cached per table). */
 const baseCache = new WeakMap<object, Map<string, number>>();
@@ -569,7 +559,7 @@ function rankSubjects(
   for (const subject of subjects) {
     const reasons = scoreSubject(subject, kb, census).map((r) =>
       team.lane.has(r.enemy)
-        ? { ...r, contribution: r.contribution * LANE_WEIGHT, notes: [...(r.notes ?? []), "lane opponent"] }
+        ? { ...r, contribution: r.contribution * P.LANE_WEIGHT, notes: [...(r.notes ?? []), "lane opponent"] }
         : r,
     );
     if (subject.kind === "hero") reasons.push(...teamReasons(team, subject.tags));
@@ -579,8 +569,8 @@ function rankSubjects(
         enemy: s.partner,
         basis: "synergy",
         mechanism: s.mechanism.trim(),
-        contribution: SYNERGY_WEIGHT,
-        factors: { edgeWeight: SYNERGY_WEIGHT },
+        contribution: P.SYNERGY_WEIGHT,
+        factors: { edgeWeight: P.SYNERGY_WEIGHT },
       });
     }
     // a candidate needs at least one argument FOR it; resilience/exposure alone
@@ -788,12 +778,7 @@ function scoreSubject(
 //  doesn't bury a hero.
 // ---------------------------------------------------------------------------
 
-const RESIST_WEIGHT = 1.0;
-const RISK_WEIGHT = 0.5;
-const BLUNT_WEIGHT = 0.6;
-/** max |sum| per enemy for each two-sided term. */
-const RESIST_CAP = 1.0;
-const RISK_CAP = 0.8;
+// P.RESIST_WEIGHT, P.RISK_WEIGHT, P.BLUNT_WEIGHT, P.RESIST_CAP, RISK_CAP: src/params.ts (ADR-039)
 
 function scoreTwoSided(subject: Subject, kb: KnowledgeBase, census: Census, out: Reason[]): void {
   for (const enemy of census.enemies) {
@@ -817,7 +802,7 @@ function scoreTwoSided(subject: Subject, kb: KnowledgeBase, census: Census, out:
           resistance: code,
           ...(re.tool ? { tool: re.tool } : { reliance: re.reliance }),
           mechanism: re.mechanism,
-          contribution: RESIST_WEIGHT * rw * re.weight * ew,
+          contribution: P.RESIST_WEIGHT * rw * re.weight * ew,
           factors: { resistWeight: rw, edgeWeight: re.weight, enemyWeight: ew },
           ...viaField(re.tool ? census.viaOf(enemy, "tool", re.tool) : census.viaOf(enemy, "reliance", re.reliance!)),
         });
@@ -842,7 +827,7 @@ function scoreTwoSided(subject: Subject, kb: KnowledgeBase, census: Census, out:
             tool: toolCode,
             reliance: edge.target,
             mechanism: edge.mechanism,
-            contribution: -RISK_WEIGHT * tw * edge.weight * cw,
+            contribution: -P.RISK_WEIGHT * tw * edge.weight * cw,
             factors: { toolWeight: tw, edgeWeight: edge.weight, relianceWeight: cw },
             ...viaField(census.viaOf(enemy, "tool", toolCode)),
           });
@@ -865,7 +850,7 @@ function scoreTwoSided(subject: Subject, kb: KnowledgeBase, census: Census, out:
             tool: toolCode,
             resistance: code,
             mechanism: re.mechanism,
-            contribution: -BLUNT_WEIGHT * tw * re.weight * ew,
+            contribution: -P.BLUNT_WEIGHT * tw * re.weight * ew,
             factors: { toolWeight: tw, edgeWeight: re.weight, enemyWeight: ew },
             ...viaField(census.viaOf(enemy, "resist", code)),
           });
@@ -883,7 +868,7 @@ function scoreTwoSided(subject: Subject, kb: KnowledgeBase, census: Census, out:
             reliance: relCode,
             resistance: code,
             mechanism: re.mechanism,
-            contribution: -BLUNT_WEIGHT * cw * re.weight * ew,
+            contribution: -P.BLUNT_WEIGHT * cw * re.weight * ew,
             factors: { relianceWeight: cw, edgeWeight: re.weight, enemyWeight: ew },
             ...viaField(census.viaOf(enemy, "resist", code)),
           });
@@ -891,7 +876,7 @@ function scoreTwoSided(subject: Subject, kb: KnowledgeBase, census: Census, out:
       }
     }
 
-    out.push(...capped(resist, RESIST_CAP), ...capped(risk, RISK_CAP));
+    out.push(...capped(resist, P.RESIST_CAP), ...capped(risk, P.RISK_CAP));
   }
 }
 

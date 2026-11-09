@@ -11,6 +11,7 @@
     "scrape:counters": "tsx scripts/scrape-counters.ts",
     "fetch:portraits": "tsx scripts/fetch-portraits.ts",
     "serve": "npm run build:web && npx --yes serve web -l 5173",
+    "params:report": "tsx scripts/params-report.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.web.json",
     "test": "tsx --test test/engine.test.ts test/screen.test.ts test/coach.test.ts test/combos.test.ts test/items.test.ts test/game.test.ts test/plan.test.ts test/review.test.ts",
     "patch:check": "tsx scripts/patch-check.ts",

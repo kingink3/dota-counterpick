@@ -13,6 +13,7 @@
 //  already standard, which then carries the "vs X" reason).
 // =============================================================================
 
+import { P } from "./params.js";
 import type { Archetype, Recommendation } from "./types.js";
 
 export type Phase = "start" | "early" | "mid" | "late";
@@ -99,11 +100,11 @@ export interface PlanItem {
   coveredBy?: string;
 }
 
-/** fit of a draft answer to the hero: 1 usual, 0.6 occasional (1-5% of games), 0.25 practically never. */
+/** fit of a draft answer to the hero: 1 usual, 0.6 occasional (1-5% of games), 0.25 practically never (ADR-039). */
 export function heroBuyFit(buy: Record<string, number> | undefined, key: string): number {
   if (!buy) return 1;
   const s = buy[key] ?? 0;
-  return s >= 0.05 ? 1 : s >= 0.01 ? 0.6 : 0.25;
+  return s >= P.BUY_COMMON ? 1 : s >= P.BUY_RARE ? P.BUY_FIT_SOME : P.BUY_FIT_NEVER;
 }
 
 export interface PlanPhase {
@@ -316,16 +317,16 @@ export function buildPlan(inp: PlanInput): ItemPlan | undefined {
   // out unless it is very strong, one a teammate usually carries goes down
   const keyOf = (r: Recommendation) => inp.dcKey?.(r.code) ?? r.code;
   const allyCover = (key: string) =>
-    (inp.allies ?? []).find((h) => h !== inp.hero && Object.entries(inp.stats.heroes[h]?.buy ?? {}).some(([k, s]) => s >= 0.25 && (k === key || related(k, key))));
+    (inp.allies ?? []).find((h) => h !== inp.hero && Object.entries(inp.stats.heroes[h]?.buy ?? {}).some(([k, s]) => s >= P.ALLY_BUYS_SHARE && (k === key || related(k, key))));
   const adjusted = (inp.counters ?? [])
-    .filter((r) => (r.fit?.mult ?? 1) >= 0.6 && r.score > 0)
+    .filter((r) => (r.fit?.mult ?? 1) >= P.PLAN_ITEM_FIT_MIN && r.score > 0)
     .map((r) => {
       const key = keyOf(r);
       const f = heroBuyFit(base.buy, key);
       const cover = allyCover(key);
-      return { r, key, f, cover, s: r.score * f * (cover ? 0.5 : 1) };
+      return { r, key, f, cover, s: r.score * f * (cover ? P.ALLY_BUYS_SCALE : 1) };
     })
-    .filter((x) => x.f >= 0.5 || x.r.score >= 3)
+    .filter((x) => x.f >= P.PLAN_BUY_FIT_MIN || x.r.score >= P.PLAN_STRONG_SCORE)
     .sort((a, b) => b.s - a.s);
   const counters = adjusted.map((x) => x.r);
   const meta = new Map(adjusted.map((x) => [x.key, x]));

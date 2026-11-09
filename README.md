@@ -7,6 +7,8 @@ Phase-2 **stat layer** (hero-vs-hero win rates from OpenDota) is layered on top:
 win rate is shown, and the **matchup gap** (actual win rate vs the one expected from both
 heroes' base win rates) tilts the KB score by at most ±6% (ADR-035). The score tooltip
 shows KB score × factor; a strong meta hero gets no bonus for being strong in general.
+Every engine weight, its argument and how much the ranking depends on it: `src/params.ts`,
+[`PARAMS.md`](PARAMS.md) (`npm run params:report`, ADR-039).
 
 The differentiator (per [`DECISIONS.md`](DECISIONS.md)) is **explainability**: every
 recommendation comes with the *mechanism* of why it counters the enemy, not just a

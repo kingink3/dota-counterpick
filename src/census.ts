@@ -6,6 +6,7 @@
 //  This is the team-level context that edge `min_targets` conditions read.
 // =============================================================================
 
+import { P } from "./params.js";
 import type { KnowledgeBase } from "./kb.js";
 import type { HeroTags } from "./types.js";
 
@@ -26,9 +27,8 @@ export interface Census {
   viaOf(enemy: string, kind: "reliance" | "tool" | "resist", code: string): string[] | undefined;
 }
 
-/** an item's offensive tools count a bit less than a hero's own kit (one slot, often
- *  bought for something else). Traits from item_traits.yaml are used as written. */
-export const ITEM_TOOL_SCALE = 0.8;
+/** an item's offensive tools count a bit less than a hero's own kit (ADR-039:
+ *  P.ITEM_TOOL_SCALE). Traits from item_traits.yaml are used as written. */
 
 export function buildCensus(kb: KnowledgeBase, enemyHeroes: string[], enemyItems?: Record<string, string[]>): Census {
   const heroTags = kb.taxonomy.hero_tags;
@@ -102,7 +102,7 @@ function withItems(
     const trait = kb.itemTraits?.[id];
     const def = itemTools.get(id);
     const label = trait?.label ?? def?.label ?? id;
-    for (const [t, w] of Object.entries(def?.tool ?? {})) raise("tool", t, w * ITEM_TOOL_SCALE, label);
+    for (const [t, w] of Object.entries(def?.tool ?? {})) raise("tool", t, w * P.ITEM_TOOL_SCALE, label);
     for (const [t, w] of Object.entries(trait?.tool ?? {})) raise("tool", t, w, label);
     for (const [r, w] of Object.entries(trait?.reliance ?? {})) raise("reliance", r, w, label);
     for (const [r, w] of Object.entries(trait?.resist ?? {})) raise("resist", r, w, label);
