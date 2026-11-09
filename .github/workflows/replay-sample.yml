@@ -1,27 +1,16 @@
-# temporary (ADR-055 follow-up): visibility bits on one public pro match. Delete afterwards.
-name: Clarity sample
+# temporary (ADR-057): fit STRATZ's lane outcome on public ranked matches. Aggregates only.
+name: Lane outcome fit
 on: { workflow_dispatch: {} }
-permissions: { contents: write }
+permissions: { contents: read }
+concurrency: { group: stratz, cancel-in-progress: false }
 jobs:
   p:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with: { distribution: temurin, java-version: 21, cache: maven }
-      - name: Build
-        working-directory: tools/clarity
-        run: mvn -q -B compile dependency:copy-dependencies
-      - name: Replay
-        run: |
-          for i in 1 2 3 4 5 6; do url=$(curl -sf https://api.opendota.com/api/matches/9081380063 | jq -r .replay_url) && [ -n "$url" ] && break; sleep 20; done
-          curl -s -o r.pack "$url"; zstd -q -d r.pack -o r.dem
-      - name: Extract
-        run: |
-          java -cp "tools/clarity/target/classes:tools/clarity/target/dependency/*" app.Extract r.dem 2>/dev/null > extract.ndjson
-          grep '"t":968,' extract.ndjson | head -3
-          gzip -c extract.ndjson > /tmp/x.gz; rm -f extract.ndjson r.pack r.dem
-          git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch -q origin dev-sample && git checkout -q -B dev-sample origin/dev-sample
-          cp /tmp/x.gz extract.ndjson.gz && git add -f extract.ndjson.gz && git commit -q -m "extract with visibility" && git push -q origin dev-sample
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - env: { STRATZ_TOKEN: "${{ secrets.STRATZ_TOKEN }}" }
+        run: npx tsx scripts/lane-fit.ts 700
