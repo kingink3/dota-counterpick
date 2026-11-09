@@ -90,7 +90,7 @@ async function main(): Promise<void> {
     "img-src 'self' blob:",
     "font-src 'self'",
     // GitHub raw: encrypted matches (ADR-031); nothing on 127.0.0.1 (ADR-034)
-    "connect-src 'self' https://raw.githubusercontent.com https://api.github.com",
+    "connect-src 'self' https://raw.githubusercontent.com https://api.github.com https://mtpmxxzhyqwwbomadsjv.supabase.co",
     "base-uri 'none'",
     "form-action 'none'",
   ].join("; ");

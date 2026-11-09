@@ -59,3 +59,14 @@ test("school: practice goals count fitting matches only", () => {
   assert.equal(w.met, 1);
   assert.equal(w.done, false);
 });
+
+// ADR-047: two copies of progress merge to the best result per entry; never down.
+test("school: progress merge keeps the best of both and clamps to 0..1", async () => {
+  const { mergeProgress, sameProgress } = await import("../src/school/merge.js");
+  const m = mergeProgress({ tests: { goal: 0.5, heroes: 1 }, exam: { foundations: 0.6 } }, { tests: { goal: 0.875, map: 0.7 }, sits: { goal: 2 } });
+  assert.deepEqual(m.tests, { goal: 0.875, heroes: 1, map: 0.7 });
+  assert.deepEqual(m.sits, { goal: 1 });
+  assert.deepEqual(m.exam, { foundations: 0.6 });
+  assert.ok(sameProgress(m, mergeProgress(m, undefined)));
+  assert.ok(!sameProgress(m, mergeProgress(m, { tests: { damage: 0.1 } })));
+});

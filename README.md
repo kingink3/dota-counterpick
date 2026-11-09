@@ -322,7 +322,8 @@ heroes and roles, damage types, the map and its timings, economy, items, reading
 Each lesson has three tracks: **Theory + Test**, **Situations** (decide what to do; the items
 and draft lessons also generate situations from the knowledge base), and **Practice** goals
 checked on your own reviewed matches. A module exam (15 questions, 80%) opens once every
-lesson test is passed. Progress is kept in this browser.
+lesson test is passed. Progress is kept in this browser; sign in (email + password,
+Supabase, ADR-047) to keep it on every device.
 
 ### Item plan and game-length tendency (ADR-027, ADR-037)
 

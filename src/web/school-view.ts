@@ -8,15 +8,12 @@ import type { MatchReview } from "../review.js";
 import { checkGoal } from "../school/practice.js";
 import { generate, rng, type GenDeps } from "../school/generate.js";
 import type { Lesson, Module, Question, Situation } from "../school/types.js";
+import { mergeProgress, sameProgress, type ProgressData } from "../school/merge.js";
+import { currentUser, pullProgress, pushProgress, resetPassword, signIn, signOut, signUp } from "./cloud.js";
 
 // ---- progress --------------------------------------------------------------------
 
-export interface ProgressData {
-  /** best share right (0..1) per lesson test / situations set, and the exam. */
-  tests: Record<string, number>;
-  sits: Record<string, number>;
-  exam: Record<string, number>;
-}
+export type { ProgressData };
 /** where progress lives: this browser now; a synced store later (ADR-046). */
 export interface SchoolProgress {
   load(): ProgressData;
@@ -74,6 +71,8 @@ export class SchoolView {
   private attempt?: Attempt;
   private exam = false;
   private seed = Math.floor(Math.random() * 1e9);
+  /** account (ADR-047): sign-in form state and the last sync message. */
+  private acct = { email: "", password: "", busy: false, msg: "", bad: false };
 
   constructor(private readonly d: SchoolDeps) {
     this.root = document.getElementById("school-view")!;
@@ -83,6 +82,26 @@ export class SchoolView {
   }
 
   show(): void {
+    this.render();
+    if (currentUser() && !this.synced) void this.sync();
+  }
+  private synced = false;
+
+  /** account <-> this browser: the best of both, saved to both (ADR-047). */
+  private async sync(): Promise<void> {
+    try {
+      const remote = await pullProgress();
+      const merged = mergeProgress(this.progress, remote);
+      this.progress = merged;
+      this.store.save(merged);
+      if (!remote || !sameProgress(remote, merged)) await pushProgress(merged);
+      this.synced = true;
+      this.acct.msg = `Synced ${new Date().toLocaleTimeString()}`;
+      this.acct.bad = false;
+    } catch (e) {
+      this.acct.msg = currentUser() ? `Sync failed: ${(e as Error).message}` : "Signed out - sign in again";
+      this.acct.bad = true;
+    }
     this.render();
   }
 
@@ -113,6 +132,7 @@ export class SchoolView {
     this.progress[kind][id] = Math.max(this.progress[kind][id] ?? 0, s);
     this.store.save(this.progress);
     this.render();
+    if (currentUser()) void this.sync();
   }
 
   private situations(l: Lesson): Situation[] {
@@ -126,7 +146,7 @@ export class SchoolView {
     const wrap = el("div", "rv sc", "");
     const side = el("aside", "rv-side", "");
     const main = el("section", "rv-main", "");
-    side.append(this.moduleCard());
+    side.append(this.moduleCard(), this.accountCard());
     if (this.exam) main.append(this.examView());
     else if (this.lesson) main.append(this.lessonView(this.lesson));
     else main.append(this.intro());
@@ -134,12 +154,107 @@ export class SchoolView {
     this.root.replaceChildren(wrap);
   }
 
+  /** sign in / create account / sign out (ADR-047). */
+  private accountCard(): HTMLElement {
+    const c = card("Account");
+    const u = currentUser();
+    const msg = () => (this.acct.msg ? el("p", this.acct.bad ? "rv-note bad" : "rv-note", this.acct.msg) : undefined);
+    if (u) {
+      c.append(el("p", "rv-sub", `Signed in as ${u.email}. Progress syncs across your devices.`));
+      const out = el("button", "g-btn", "Sign out") as HTMLButtonElement;
+      out.type = "button";
+      out.addEventListener("click", () => {
+        void signOut().then(() => {
+          this.synced = false;
+          this.acct = { email: "", password: "", busy: false, msg: "Signed out. Progress stays in this browser.", bad: false };
+          this.render();
+        });
+      });
+      c.append(out);
+      const m = msg();
+      if (m) c.append(m);
+      return c;
+    }
+    c.append(el("p", "rv-note", "Optional: sign in to keep progress on every device. Without it, progress stays in this browser."));
+    const email = document.createElement("input");
+    email.type = "email";
+    email.placeholder = "Email";
+    email.autocomplete = "username";
+    email.className = "rv-in";
+    email.value = this.acct.email;
+    email.addEventListener("input", () => (this.acct.email = email.value.trim()));
+    const pw = document.createElement("input");
+    pw.type = "password";
+    pw.placeholder = "Password (8+ characters)";
+    pw.autocomplete = "current-password";
+    pw.className = "rv-in";
+    pw.value = this.acct.password;
+    pw.addEventListener("input", () => (this.acct.password = pw.value));
+    const run = async (what: "in" | "up" | "reset") => {
+      const { email: e, password: p } = this.acct;
+      if (!/^\S+@\S+\.\S+$/.test(e)) return this.note("Enter your email.", true);
+      if (what !== "reset" && p.length < 8) return this.note("The password needs at least 8 characters.", true);
+      this.acct.busy = true;
+      this.render();
+      try {
+        if (what === "in") {
+          await signIn(e, p);
+          this.acct.password = "";
+          this.acct.msg = "Signed in.";
+          this.acct.bad = false;
+          await this.sync();
+        } else if (what === "up") {
+          const r = await signUp(e, p);
+          this.acct.password = "";
+          if (r === "signed-in") await this.sync();
+          else this.note("Check your email and open the confirmation link, then sign in here.", false);
+        } else {
+          await resetPassword(e);
+          this.note("If the account exists, a password reset email is on its way.", false);
+        }
+      } catch (err) {
+        const m = String((err as Error).message ?? err);
+        this.note(/invalid login/i.test(m) ? "Wrong email or password (or the email is not confirmed yet)." : /not confirmed/i.test(m) ? "Confirm your email first: open the link we sent." : m, true);
+      } finally {
+        this.acct.busy = false;
+        this.render();
+      }
+    };
+    const form = document.createElement("form");
+    form.className = "sc-acct";
+    form.addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      void run("in");
+    });
+    const inB = el("button", "g-btn", "Sign in") as HTMLButtonElement;
+    inB.type = "submit";
+    const upB = el("button", "g-btn", "Create account") as HTMLButtonElement;
+    upB.type = "button";
+    upB.addEventListener("click", () => void run("up"));
+    const rsB = el("button", "link", "Forgot password") as HTMLButtonElement;
+    rsB.type = "button";
+    rsB.addEventListener("click", () => void run("reset"));
+    for (const b of [inB, upB, rsB]) b.disabled = this.acct.busy;
+    const row = el("div", "game-row", "");
+    row.append(inB, upB, rsB);
+    form.append(email, pw, row);
+    c.append(form);
+    const m = msg();
+    if (m) c.append(m);
+    return c;
+  }
+  private note(msg: string, bad: boolean): void {
+    this.acct.msg = msg;
+    this.acct.bad = bad;
+    this.render();
+  }
+
   private intro(): HTMLElement {
     const c = el("div", "sc-intro", "");
     c.append(
       el("h2", "", "School"),
       el("p", "", "Start from zero and build up: every lesson has the theory and a test on it, situations to decide (map, items, draft), and a practice goal checked on your own reviewed matches."),
-      el("p", "rv-note", `Facts checked for patch ${this.mod.patch} (${this.mod.checked}). Progress is kept in this browser.`),
+      el("p", "rv-note", `Facts checked for patch ${this.mod.patch} (${this.mod.checked}). Progress is kept in this browser, and on your account if you sign in.`),
     );
     const go = el("button", "g-btn", "Start with lesson 1") as HTMLButtonElement;
     go.type = "button";
