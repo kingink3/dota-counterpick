@@ -28,7 +28,7 @@ export interface TheoryBlock {
   p: string[];
 }
 
-export type GoalId = "cs10" | "nw20" | "xp10" | "deaths" | "idle" | "observers" | "stacks" | "dewards" | "kp";
+export type GoalId = "cs10" | "nw20" | "xp10" | "deaths" | "idle" | "observers" | "stacks" | "dewards" | "kp" | "answers";
 
 export interface PracticeGoal {
   id: GoalId;
@@ -52,7 +52,7 @@ export interface Lesson {
   quiz: Question[];
   situations: Situation[];
   /** situations generated from the knowledge base (src/school/generate.ts). */
-  generated?: "items" | "draft";
+  generated?: "items" | "draft" | "mechanism" | "itemtool" | "builds" | "timing";
   practice: PracticeGoal[];
 }
 

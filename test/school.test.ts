@@ -6,6 +6,7 @@ import { CounterPickEngine } from "../src/engine.js";
 import { resolve } from "../src/resolver.js";
 import { FOUNDATIONS } from "../src/school/foundations.js";
 import { ROLES } from "../src/school/roles.js";
+import { DRAFTING } from "../src/school/drafting.js";
 import { generate } from "../src/school/generate.js";
 import { checkGoal } from "../src/school/practice.js";
 import type { MatchReview } from "../src/review.js";
@@ -13,7 +14,7 @@ import type { MatchReview } from "../src/review.js";
 test("school: every question is well-formed and ids are unique", () => {
   const ids = new Set<string>();
   const lessonIds = new Set<string>();
-  for (const l of [...FOUNDATIONS.lessons, ...ROLES.lessons]) {
+  for (const l of [...FOUNDATIONS.lessons, ...ROLES.lessons, ...DRAFTING.lessons]) {
     assert.ok(!lessonIds.has(l.id), `duplicate lesson id ${l.id}`);
     lessonIds.add(l.id);
     assert.ok(l.theory.length >= 2, `${l.id}: theory`);
@@ -84,4 +85,25 @@ test("school: benchmark goals and per-goal targets", async () => {
   assert.equal(checkMatch("deaths", r).ok, false, "6 > 5 by default");
   assert.equal(checkMatch("deaths", r, 6).ok, true, "the offlane goal allows 6");
   assert.equal(checkMatch("nw20", { ...r, comparable: false } as MatchReview).ok, null, "turbo: no benchmark verdict");
+});
+
+// ADR-049: module 3 generators read the KB and the build statistics directly.
+test("school: module 3 generators give valid, distinct questions from the data", async () => {
+  const { readFileSync } = await import("node:fs");
+  const engine = CounterPickEngine.load(join(import.meta.dirname, ".."));
+  const stats = JSON.parse(readFileSync("data/item-stats.json", "utf8"));
+  const deps = { resolve: (d: Parameters<typeof resolve>[1]) => resolve(engine.kb, d), heroes: [], items: [], heroLabel: (s: string) => s, itemLabel: (s: string) => s, why: () => "", kb: engine.kb, stats };
+  const edges = engine.kb.taxonomy.edges;
+  for (const kind of ["mechanism", "itemtool", "builds", "timing"] as const) {
+    const qs = generate(kind, 6, 5, deps);
+    assert.equal(qs.length, 6, kind);
+    for (const q of qs) assert.equal(new Set(q.options).size, 4, `${kind}: distinct options`);
+  }
+  // mechanism: no distractor is also an answer to the same weakness
+  for (const q of generate("mechanism", 6, 9, deps)) {
+    const rel = engine.kb.taxonomy.reliance.find((r) => q.scene.endsWith(`${r.label.toLowerCase()}.`))!;
+    const answers = new Set(edges.filter((e) => e.target === rel.code).map((e) => engine.kb.toolByCode.get(e.tool)!.label));
+    assert.ok(answers.has(q.options[0]!));
+    for (const o of q.options.slice(1)) assert.ok(!answers.has(o), `${o} also answers ${rel.code}`);
+  }
 });

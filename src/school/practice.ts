@@ -27,6 +27,7 @@ export const GOAL_DEFAULT: Record<GoalId, number> = {
   stacks: 3,
   dewards: 2,
   kp: 0.5,
+  answers: 0, // "missing / late answer" problems allowed
 };
 
 /** one match against one goal: ok, and the value shown. */
@@ -59,6 +60,11 @@ export function checkMatch(id: GoalId, r: MatchReview, target = GOAL_DEFAULT[id]
       return r.vision ? { ok: r.vision.stacks >= target, value: `${r.vision.stacks} stacks` } : { ok: null, value: "no stack data" };
     case "dewards":
       return r.vision ? { ok: r.vision.dewards >= target, value: `${r.vision.dewards} wards destroyed` } : { ok: null, value: "no ward data" };
+    case "answers": {
+      // ADR-029g: a missing or late answer counts only when it answers the real killers
+      const n = r.findings.filter((f) => (f.id === "counter_missing" || f.id === "counter_late") && !f.good && !f.note).length;
+      return { ok: n <= target, value: n ? `${n} missing / late answer${n > 1 ? "s" : ""}` : "answers bought" };
+    }
     case "kp":
       return r.kp !== undefined ? { ok: r.kp >= target, value: `${Math.round(r.kp * 100)}% of kills` } : { ok: null, value: "too few kills" };
   }

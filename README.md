@@ -321,6 +321,9 @@ The **School** tab teaches the game from zero. Module 1 "Foundations" (7 lessons
 heroes and roles, damage types, the map and its timings, economy, items, reading a draft.
 Module 2 "Roles" (6 lessons): laning, then positions 5, 4, 3, 2 and 1, each with practice
 goals for that position (wards, dewards, stacks, XP and net worth against ranked averages).
+Module 3 "Draft and items" (6 lessons): counter mechanisms, what items bring, typical builds,
+item timings, reading enemy items, team composition - its situations are generated from the
+knowledge base and recent public-match builds, so they follow the patch data.
 Each lesson has three tracks: **Theory + Test**, **Situations** (decide what to do; the items
 and draft lessons also generate situations from the knowledge base), and **Practice** goals
 checked on your own reviewed matches. A module exam (15 questions, 80%) opens once every

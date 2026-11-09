@@ -369,7 +369,7 @@ export class SchoolView {
       if (!sits.length) box.append(el("p", "muted", "No situations for this lesson yet."));
       else {
         if (!this.attempt) this.start(sits);
-        if (l.generated) box.append(el("p", "rv-note", `Part of these come from the knowledge base for random ${l.generated === "items" ? "enemy lineups" : "drafts"}: the engine's best answer against options it scores far lower.`));
+        if (l.generated) box.append(el("p", "rv-note", GEN_NOTE[l.generated]));
         box.append(this.quiz("sits", l.id, sits.length, l.generated ? () => this.start(this.situations(l)) : undefined));
       }
     } else {
@@ -478,6 +478,16 @@ export class SchoolView {
 }
 
 // ---- helpers ---------------------------------------------------------------------
+
+/** where generated situations come from, shown above them. */
+const GEN_NOTE: Record<NonNullable<Lesson["generated"]>, string> = {
+  items: "Part of these come from the knowledge base for random enemy lineups: the engine's best answer against options it scores far lower.",
+  draft: "Part of these come from the knowledge base for random drafts: the engine's best counter against heroes it scores far lower.",
+  mechanism: "Generated from the knowledge base's counter pairs (weakness -> answer, with the mechanism).",
+  itemtool: "Generated from the knowledge base: each item's main tool against the enemy.",
+  builds: "Generated from public matches (Crusader-Ancient, STRATZ) at the hero's main position.",
+  timing: "Generated from purchase times in parsed public matches.",
+};
 
 function mark(letter: string, v: number | undefined): HTMLElement {
   const m = el("span", `sc-m${v === undefined ? "" : v >= PASS ? " ok" : " low"}`, letter);

@@ -12,6 +12,7 @@
 
 import { FOUNDATIONS } from "../school/foundations.js";
 import { ROLES } from "../school/roles.js";
+import { DRAFTING } from "../school/drafting.js";
 import { SchoolView } from "./school-view.js";
 import { loadHistory, loadSettings } from "./review-local.js";
 import { indexKB, type KnowledgeBase, type RawKB } from "../knowledge.js";
@@ -155,7 +156,7 @@ let school: SchoolView | undefined;
 /** School tab (ADR-046): lessons, tests, situations from the KB, practice on your reviews. */
 function buildSchoolView(): void {
   school = new SchoolView({
-    modules: [FOUNDATIONS, ROLES],
+    modules: [FOUNDATIONS, ROLES, DRAFTING],
     gen: () =>
       kb
         ? {
@@ -163,6 +164,8 @@ function buildSchoolView(): void {
             heroes: grid.map((g) => g.engineId).filter((id) => kb.taxonomy.hero_tags[id]),
             items: kb.items.filter((i) => Object.keys(i.tool).length).map((i) => i.code),
             heroLabel: labelFor,
+            kb,
+            ...(itemStats ? { stats: itemStats } : {}),
             itemLabel: (id) => kb.items.find((i) => i.code === id)?.label || id.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
             why: (rec) => {
               const r = leadReason(rec);
