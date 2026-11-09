@@ -24,7 +24,9 @@ const CLS: Record<string, number> = { RADIANT_STOMP: 2, RADIANT_VICTORY: 1, TIE:
 async function main() {
   const want = Number(process.argv[2] ?? 600);
   const ids: number[] = [];
-  let lt: number | undefined;
+  // public matches are parsed by STRATZ hours later: start ~1-2 days back (ids grow ~1M a day)
+  const head = (await (await fetch(`${OD}/publicMatches`)).json()) as Array<{ match_id: number }>;
+  let lt: number | undefined = Math.max(...head.map((m) => m.match_id)) - Number(process.argv[3] ?? 1_500_000);
   while (ids.length < want) {
     const r = await fetch(`${OD}/publicMatches${lt ? `?less_than_match_id=${lt}` : ""}`).catch(() => undefined);
     if (!r?.ok) { await sleep(5000); continue; }
@@ -37,14 +39,19 @@ async function main() {
   // public matches are parsed by STRATZ some hours after: take ones ~1 day old
   console.log(`ids: ${ids.length}`);
   const ms: M[] = [];
+  let got = 0, withOutcome = 0, withStats = 0;
   for (let i = 0; i < ids.length; i += 10) {
     try {
       const d = await gql<{ matches: M[] }>(`{ matches(ids: [${ids.slice(i, i + 10).join(",")}]) { id bottomLaneOutcome midLaneOutcome topLaneOutcome players { isRadiant lane stats { networthPerMinute experiencePerMinute } } } }`);
-      ms.push(...(d.matches ?? []).filter((m) => m && m.bottomLaneOutcome && m.players?.every((p) => (p.stats?.networthPerMinute?.length ?? 0) > 12)));
+      const list = (d.matches ?? []).filter(Boolean);
+      got += list.length;
+      withOutcome += list.filter((m) => m.bottomLaneOutcome).length;
+      withStats += list.filter((m) => m.players?.every((p) => (p.stats?.networthPerMinute?.length ?? 0) > 12)).length;
+      ms.push(...list.filter((m) => m.bottomLaneOutcome && m.players?.every((p) => (p.stats?.networthPerMinute?.length ?? 0) > 12)));
     } catch (e) { console.log(`batch failed: ${String(e).slice(0, 160)}`); }
     await sleep(400);
   }
-  console.log(`matches with outcomes and stats: ${ms.length}`);
+  console.log(`STRATZ returned ${got}, with lane outcomes ${withOutcome}, with per-minute stats ${withStats}; used ${ms.length}`);
   type Row = { cls: number; lane: string; f: Record<string, number> };
   const rows: Row[] = [];
   for (const m of ms) {
