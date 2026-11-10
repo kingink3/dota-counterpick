@@ -33,6 +33,9 @@ export function damageRead(d: DamageRead): HTMLElement {
       : `They are softer to ${school(d.offenseLean)} damage.`);
   return p;
 }
+/** below this share of games relative to the hero's main position the card says "rare on pos N". */
+const ROLE_NOTE_REL = 0.6;
+
 /** Your lineup (ADR-023): which team needs are covered, damage mix, lane opponents. */
 export function teamRead(t: TeamRead): HTMLElement {
   const p = document.createElement("p");
@@ -124,6 +127,12 @@ export function recCard(rec: Recommendation): HTMLElement {
   if (rec.fit && rec.fit.mult < 0.5) {
     card.classList.add("off-build");
     meta.push(`<span class="off" title="Counters them, but rarely built by this archetype (score x${rec.fit.mult})">unusual for a ${archetypeLabel(rec.fit.archetype, rec.fit.attack)}</span>`);
+  }
+  // ADR-060: the hero is seldom played on the chosen position - say so, the score is already lowered
+  if (isHero && rec.roleFit && rec.roleFit.rel < ROLE_NOTE_REL) {
+    const rf = rec.roleFit;
+    const how = rf.share !== undefined ? `${Math.round(rf.share * 100)}% of its games` : "not its usual role";
+    meta.push(`<span class="off" title="Share of this hero's games on position ${rf.pos} in our bracket - score x${rf.factor}">rare on pos ${rf.pos} (${how})</span>`);
   }
   if (rec.rareOnHero !== undefined && state.myHero) {
     meta.push(`<span class="off" title="STRATZ: share of ${esc(labelFor(state.myHero))} games with this item - score lowered">rare on ${esc(labelFor(state.myHero))} (${Math.round(rec.rareOnHero * 100)}% of games)</span>`);

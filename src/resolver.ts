@@ -280,6 +280,9 @@ function heroCandidates(
     if (allies.has(code)) continue; // already on your team
     if (draft.myHero && code === draft.myHero) continue;
     if (draft.myRole !== undefined && !tags.pos.includes(draft.myRole)) continue;
+    // ADR-060: the KB lists the position, but in our bracket the hero is practically never
+    // played there - not a pick to offer for it
+    if (draft.myRole !== undefined && (kb.posShare?.[code]?.[String(draft.myRole)] ?? (kb.posShare?.[code] ? 0 : 1)) < P.ROLE_MIN_SHARE) continue;
     subjects.push({
       kind: "hero",
       code,

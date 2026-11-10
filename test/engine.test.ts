@@ -773,3 +773,87 @@ test("ADR-059: BKB answers control and burst, not the magic share; piercing disa
   const pipe = rec(top(["phantom_assassin", "storm_spirit", "bristleback", "lion", "dazzle"]), "pipe_of_insight");
   assert.ok(!pipe?.reasons.some((x) => x.enemy === "dazzle" || x.enemy === "phantom_assassin"));
 });
+
+test("ADR-060: a pick is scaled by how usual the hero is on the chosen position", async () => {
+  const { roleFit } = await import("../src/resolver.js");
+  const { loadKB } = await import("../src/kb.js");
+  const kb = loadKB();
+  // Axe is an offlaner in 9 games of 10; Clockwerk is mostly a 4, sometimes a 3
+  const axe = roleFit(kb, "axe", 3);
+  assert.equal(axe.rel, 1);
+  assert.equal(axe.factor, 1);
+  const clock3 = roleFit(kb, "rattletrap", 3);
+  const clock4 = roleFit(kb, "rattletrap", 4);
+  assert.equal(clock4.factor, 1);
+  assert.ok(clock3.factor < 0.85 && clock3.factor > 0.6, `Clockwerk pos 3: ${clock3.factor}`);
+  assert.ok(clock3.share! > 0.1 && clock3.share! < 0.35);
+  // a position the hero is never played on keeps the floor, not zero
+  assert.equal(roleFit(kb, "axe", 1).factor <= 0.61, true);
+  // without the data: by the order of the KB position list
+  const bare = { ...kb, posShare: undefined } as typeof kb;
+  assert.deepEqual([3, 4, 5].map((p) => roleFit(bare, "rattletrap", p).rel), [0.5, 1, 0]);
+
+  // on the recommendation: present with a role, absent without one
+  const withRole = engine.recommend({ enemyHeroes: ["spectre", "naga_siren", "slark", "doom", "enigma"], myRole: 3 });
+  const clock = rec(withRole.heroes, "rattletrap")!;
+  assert.equal(clock.roleFit!.pos, 3);
+  assert.ok(clock.roleFit!.factor < 1);
+  assert.equal(rec(withRole.heroes, "axe")!.roleFit!.factor, 1);
+  const noRole = engine.recommend({ enemyHeroes: ["spectre", "naga_siren", "slark", "doom", "enigma"] });
+  assert.ok(noRole.heroes.every((h) => h.roleFit === undefined));
+});
+
+test("ADR-060: tempo - a greedy carry into early map pressure is a risk; a scaler outlasts a snowballer", () => {
+  const zoo = engine.recommend({ enemyHeroes: ["broodmother", "lycan", "beastmaster", "natures_prophet", "chen"], myRole: 1 });
+  const medusa = rec(zoo.heroes, "medusa");
+  // the risk exists and names the pressure heroes
+  if (medusa) {
+    const risk = medusa.reasons.filter((x) => x.tool === "early_pressure" && x.reliance === "greedy_farmer");
+    assert.ok(risk.length >= 3 && risk.every((x) => x.contribution < 0), "early pressure is a risk for Medusa");
+    assert.ok(medusa.risks?.length, "shown as risky");
+  }
+  assert.notEqual(zoo.heroes[0]!.code, "medusa");
+  assert.ok(!zoo.heroes.slice(0, 3).some((h) => ["medusa", "spectre", "anti_mage", "naga_siren"].includes(h.code)), "no greedy carry in the top 3 against a push lineup");
+  // the same carry is not punished without pressure heroes
+  const calm = engine.recommend({ enemyHeroes: ["zeus", "lion", "crystal_maiden", "sniper", "tidehunter"], myRole: 1 });
+  assert.ok(!rec(calm.heroes, "medusa")?.reasons.some((x) => x.tool === "early_pressure"));
+  // the other way: a pressure hero is a counter to their greedy carry
+  const greedy = engine.recommend({ enemyHeroes: ["medusa", "lion", "crystal_maiden", "axe", "zeus"], myRole: 3 });
+  assert.ok(rec(greedy.heroes, "lycan")?.reasons.some((x) => x.tool === "early_pressure" && x.enemy === "medusa" && x.contribution > 0));
+  // out_scales vs a snowball hero
+  const snow = engine.recommend({ enemyHeroes: ["huskar", "night_stalker", "slark", "lion", "crystal_maiden"], myRole: 1 });
+  assert.ok(rec(snow.heroes, "terrorblade")?.reasons.some((x) => x.tool === "out_scales" && x.reliance === "snowball_dependent" && x.contribution > 0));
+});
+
+test("ADR-060: counter items weigh a reason by the target and saturate per enemy", () => {
+  const r = engine.recommend({ enemyHeroes: ["medusa", "sniper", "drow_ranger", "crystal_maiden", "shadow_shaman"], myHero: "axe", myRole: 3 });
+  let weighted = 0;
+  for (const it of r.items) {
+    const byEnemy = new Map<string, typeof it.reasons>();
+    for (const x of it.reasons) {
+      if ((x.basis !== "edge" && x.basis !== "item_edge") || x.contribution <= 0) continue;
+      byEnemy.set(x.enemy, [...(byEnemy.get(x.enemy) ?? []), x]);
+      if (x.factors.targetWeight !== undefined) weighted++;
+    }
+    for (const list of byEnemy.values()) assert.equal(list.filter((x) => x.factors.stackWeight === undefined).length, 1, `${it.code}: one full-weight reason per enemy`);
+  }
+  assert.ok(weighted > 0, "reasons against their supports are weighted");
+  // an answer to their position 1 outranks the same answer to their position 5
+  const halberd = rec(r.items, "heavens_halberd")!;
+  const onCarry = halberd.reasons.find((x) => x.enemy === "medusa" || x.enemy === "drow_ranger" || x.enemy === "sniper")!;
+  assert.ok(onCarry.contribution > 0);
+  // defence and counters share one scale: the top of each list is within a factor of two
+  const top = (l: typeof r.items) => l[0]!.score;
+  assert.ok(top(r.defense) < 2 * top(r.items) && top(r.items) < 2 * top(r.defense), `${top(r.items)} vs ${top(r.defense)}`);
+});
+
+test("ADR-060: a hero practically never played on the chosen position is not offered for it", () => {
+  // the KB lists Kunkka as 2/3/1, but he is a position 1 in ~0% of games in our bracket
+  const r = engine.recommend({ enemyHeroes: ["broodmother", "lycan", "beastmaster", "natures_prophet", "chen"], myRole: 1 });
+  assert.equal(rec(r.heroes, "kunkka"), undefined);
+  const mid = engine.recommend({ enemyHeroes: ["broodmother", "lycan", "beastmaster", "natures_prophet", "chen"], myRole: 2 });
+  assert.ok(mid.heroes.every((h) => (h.roleFit?.share ?? 1) >= 0.02));
+  // without a chosen position nobody is filtered
+  const any = engine.recommend({ enemyHeroes: ["broodmother", "lycan", "beastmaster", "natures_prophet", "chen"] });
+  assert.ok(any.heroes.length >= mid.heroes.length);
+});

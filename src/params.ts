@@ -68,6 +68,13 @@ export const PARAM_DOCS = {
     why: "Hero picks for a chosen position: the score is scaled by how usual the hero is there - 1 on its most played position, falling linearly with (games there / games on the main position) to this value for a position it is practically never played on. Counter reasons assume the hero gets the farm and the lane of its usual role; Clockwerk as an offlaner (19% of his games against 47% as a 4) keeps most of his score, a hero picked into a role one game in twenty keeps 0.6. At 1 the position list of the KB alone decides (before ADR-060).",
     range: [0.4, 0.8],
   },
+  ROLE_MIN_SHARE: {
+    value: 0.02,
+    kind: "design",
+    area: "counter",
+    why: "A hero is not offered for a position it is played on in under 2% of its games in our bracket (data/benchmarks.json), even when the KB position list names it: Kunkka, Night Stalker and Lycan as position 1 are at 0%. Below the line are stale KB entries, not rare-but-real roles (those start at about 3%: Venomancer 3, Doom 2). Heroes without data are not filtered.",
+    range: [0.01, 0.04],
+  },
   // ---- two-sided (ADR-020/022) ---------------------------------------------
   RESIST_WEIGHT: {
     value: 1.0,

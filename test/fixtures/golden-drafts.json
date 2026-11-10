@@ -164,9 +164,9 @@
         "heroes": [
           "sven",
           "juggernaut",
-          "kunkka",
           "ursa",
-          "luna"
+          "luna",
+          "bloodseeker"
         ],
         "items": [
           "battlefury",

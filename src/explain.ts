@@ -107,8 +107,12 @@ export function renderRecommendation(
   opts: ExplainOptions = {},
 ): string[] {
   const out: string[] = [];
+  const rare =
+    rec.roleFit && rec.roleFit.rel < 0.6
+      ? `; rare on pos ${rec.roleFit.pos}${rec.roleFit.share !== undefined ? `, ${Math.round(rec.roleFit.share * 100)}% of games` : ""}, score x${rec.roleFit.factor}`
+      : "";
   const tag =
-    rec.kind === "hero" && rec.pos ? ` (pos ${rec.pos.join("/")})` : "";
+    rec.kind === "hero" && rec.pos ? ` (pos ${rec.pos.join("/")}${rare})` : "";
   const cov = rec.coverage.length ? `answers ${rec.coverage.map(heroLabel).join(", ")}` : "";
   const syn = rec.synergyWith?.length
     ? `synergy with ${rec.synergyWith.map(heroLabel).join(", ")}`
