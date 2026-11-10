@@ -47,7 +47,12 @@ function edgeLine(rec: Recommendation): string {
         : `no matchup data: mechanics only, ${signed(x.kb - x.baseline, 2)} above this hero's usual`;
       return `<span class="${cls}" title="${esc(how)}">${esc(labelFor(x.enemy))} ${signed(x.edge)}</span>`;
     });
-  if (Math.abs(rec.edge!.team) >= 0.05) parts.push(`<span title="What the pick adds to your lineup (KB)">team ${signed(rec.edge!.team)}</span>`);
+  for (const a of rec.edge!.allies ?? []) {
+    if (Math.abs(a.edge) < 0.05) continue;
+    const cls = a.edge >= 0.5 ? "good" : a.edge <= -0.5 ? "bad" : "";
+    parts.push(`<span class="${cls}" title="${esc(`Together with ${labelFor(a.ally)}: ${signed(a.gap)} pp vs the rate expected from both base rates, ${a.games} games (measured synergy)`)}">with ${esc(labelFor(a.ally))} ${signed(a.edge)}</span>`);
+  }
+  if (Math.abs(rec.edge!.team) >= 0.05) parts.push(`<span title="What the pick adds to your lineup's needs (KB, small weight: it did not predict outcomes in the backtest)">team ${signed(rec.edge!.team)}</span>`);
   return `<span class="muted">By enemy, pp:</span> ${parts.join(" · ")}`;
 }
 

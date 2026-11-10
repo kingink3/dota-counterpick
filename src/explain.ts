@@ -128,7 +128,8 @@ export function renderRecommendation(
     const by = [...rec.edge.byEnemy]
       .sort((a, b) => b.edge - a.edge)
       .map((x) => `${heroLabel(x.enemy)} ${x.edge >= 0 ? "+" : ""}${x.edge}${x.games ? ` (measured ${x.gap! >= 0 ? "+" : ""}${x.gap} over ${x.games}g, kb ${x.kb} vs usual ${x.baseline})` : ` (kb ${x.kb} vs usual ${x.baseline})`}`);
-    out.push(`      by enemy, pp: ${by.join("; ")}${rec.edge.team ? `; team ${rec.edge.team >= 0 ? "+" : ""}${rec.edge.team}` : ""}`);
+    const withA = (rec.edge.allies ?? []).map((a) => `with ${heroLabel(a.ally)} ${a.edge >= 0 ? "+" : ""}${a.edge} (measured ${a.gap >= 0 ? "+" : ""}${a.gap} over ${a.games}g)`);
+    out.push(`      by enemy, pp: ${by.join("; ")}${withA.length ? `; ${withA.join("; ")}` : ""}${rec.edge.team ? `; team ${rec.edge.team >= 0 ? "+" : ""}${rec.edge.team}` : ""}`);
   }
   for (const reason of rec.reasons) {
     const line =

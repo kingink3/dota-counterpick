@@ -110,6 +110,8 @@ interface TeamContext {
   /** each enemy's assumed position (assignPositions). */
   enemyPos: Map<string, number>;
   myRole?: number;
+  /** the allies already picked (incl. myHero). */
+  allyCodes: string[];
 }
 
 function readTeam(kb: KnowledgeBase, draft: DraftState): TeamContext {
@@ -150,6 +152,7 @@ function readTeam(kb: KnowledgeBase, draft: DraftState): TeamContext {
     lane,
     enemyPos,
     ...(draft.myRole !== undefined ? { myRole: draft.myRole } : {}),
+    allyCodes,
   };
 }
 
@@ -769,12 +772,30 @@ function rankHeroes(
     }
     // a candidate needs something to stand on: a mechanism for it or a measured matchup
     if (!evidence) continue;
-    const teamPart = P.KB_PP_PER_POINT * reasons.filter(isTeamReason).reduce((s, r) => s + r.contribution, 0);
-    const total = byEnemy.reduce((s, x) => s + x.edge, 0) + teamPart;
+    const teamPart = P.TEAM_KB_SCALE * P.KB_PP_PER_POINT * reasons.filter(isTeamReason).reduce((s, r) => s + r.contribution, 0);
+    // measured synergy with the allies already picked (ADR-063)
+    const withAllies: NonNullable<NonNullable<Recommendation["edge"]>["allies"]> = [];
+    if (kb.allyMatchups && own !== undefined) {
+      for (const ally of team.allyCodes) {
+        if (ally === subject.code) continue;
+        const a = kb.allyMatchups[subject.code]?.[ally];
+        const b = kb.allyMatchups[ally]?.[subject.code];
+        const theirs = base?.get(ally);
+        if ((!a && !b) || theirs === undefined) continue;
+        const expected = sigmoid(logit(own) + logit(theirs));
+        let w = 0;
+        let s = 0;
+        for (const x of [a, b]) if (x) { s += (x[0] - expected) * 100 * x[1]; w += x[1]; }
+        const gapA = s / w;
+        withAllies.push({ ally, gap: round(gapA), games: Math.round(w / ((a ? 1 : 0) + (b ? 1 : 0))), edge: round(P.SYN_DATA_WEIGHT * gapA) });
+      }
+    }
+    const allyPart = withAllies.reduce((s, x) => s + x.edge, 0);
+    const total = byEnemy.reduce((s, x) => s + x.edge, 0) + teamPart + allyPart;
     // not better than its own usual against this draft: not a counter-pick
     if (total <= 0 && !keepAll) continue;
     const rec = finalizeRec("hero", subject.code, subject.label, subject.pos, reasons);
-    rec.edge = { total: round(total), team: round(teamPart), byEnemy };
+    rec.edge = { total: round(total), team: round(teamPart), byEnemy, ...(withAllies.length ? { allies: withAllies } : {}) };
     rec.score = round(total);
     // "answers X": a mechanism against X, or a clearly winning measured matchup
     for (const x of byEnemy) {

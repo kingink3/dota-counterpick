@@ -131,7 +131,7 @@ function pairFeatures(m: Match): Feat {
   return { base: b, gap, kb: k, syn };
 }
 function engineFeatures(m: Match): Feat {
-  const out = { eData: 0, eKb: 0, eTeam: 0, eTotal: 0 };
+  const out = { eData: 0, eKb: 0, eTeam: 0, eSyn: 0, eTotal: 0 };
   for (const [team, other, sign] of [[m.r, m.d, 1], [m.d, m.r, -1]] as const) {
     const pos = assignPositions(kb, team);
     for (const h of team) {
@@ -143,6 +143,7 @@ function engineFeatures(m: Match): Feat {
         out.eKb += sign * (1 - x.dataWeight) * prior;
       }
       out.eTeam += sign * rec.edge.team;
+      out.eSyn += sign * (rec.edge.allies ?? []).reduce((s, a) => s + a.edge, 0);
       out.eTotal += sign * rec.edge.total;
     }
   }
@@ -264,8 +265,7 @@ const models = [
   evaluate("+ measured matchups + KB mechanics", ["base", "gap", "kb"], F),
   evaluate("+ matchups + KB + measured synergy", ["base", "gap", "kb", "syn"], F),
   evaluate("engine as shipped (one number)", ["base", "eTotal"], F),
-  evaluate("engine split: data / KB / team", ["base", "eData", "eKb", "eTeam"], F),
-  evaluate("engine split + measured synergy", ["base", "eData", "eKb", "eTeam", "syn"], F),
+  evaluate("engine split: data / KB / team / synergy", ["base", "eData", "eKb", "eTeam", "eSyn"], F),
 ];
 const byName = new Map(models.map((m) => [m.name, m]));
 
@@ -290,7 +290,7 @@ function tweak(name: keyof typeof P, value: number): () => void {
 }
 const variantRows: string[] = [];
 if (VARIANTS) {
-  const shipped = byName.get("engine split: data / KB / team")!;
+  const shipped = byName.get("engine split: data / KB / team / synergy")!;
   for (const v of variants) {
     const undo = v.set();
     const savedBase = kb.baselines;
@@ -298,7 +298,7 @@ if (VARIANTS) {
     const G = matches.map((m, i) => ({ ...F[i]!, ...engineFeatures(m) }));
     kb.baselines = savedBase;
     undo();
-    const s = evaluate(v.name, ["base", "eData", "eKb", "eTeam"], G);
+    const s = evaluate(v.name, ["base", "eData", "eKb", "eTeam", "eSyn"], G);
     const c = compare(s, shipped);
     variantRows.push(`| ${v.name} | ${s.logloss.toFixed(5)} | ${s.auc.toFixed(4)} | ${f(c.diff * 1000, 2)} ± ${(c.se * 1000).toFixed(2)} | ${verdictOf(c)} |`);
     console.log(`variant ${v.name}: ${f(c.diff * 1000, 2)} ± ${(c.se * 1000).toFixed(2)} (x1000 log-loss vs shipped)`);
@@ -341,8 +341,8 @@ out.push("");
 out.push(`- KB mechanics on top of measured matchups: ${pair("+ measured matchups + KB mechanics", "+ measured matchups")}`);
 out.push(`- measured matchups on top of KB mechanics: ${pair("+ measured matchups + KB mechanics", "+ KB mechanics (pairwise)")}`);
 out.push(`- measured synergy on top of both: ${pair("+ matchups + KB + measured synergy", "+ measured matchups + KB mechanics")}`);
-out.push(`- the engine's lineup context (lane, target, saturation, team) vs the plain pairwise sums: ${pair("engine split: data / KB / team", "+ measured matchups + KB mechanics")}`);
-out.push(`- engine split vs engine as one number: ${pair("engine split: data / KB / team", "engine as shipped (one number)")}`);
+out.push(`- the engine as shipped vs the plain pairwise sums with measured synergy: ${pair("engine as shipped (one number)", "+ matchups + KB + measured synergy")}`);
+out.push(`- engine split vs engine as one number: ${pair("engine split: data / KB / team / synergy", "engine as shipped (one number)")}`);
 out.push("");
 out.push("## Coefficients (all matches)");
 out.push("");

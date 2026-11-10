@@ -12,7 +12,10 @@ baseline (what it scores against an average enemy, `data/baselines.json`), so a 
 many tool tags gets no bonus for it. With no games the KB decides; with thousands the data
 does. Both blend numbers are derived from the data: [`KB_VALIDATION.md`](KB_VALIDATION.md)
 (`npm run kb:validate`) also lists which general rules the data supports or refutes.
-Counter items and defensive items stay KB-ranked. Every engine weight, its argument and how
+What the pick adds to the lineup: the measured synergy with each ally already picked
+(ADR-063); the KB team reasons are shown but weigh little, because in a backtest on 25 000
+real drafts they did not predict the winner ([`BACKTEST.md`](BACKTEST.md),
+`scripts/backtest.ts`). Counter items and defensive items stay KB-ranked. Every engine weight, its argument and how
 much the ranking depends on it: `src/params.ts`, [`PARAMS.md`](PARAMS.md)
 (`npm run params:report`, ADR-039).
 

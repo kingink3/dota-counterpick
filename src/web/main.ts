@@ -44,7 +44,7 @@ const ATTR_NAME: Record<Attr, string> = {
 interface PagesBundle {
   kb: RawKB;
   roster: { heroes: RosterHero[] };
-  matchups: { heroes?: Record<string, Record<string, [number, number]>> } | null;
+  matchups: { heroes?: Record<string, Record<string, [number, number]>>; allies?: Record<string, Record<string, [number, number]>> } | null;
   itemStats?: ItemStats | null;
   ids?: Ids | null;
   benchmarks?: Benchmarks | null;
@@ -61,10 +61,12 @@ async function boot(): Promise<void> {
     // optional stat layer; tolerate its absence
     fetch("./matchups.json").then((r) => (r.ok ? r.json() : null)).catch(() => null) as Promise<{
       heroes?: Record<string, Record<string, [number, number]>>;
+      allies?: Record<string, Record<string, [number, number]>>;
     } | null>,
   ]);
   const kbIndexed = indexKB(rawKb);
   if (matchups?.heroes) kbIndexed.matchups = matchups.heroes;
+  if (matchups?.allies) kbIndexed.allyMatchups = matchups.allies;
   const stats: ItemStats | undefined =
     (BUNDLE ? BUNDLE.itemStats : await fetch("./item-stats.json").then((r) => (r.ok ? r.json() : null)).catch(() => null)) ??
     undefined;

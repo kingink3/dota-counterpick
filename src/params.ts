@@ -249,6 +249,20 @@ export const PARAM_DOCS = {
     why: "Games at which a measured matchup weighs as much as the mechanics: edge = (games x gap + 1700 x prior) / (games + 1700). It is the sampling variance of a win rate per game (2500 pp^2) divided by the variance of the true gap around the KB prior (1.22 pp squared, estimated on pairs with 5000+ games after removing sampling noise) - the standard shrinkage weight, not a tuned number. At 1700 games the two count equally; at 17 000 the data is 91% of the estimate. Replaces the +-6% cap of ADR-035 (ADR-061).",
     range: [850, 3400],
   },
+  TEAM_KB_SCALE: {
+    value: 0.1,
+    kind: "derived",
+    area: "stat",
+    why: "Hero picks: the KB team part (gaps of the allied lineup, damage mix, combos) enters the estimated edge at this share of its KB points x KB_PP_PER_POINT. Backtest on 25 007 ranked drafts played after the statistics snapshot (BACKTEST.md, ADR-063): the team part predicted the winner at 0.06 +- 0.09 of the weight the engine gave it (the calibrated value is 0.5 on that scale, so ~0.12 of it). The reasons stay on the card as explanations; they no longer move the ranking much. At 1 the behaviour of ADR-061.",
+    range: [0, 0.5],
+  },
+  SYN_DATA_WEIGHT: {
+    value: 0.6,
+    kind: "derived",
+    area: "stat",
+    why: "Hero picks: the measured synergy with each ally already picked (win rate of the pair together minus the rate expected from both base rates, pp) enters the estimated edge at this weight. Backtest (BACKTEST.md, ADR-063): the sum of these gaps over allied pairs predicts the winner at 0.59 +- 0.06 pp per pp, out of time, and on top of the measured matchups and the KB. Noise in pairs with few games is part of why it is below 1.",
+    range: [0.4, 0.8],
+  },
   ROLE_DATA_SHARE: {
     value: 0.2,
     kind: "design",

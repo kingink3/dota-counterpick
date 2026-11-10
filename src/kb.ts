@@ -372,8 +372,9 @@ function pairKey(pair: readonly string[]): string {
 export function loadKB(root: string = REPO_ROOT): KnowledgeBase {
   const kb = indexKB(readRawKB(root));
   try {
-    const doc = readYaml<{ heroes?: Matchups }>(join(root, "data", "matchups.json"));
+    const doc = readYaml<{ heroes?: Matchups; allies?: Matchups }>(join(root, "data", "matchups.json"));
     if (doc.heroes) kb.matchups = doc.heroes;
+    if (doc.allies) kb.allyMatchups = doc.allies;
   } catch {
     /* optional stat layer; absent is fine */
   }

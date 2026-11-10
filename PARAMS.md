@@ -17,33 +17,35 @@ other choices; *expert* - a judgement, to be calibrated first where sensitivity 
 | Parameter | Value | Kind | Range | Heroes top-5 kept (lo / hi) | Heroes #1 changed | Items top-5 kept | Items #1 changed | Plan top-5 kept | Sensitivity |
 |---|---|---|---|---|---|---|---|---|---|
 | `PLAN_STRONG_SCORE` | 2 | expert | 1.4 – 2.7 | 100% / 100% | 0% / 0% | 100% / 100% | 0% / 0% | 90% / 82% | **high** |
-| `STAT_PRIOR_GAMES` | 1700 | derived | 850 – 3400 | 86% / 84% | 17% / 22% | 100% / 100% | 0% / 0% | 100% / 100% | **high** |
-| `SYNERGY_WEIGHT` | 0.6 | expert | 0.3 – 1 | 91% / 86% | 12% / 17% | 100% / 100% | 0% / 0% | 100% / 100% | medium |
-| `KB_PP_PER_POINT` | 1.8 | derived | 1.2 – 2.4 | 90% / 90% | 13% / 7% | 100% / 100% | 0% / 0% | 100% / 100% | medium |
+| `STAT_PRIOR_GAMES` | 1700 | derived | 850 – 3400 | 86% / 84% | 12% / 13% | 100% / 100% | 0% / 0% | 100% / 100% | **high** |
+| `SYN_DATA_WEIGHT` | 0.6 | derived | 0.4 – 0.8 | 86% / 86% | 13% / 12% | 100% / 100% | 0% / 0% | 100% / 100% | medium |
 | `BUY_RARE` | 0.01 | expert | 0.005 – 0.02 | 100% / 100% | 0% / 0% | 100% / 100% | 0% / 0% | 99% / 90% | medium |
-| `ROLE_FLOOR` | 0.6 | expert | 0.4 – 0.8 | 94% / 91% | 8% / 10% | 100% / 100% | 0% / 0% | 100% / 100% | medium |
-| `TARGET_FLOOR` | 0.5 | expert | 0.35 – 0.75 | 98% / 95% | 2% / 2% | 95% / 95% | 8% / 13% | 92% / 94% | medium |
-| `TEAM_FULL_AT` | 3 | design | 2 – 4 | 93% / 98% | 5% / 2% | 100% / 100% | 0% / 0% | 100% / 100% | medium |
-| `ROLE_DATA_SHARE` | 0.2 | design | 0.15 – 0.3 | 95% / 93% | 3% / 3% | 100% / 100% | 0% / 0% | 100% / 100% | medium |
-| `RISK_WEIGHT` | 0.5 | expert | 0.3 – 0.8 | 96% / 94% | 3% / 8% | 100% / 100% | 0% / 0% | 100% / 100% | medium |
-| `RESIST_WEIGHT` | 1 | design | 0.7 – 1.2 | 96% / 99% | 2% / 2% | 100% / 100% | 0% / 0% | 100% / 100% | low |
-| `STACK_DECAY` | 0.5 | expert | 0.35 – 0.75 | 98% / 99% | 2% / 0% | 98% / 97% | 7% / 8% | 99% / 98% | low |
+| `TARGET_FLOOR` | 0.5 | expert | 0.35 – 0.75 | 99% / 94% | 0% / 3% | 95% / 95% | 8% / 13% | 92% / 94% | medium |
+| `ROLE_FLOOR` | 0.6 | expert | 0.4 – 0.8 | 92% / 94% | 5% / 5% | 100% / 100% | 0% / 0% | 100% / 100% | medium |
+| `TEAM_KB_SCALE` | 0.1 | derived | 0 – 0.5 | 99% / 93% | 2% / 5% | 100% / 100% | 0% / 0% | 100% / 100% | medium |
+| `ROLE_DATA_SHARE` | 0.2 | design | 0.15 – 0.3 | 95% / 94% | 3% / 3% | 100% / 100% | 0% / 0% | 100% / 100% | medium |
+| `KB_PP_PER_POINT` | 1.8 | derived | 1.2 – 2.4 | 96% / 94% | 2% / 5% | 100% / 100% | 0% / 0% | 100% / 100% | medium |
+| `RISK_WEIGHT` | 0.5 | expert | 0.3 – 0.8 | 96% / 96% | 2% / 3% | 100% / 100% | 0% / 0% | 100% / 100% | low |
+| `STACK_DECAY` | 0.5 | expert | 0.35 – 0.75 | 99% / 97% | 0% / 2% | 98% / 97% | 7% / 8% | 99% / 98% | low |
 | `BUY_COMMON` | 0.05 | expert | 0.03 – 0.1 | 100% / 100% | 0% / 0% | 100% / 100% | 0% / 0% | 99% / 97% | low |
+| `LANE_WEIGHT` | 1.25 | expert | 1 – 1.5 | 98% / 97% | 2% / 2% | 100% / 100% | 0% / 0% | 100% / 100% | low |
 | `MID_CARRY_ATTACK` | 0.6 | expert | 0.5 – 0.7 | 100% / 100% | 0% / 0% | 100% / 99% | 0% / 1% | 100% / 98% | low |
 | `BUY_FIT_NEVER` | 0.25 | expert | 0.1 – 0.4 | 100% / 100% | 0% / 0% | 100% / 100% | 0% / 0% | 98% / 99% | low |
 | `PLAN_ITEM_FIT_MIN` | 0.6 | design | 0.5 – 0.7 | 100% / 100% | 0% / 0% | 100% / 100% | 0% / 0% | 98% / 100% | low |
-| `LANE_WEIGHT` | 1.25 | expert | 1 – 1.5 | 98% / 98% | 5% / 3% | 100% / 100% | 0% / 0% | 100% / 100% | low |
+| `RESIST_WEIGHT` | 1 | design | 0.7 – 1.2 | 99% / 98% | 5% / 0% | 100% / 100% | 0% / 0% | 100% / 100% | low |
 | `ITEM_TOOL_SCALE` | 0.8 | expert | 0.6 – 1 | 100% / 100% | 0% / 0% | 100% / 100% | 0% / 0% | 98% / 99% | low |
 | `ALLY_BUYS_SHARE` | 0.25 | expert | 0.15 – 0.4 | 100% / 100% | 0% / 0% | 100% / 100% | 0% / 0% | 98% / 99% | low |
 | `ALLY_BUYS_SCALE` | 0.5 | expert | 0.3 – 0.7 | 100% / 100% | 0% / 0% | 100% / 100% | 0% / 0% | 98% / 99% | low |
+| `BLUNT_WEIGHT` | 0.6 | expert | 0.4 – 0.8 | 99% / 99% | 2% / 2% | 99% / 100% | 2% / 0% | 99% / 100% | low |
+| `TEAM_FULL_AT` | 3 | design | 2 – 4 | 99% / 100% | 0% / 2% | 100% / 100% | 0% / 0% | 100% / 100% | low |
 | `SELF_TOOL` | 0.5 | expert | 0.4 – 0.7 | 100% / 100% | 0% / 0% | 100% / 99% | 0% / 2% | 99% / 99% | low |
-| `ROLE_MIN_SHARE` | 0.02 | design | 0.01 – 0.04 | 100% / 99% | 0% / 2% | 100% / 100% | 0% / 0% | 100% / 100% | low |
-| `BLUNT_WEIGHT` | 0.6 | expert | 0.4 – 0.8 | 100% / 99% | 0% / 0% | 99% / 100% | 2% / 0% | 99% / 100% | low |
+| `SYNERGY_WEIGHT` | 0.6 | expert | 0.3 – 1 | 99% / 99% | 0% / 2% | 100% / 100% | 0% / 0% | 100% / 100% | low |
 | `BUY_FIT_SOME` | 0.6 | expert | 0.5 – 0.8 | 100% / 100% | 0% / 0% | 100% / 100% | 0% / 0% | 100% / 99% | low |
-| `DAMAGE_MIX_WEIGHT` | 0.3 | expert | 0.15 – 0.5 | 100% / 99% | 2% / 2% | 100% / 100% | 0% / 0% | 100% / 100% | low |
-| `DAMAGE_MIX_MIN_SHARE` | 0.3 | expert | 0.2 – 0.4 | 100% / 99% | 2% / 0% | 100% / 100% | 0% / 0% | 100% / 100% | low |
+| `DAMAGE_MIX_WEIGHT` | 0.3 | expert | 0.15 – 0.5 | 99% / 100% | 2% / 0% | 100% / 100% | 0% / 0% | 100% / 100% | low |
+| `DAMAGE_MIX_MIN_SHARE` | 0.3 | expert | 0.2 – 0.4 | 99% / 100% | 2% / 0% | 100% / 100% | 0% / 0% | 100% / 100% | low |
+| `ROLE_MIN_SHARE` | 0.02 | design | 0.01 – 0.04 | 100% / 100% | 0% / 0% | 100% / 100% | 0% / 0% | 100% / 100% | low |
 | `RESIST_CAP` | 1 | design | 0.7 – 1.5 | 100% / 100% | 0% / 0% | 100% / 100% | 0% / 0% | 100% / 100% | not exercised |
-| `RISK_CAP` | 0.8 | design | 0.5 – 1 | 100% / 100% | 0% / 0% | 100% / 100% | 0% / 0% | 100% / 100% | not exercised |
+| `RISK_CAP` | 0.8 | design | 0.5 – 1 | 100% / 100% | 0% / 0% | 100% / 100% | 0% / 0% | 100% / 100% | low |
 | `SELF_TOOL_FLOOR` | 0.25 | design | 0.1 – 0.4 | 100% / 100% | 0% / 0% | 100% / 100% | 0% / 0% | 100% / 100% | not exercised |
 | `PLAN_BUY_FIT_MIN` | 0.5 | design | 0.3 – 0.6 | 100% / 100% | 0% / 0% | 100% / 100% | 0% / 0% | 100% / 100% | not exercised |
 | `PIERCE_DISCOUNT` | 0.5 | expert | 0.3 – 0.7 | 100% / 100% | 0% / 0% | 100% / 100% | 0% / 0% | 100% / 100% | low |
@@ -80,4 +82,6 @@ other choices; *expert* - a judgement, to be calibrated first where sensitivity 
 - **`PIERCE_DISCOUNT` = 0.5** (expert, items; range 0.3 – 0.7). A defensive item that their lineup pierces (Black King Bar vs Doom, Chronosphere, Black Hole, Berserker's Call) loses up to this share of its score, reached when the piercing tools sum to 1.5 (about two heroes built around one). BKB still blocks the rest of their spells, so it is halved rather than removed; at 0 piercing disables are ignored (before ADR-059).
 - **`KB_PP_PER_POINT` = 1.8** (derived, stat; range 1.2 – 2.4). Converts KB points into percentage points of win rate: the slope of the measured matchup gap on the KB lift (score against the enemy minus the hero's baseline) over 12 199 hero pairs with at least 1000 games, weighted by precision (npm run kb:validate, KB_VALIDATION.md). Noise in the gap does not bias a slope. Was 1.2 before the rule weights were set against the same data (ADR-062): with the rules that predict nothing damped, a KB point is worth more. Re-derive after a statistics refresh or a KB pass.
 - **`STAT_PRIOR_GAMES` = 1700** (derived, stat; range 850 – 3400). Games at which a measured matchup weighs as much as the mechanics: edge = (games x gap + 1700 x prior) / (games + 1700). It is the sampling variance of a win rate per game (2500 pp^2) divided by the variance of the true gap around the KB prior (1.22 pp squared, estimated on pairs with 5000+ games after removing sampling noise) - the standard shrinkage weight, not a tuned number. At 1700 games the two count equally; at 17 000 the data is 91% of the estimate. Replaces the +-6% cap of ADR-035 (ADR-061).
+- **`TEAM_KB_SCALE` = 0.1** (derived, stat; range 0 – 0.5). Hero picks: the KB team part (gaps of the allied lineup, damage mix, combos) enters the estimated edge at this share of its KB points x KB_PP_PER_POINT. Backtest on 25 007 ranked drafts played after the statistics snapshot (BACKTEST.md, ADR-063): the team part predicted the winner at 0.06 +- 0.09 of the weight the engine gave it (the calibrated value is 0.5 on that scale, so ~0.12 of it). The reasons stay on the card as explanations; they no longer move the ranking much. At 1 the behaviour of ADR-061.
+- **`SYN_DATA_WEIGHT` = 0.6** (derived, stat; range 0.4 – 0.8). Hero picks: the measured synergy with each ally already picked (win rate of the pair together minus the rate expected from both base rates, pp) enters the estimated edge at this weight. Backtest (BACKTEST.md, ADR-063): the sum of these gaps over allied pairs predicts the winner at 0.59 +- 0.06 pp per pp, out of time, and on top of the measured matchups and the KB. Noise in pairs with few games is part of why it is below 1.
 - **`ROLE_DATA_SHARE` = 0.2** (design, counter; range 0.15 – 0.3). A hero is also offered for a position missing from its KB list when it is played there in at least a fifth of its games in our bracket (data/benchmarks.json): Broodmother 2, Chaos Knight 3, Wraith King 3, Gyrocopter 4. One game in five is a real role, not an experiment; the role-fit factor still lowers it against the hero's main position.

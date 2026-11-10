@@ -56,6 +56,8 @@ export interface KnowledgeBase {
   combos: Combo[];
   /** hero-vs-hero win rates (Phase 2). undefined when not loaded. */
   matchups?: Matchups;
+  /** hero -> ally -> [win rate together, games] (data/matchups.json "allies"; ADR-063). */
+  allyMatchups?: Matchups;
   itemFit?: ItemFitTable;
   heroAttack?: Record<string, AttackType>;
   /** enemy-item traits (data/item_traits.yaml, ADR-024). */

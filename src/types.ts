@@ -396,6 +396,10 @@ export interface Recommendation {
     total: number;
     team: number;
     byEnemy: Array<{ enemy: string; kb: number; baseline: number; gap?: number; games?: number; dataWeight: number; edge: number }>;
+    /** ADR-063: measured synergy with each ally already picked - the pair's win rate together
+     *  minus the rate expected from both base rates (pp, both records), and its part of the
+     *  score (x SYN_DATA_WEIGHT). Included in total. */
+    allies?: Array<{ ally: string; gap: number; games: number; edge: number }>;
   };
   /** hero picks with a role (ADR-060): how usual the hero is on that position - its share
    *  of the hero's games there, relative to its most played position - and the factor

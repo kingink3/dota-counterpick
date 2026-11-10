@@ -20,9 +20,9 @@
         "heroes": [
           "slark",
           "drow_ranger",
+          "templar_assassin",
           "viper",
-          "troll_warlord",
-          "templar_assassin"
+          "troll_warlord"
         ],
         "items": [
           "bloodthorn",

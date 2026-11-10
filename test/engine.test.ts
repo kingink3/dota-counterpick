@@ -886,8 +886,8 @@ test("ADR-061: the score is a per-enemy edge - measured gap shrunk toward the KB
   for (const h of r.heroes) {
     const e = h.edge!;
     assert.equal(e.byEnemy.length, 5);
-    // total = sum of the per-enemy edges + the team part
-    assert.ok(Math.abs(e.total - (e.byEnemy.reduce((s, x) => s + x.edge, 0) + e.team)) < 0.01, h.code);
+    // total = sum of the per-enemy edges + the team part + measured synergy (ADR-063)
+    assert.ok(Math.abs(e.total - (e.byEnemy.reduce((s, x) => s + x.edge, 0) + e.team + (e.allies ?? []).reduce((s, x) => s + x.edge, 0))) < 0.02, h.code);
     for (const x of e.byEnemy) {
       const prior = BLEND.pp * (x.kb - x.baseline);
       const want = x.games ? (x.games * x.gap! + BLEND.games * prior) / (x.games + BLEND.games) : prior;
@@ -1007,5 +1007,38 @@ test("ADR-062: the measured gap averages both records of a matchup", () => {
     assert.ok(Math.abs(x.gap! - 1.5) < 0.3, `games-weighted mean of the two records, got ${x.gap}`);
   } finally {
     engine.kb.matchups = real;
+  }
+});
+
+test("ADR-063: measured synergy with the allies already picked enters the edge", () => {
+  const draft = { enemyHeroes: ["phantom_assassin", "storm_spirit", "bristleback", "lion", "dazzle"], allyHeroes: ["crystal_maiden", "zeus"], myRole: 1 };
+  const r = engine.recommend(draft, { all: true });
+  const withAllies = r.heroes.filter((h) => h.edge?.allies?.length);
+  assert.ok(withAllies.length > 20, "most candidates have measured pairs with CM or Zeus");
+  for (const h of withAllies) {
+    for (const a of h.edge!.allies!) {
+      assert.ok(["crystal_maiden", "zeus"].includes(a.ally));
+      assert.ok(Math.abs(a.edge - P.SYN_DATA_WEIGHT * a.gap) < 0.01);
+    }
+    const sum = h.edge!.byEnemy.reduce((s, x) => s + x.edge, 0) + h.edge!.team + h.edge!.allies!.reduce((s, x) => s + x.edge, 0);
+    assert.ok(Math.abs(h.edge!.total - sum) < 0.02, h.code);
+  }
+  // no allies -> no synergy part
+  assert.ok(engine.recommend({ enemyHeroes: draft.enemyHeroes }, { all: true }).heroes.every((h) => !h.edge?.allies));
+  // without the ally table the engine still works
+  const real = engine.kb.allyMatchups;
+  try {
+    engine.kb.allyMatchups = undefined;
+    assert.ok(engine.recommend(draft).heroes.every((h) => !h.edge?.allies));
+  } finally {
+    engine.kb.allyMatchups = real;
+  }
+});
+
+test("ADR-063: the KB team part is scaled down (it did not predict outcomes)", () => {
+  const r = engine.recommend({ enemyHeroes: ["sniper", "drow_ranger"], allyHeroes: ["anti_mage", "phantom_lancer", "medusa"] }, { all: true });
+  for (const h of r.heroes) {
+    const kbTeam = h.reasons.filter((x) => x.basis === "team" || x.basis === "synergy").reduce((s, x) => s + x.contribution, 0);
+    assert.ok(Math.abs(h.edge!.team - P.TEAM_KB_SCALE * P.KB_PP_PER_POINT * kbTeam) < 0.01, h.code);
   }
 });

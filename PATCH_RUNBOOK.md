@@ -131,6 +131,11 @@
    - раздел «Tag suggestions»: тег добавлять только при реальной способности;
    - списки «пропущено / опровергнуто» — материал для новых общих рёбер (не для точечной
      правки героев).
+   - **бэктест** *(ADR-063)* — после обновления `data/matchups.json`, когда пройдёт 2–3 дня:
+     запустить workflow «Fetch backtest matches» (матчи после среза статистики), затем
+     `git clone -b backtest-raw` и `npx tsx scripts/backtest.ts <matches.ndjson> --variants` →
+     `BACKTEST.md`. Если коэффициенты частей движка (данные / KB / синергия) разошлись друг с
+     другом или с ~0,5 — пересмотреть `KB_PP_PER_POINT`, `SYN_DATA_WEIGHT`, `TEAM_KB_SCALE`.
 4. `npm run build:web`, ручной смоук: Test a screenshot + один живой драфт.
 5. Запись: строка в `CHANGELOG.md` (что поменялось в KB) и, если менялись правила, ADR.
 
