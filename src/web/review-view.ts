@@ -51,6 +51,8 @@ export class ReviewView {
   private storePoll?: number;
   private status = "";
   private busy = false;
+  /** show the listed matches only STRATZ can review (no replay, not stored). */
+  private showGone = false;
 
   constructor(private readonly d: ReviewDeps) {
     this.root = document.querySelector<HTMLElement>("#review-view")!;
@@ -242,7 +244,12 @@ export class ReviewView {
     const ago = Math.round((Date.now() / 1000 - list.fetchedAt) / 60);
     c.append(el("p", "rv-sub", `List as of ${ago < 90 ? `${ago} min` : `${Math.round(ago / 60)} h`} ago.`));
     const ul = el("ul", "rv-list");
+    // matches whose replay Valve no longer has and that are not stored: only STRATZ can review
+    // them - hidden until the user asks (they need a run per match, 2 per 15 min)
+    const isGone = (id: number) => !stored.has(id) && (list.missed ?? []).includes(id);
+    const goneCount = list.matches.filter((m) => isGone(m.id)).length;
     for (const m of list.matches) {
+      if (!this.showGone && isGone(m.id)) continue;
       const p = m.players?.[0];
       const hero = p ? this.d.heroOf(p.heroId) : "";
       const li = el("li", `rv-m${p?.isVictory ? " win" : " loss"}${this.open?.id === m.id ? " on" : ""}`);
@@ -276,6 +283,16 @@ export class ReviewView {
       ul.append(li);
     }
     c.append(ul);
+    if (goneCount) {
+      const t = el("button", "link rv-gone", this.showGone ? `Hide ${goneCount} without a replay` : `${goneCount} older without a replay (STRATZ only) — show`) as HTMLButtonElement;
+      t.type = "button";
+      t.title = "Valve keeps replays about two weeks; these matches can only be reviewed from STRATZ";
+      t.addEventListener("click", () => {
+        this.showGone = !this.showGone;
+        this.render();
+      });
+      c.append(t);
+    }
     this.otherStored(c, new Set(list.matches.map((m) => m.id)));
     return c;
   }
