@@ -308,6 +308,20 @@ function heroCandidates(
   return subjects;
 }
 
+/** One hero's pick evaluation against a full draft, without the candidate filters and
+ *  without items / defence (ADR-063 backtest: every hero of a real lineup, on the position
+ *  it was played). undefined when nothing speaks for or against it. */
+export function heroEdge(kb: KnowledgeBase, draft: DraftState, hero: string): Recommendation | undefined {
+  const tags = kb.taxonomy.hero_tags[hero];
+  if (!tags) return undefined;
+  const census = buildCensus(kb, draft.enemyHeroes, undefined);
+  const allies = new Set(draft.allyHeroes ?? []);
+  const synergy = buildSynergyIndex(kb, allies);
+  const team = readTeam(kb, draft);
+  const subject: Subject = { kind: "hero", code: hero, label: prettifyHero(hero), pos: positionsOf(kb, hero), toolTable: tags.tool ?? {}, resist: tags.resist ?? {}, tags };
+  return rankHeroes([subject], kb, census, synergy, team, true)[0];
+}
+
 function itemCandidates(kb: KnowledgeBase): Subject[] {
   return kb.items.map((item) => ({
     kind: "item" as const,
