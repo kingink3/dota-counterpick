@@ -37,7 +37,8 @@ test("detection edge resolves invis carriers (Sentry vs Riki/Clinkz)", () => {
 test("every scored reason carries a mechanism (no bare numbers)", () => {
   const r = engine.recommend({ enemyHeroes: ["medusa", "phantom_lancer", "huskar"] });
   for (const rc of allRecs(r)) {
-    assert.ok(rc.reasons.length > 0, `${rc.code} has reasons`);
+    // a hero pick may stand on measured matchups alone (ADR-061)
+    assert.ok(rc.reasons.length > 0 || rc.edge, `${rc.code} has reasons`);
     for (const reason of rc.reasons) {
       assert.ok(reason.mechanism.trim().length > 0, `${rc.code} reason has mechanism`);
     }
@@ -113,7 +114,7 @@ test("v0.2: pickoff carriers answer squishy / immobile targets", () => {
 });
 
 test("v0.2: physical_burst answers low_armor (filled answered_by hole)", () => {
-  const r = engine.recommend({ enemyHeroes: ["terrorblade"] }); // low_armor 0.4
+  const r = engine.recommend({ enemyHeroes: ["terrorblade"] }, { all: true }); // low_armor 0.4
   const sven = rec(r.heroes, "sven"); // physical_burst carrier
   assert.ok(sven?.reasons.some((x) => x.tool === "physical_burst" && x.reliance === "low_armor"));
 });
@@ -401,9 +402,9 @@ test("resist: Medusa surfaces vs health-based damage (Lifestealer + Witch Doctor
 });
 
 test("risk: Medusa is exposed to mana burn and gets no Mana Shield credit vs Anti-Mage", () => {
-  const r = engine.recommend({ enemyHeroes: ["anti_mage", "witch_doctor"] });
+  const r = engine.recommend({ enemyHeroes: ["anti_mage", "witch_doctor"] }, { all: true });
   const med = rec(r.heroes, "medusa")!;
-  assert.ok(med, "still listed (resist vs Witch Doctor)");
+  assert.ok(med, "has reasons (resist vs Witch Doctor)");
   assert.ok(med.reasons.some((x) => x.basis === "risk" && x.enemy === "anti_mage" && x.tool === "mana_burn" && x.contribution < 0));
   assert.ok(!med.reasons.some((x) => x.basis === "resist" && x.enemy === "anti_mage"), "mana_shield is pierced_by mana_burn");
   assert.deepEqual(med.risks, ["anti_mage"]);
@@ -436,8 +437,11 @@ test("two-sided terms are capped per enemy and never make coverage", () => {
       assert.ok(neg >= -0.8 - 1e-6, `${h.code} risk vs ${enemy} capped (${neg})`);
       assert.ok(res <= 1.0 + 1e-6, `${h.code} resist vs ${enemy} capped (${res})`);
     }
-    assert.ok(h.reasons.some((x) => x.contribution > 0), `${h.code} has an argument for it`);
-    for (const c of h.coverage) assert.ok(h.reasons.some((x) => x.enemy === c && x.contribution > 0));
+    assert.ok(h.reasons.some((x) => x.contribution > 0) || h.edge!.byEnemy.some((x) => x.games), `${h.code} has an argument for it`);
+    // "answers X": a mechanism against X, or a clearly winning measured matchup (ADR-061) - never a risk / resist term alone
+    for (const c of h.coverage) {
+      assert.ok(h.reasons.some((x) => x.enemy === c && x.contribution > 0 && x.basis !== "resist") || h.edge!.byEnemy.some((x) => x.enemy === c && x.edge >= 1 && x.dataWeight >= 0.5) || h.reasons.some((x) => x.enemy === c && x.contribution > 0));
+    }
   }
 });
 
@@ -479,9 +483,9 @@ test("ally_save: saves answer one-target killers, and the killer is told it is r
 });
 
 test("illusion_execute and creep_execute reach illusion / summon heroes", () => {
-  const pl = engine.recommend({ enemyHeroes: ["phantom_lancer"] });
+  const pl = engine.recommend({ enemyHeroes: ["phantom_lancer"] }, { all: true });
   assert.ok(rec(pl.heroes, "lion")?.reasons.some((x) => x.tool === "illusion_execute"));
-  const chen = engine.recommend({ enemyHeroes: ["chen"] });
+  const chen = engine.recommend({ enemyHeroes: ["chen"] }, { all: true });
   assert.ok(rec(chen.heroes, "doom")?.reasons.some((x) => x.tool === "creep_execute"), "Devour vs Chen's creeps");
 });
 
@@ -663,16 +667,19 @@ test("stat tilt: a hero strong vs everyone gains ~nothing; a real counter gains"
     engine.kb.matchups = table((a, b) => (a === cand ? 0.56 : b === cand ? 0.44 : 0.5));
     const meta = engine.recommend({ enemyHeroes: [enemy] }).heroes.find((h) => h.code === cand)!;
     assert.equal(meta.winrate, 0.56);
-    assert.ok(meta.stat, "stat breakdown present");
-    assert.ok(Math.abs(meta.stat.advantage) < 0.005, `meta advantage ~0, got ${meta.stat.advantage}`);
-    assert.ok(Math.abs(meta.stat.factor - 1) < 0.01);
+    const metaEdge = meta.edge!.byEnemy.find((x) => x.enemy === enemy)!;
+    assert.ok(Math.abs(metaEdge.gap!) < 0.5, `meta gap ~0, got ${metaEdge.gap}`);
 
     // counter: 56% only vs this enemy, 50% vs the rest
     engine.kb.matchups = table((a, b) => (a === cand && b === enemy ? 0.56 : a === enemy && b === cand ? 0.44 : 0.5));
     const ctr = engine.recommend({ enemyHeroes: [enemy] }).heroes.find((h) => h.code === cand)!;
-    assert.ok(ctr.stat && ctr.stat.advantage > 0.05, `counter advantage > 5 pp, got ${ctr.stat?.advantage}`);
-    assert.ok(ctr.stat.factor > meta.stat.factor);
-    assert.equal(Math.round((ctr.stat.kbScore * ctr.stat.factor) * 100) / 100, Math.round(ctr.score * 100) / 100);
+    const ctrEdge = ctr.edge!.byEnemy.find((x) => x.enemy === enemy)!;
+    assert.ok(ctrEdge.gap! > 5, `counter gap > 5 pp, got ${ctrEdge.gap}`);
+    assert.ok(ctr.score > meta.score, "a measured counter outranks a meta hero with the same mechanics");
+    // the blend: (games x gap + STAT_PRIOR_GAMES x prior) / (games + STAT_PRIOR_GAMES)
+    const prior = 1.2 * (ctrEdge.kb - ctrEdge.baseline);
+    assert.ok(Math.abs(ctrEdge.edge - (1000 * ctrEdge.gap! + 1600 * prior) / 2600) < 0.02);
+    assert.equal(ctrEdge.dataWeight, Math.round((1000 / 2600) * 1000) / 1000);
   } finally {
     engine.kb.matchups = real;
   }
@@ -794,7 +801,7 @@ test("ADR-060: a pick is scaled by how usual the hero is on the chosen position"
   assert.deepEqual([3, 4, 5].map((p) => roleFit(bare, "rattletrap", p).rel), [0.5, 1, 0]);
 
   // on the recommendation: present with a role, absent without one
-  const withRole = engine.recommend({ enemyHeroes: ["spectre", "naga_siren", "slark", "doom", "enigma"], myRole: 3 });
+  const withRole = engine.recommend({ enemyHeroes: ["spectre", "naga_siren", "slark", "doom", "enigma"], myRole: 3 }, { all: true });
   const clock = rec(withRole.heroes, "rattletrap")!;
   assert.equal(clock.roleFit!.pos, 3);
   assert.ok(clock.roleFit!.factor < 1);
@@ -818,10 +825,10 @@ test("ADR-060: tempo - a greedy carry into early map pressure is a risk; a scale
   const calm = engine.recommend({ enemyHeroes: ["zeus", "lion", "crystal_maiden", "sniper", "tidehunter"], myRole: 1 });
   assert.ok(!rec(calm.heroes, "medusa")?.reasons.some((x) => x.tool === "early_pressure"));
   // the other way: a pressure hero is a counter to their greedy carry
-  const greedy = engine.recommend({ enemyHeroes: ["medusa", "lion", "crystal_maiden", "axe", "zeus"], myRole: 3 });
+  const greedy = engine.recommend({ enemyHeroes: ["medusa", "lion", "crystal_maiden", "axe", "zeus"], myRole: 3 }, { all: true });
   assert.ok(rec(greedy.heroes, "lycan")?.reasons.some((x) => x.tool === "early_pressure" && x.enemy === "medusa" && x.contribution > 0));
   // out_scales vs a snowball hero
-  const snow = engine.recommend({ enemyHeroes: ["huskar", "night_stalker", "slark", "lion", "crystal_maiden"], myRole: 1 });
+  const snow = engine.recommend({ enemyHeroes: ["huskar", "night_stalker", "slark", "lion", "crystal_maiden"], myRole: 1 }, { all: true });
   assert.ok(rec(snow.heroes, "terrorblade")?.reasons.some((x) => x.tool === "out_scales" && x.reliance === "snowball_dependent" && x.contribution > 0));
 });
 
@@ -856,4 +863,89 @@ test("ADR-060: a hero practically never played on the chosen position is not off
   // without a chosen position nobody is filtered
   const any = engine.recommend({ enemyHeroes: ["broodmother", "lycan", "beastmaster", "natures_prophet", "chen"] });
   assert.ok(any.heroes.length >= mid.heroes.length);
+});
+
+test("ADR-061: baselines on disk are current (npm run build:baselines after a KB change)", async () => {
+  const { computeBaselines } = await import("../src/baseline.js");
+  const { loadKB } = await import("../src/kb.js");
+  const kb = loadKB();
+  assert.ok(kb.baselines, "data/baselines.json is loaded");
+  const fresh = computeBaselines({ ...kb, baselines: undefined, matchups: undefined } as typeof kb, [0, 3]);
+  for (const role of ["0", "3"]) {
+    assert.deepEqual(Object.keys(fresh[role]!).sort(), Object.keys(kb.baselines![role]!).sort());
+    for (const [hero, row] of Object.entries(fresh[role]!)) assert.deepEqual(kb.baselines![role]![hero], row, `${hero}, role ${role}: run npm run build:baselines`);
+  }
+});
+
+test("ADR-061: the score is a per-enemy edge - measured gap shrunk toward the KB lift", () => {
+  const r = engine.recommend({ enemyHeroes: ["phantom_assassin", "storm_spirit", "bristleback", "lion", "dazzle"], myRole: 1 }, { all: true });
+  assert.ok(r.heroes.length > 20);
+  for (const h of r.heroes) {
+    const e = h.edge!;
+    assert.equal(e.byEnemy.length, 5);
+    // total = sum of the per-enemy edges + the team part
+    assert.ok(Math.abs(e.total - (e.byEnemy.reduce((s, x) => s + x.edge, 0) + e.team)) < 0.01, h.code);
+    for (const x of e.byEnemy) {
+      const prior = 1.2 * (x.kb - x.baseline);
+      const want = x.games ? (x.games * x.gap! + 1600 * prior) / (x.games + 1600) : prior;
+      assert.ok(Math.abs(x.edge - want) < 0.01, `${h.code} vs ${x.enemy}: ${x.edge} != ${want}`);
+      assert.ok(x.dataWeight >= 0 && x.dataWeight < 1);
+    }
+    // the shown score: the edge, scaled by the role fit when positive
+    const shown = e.total > 0 ? e.total * (h.roleFit?.factor ?? 1) : e.total;
+    assert.ok(Math.abs(h.score - shown) < 0.01, h.code);
+  }
+  // the default list holds only picks above their own usual
+  const top = engine.recommend({ enemyHeroes: ["phantom_assassin", "storm_spirit", "bristleback", "lion", "dazzle"], myRole: 1 });
+  assert.ok(top.heroes.length < r.heroes.length && top.heroes.every((h) => h.score > 0));
+});
+
+test("ADR-061: without matchup data the KB lift alone ranks; without baselines the KB score", async () => {
+  const { resolve } = await import("../src/resolver.js");
+  const draft = { enemyHeroes: ["phantom_lancer", "naga_siren", "terrorblade"] };
+  const noData = resolve({ ...engine.kb, matchups: undefined }, draft);
+  assert.ok(noData.heroes.length > 0);
+  for (const h of noData.heroes) {
+    assert.ok(h.edge!.byEnemy.every((x) => x.games === undefined && x.dataWeight === 0));
+    assert.ok(h.reasons.some((x) => x.contribution > 0), "KB only: every pick has a mechanism");
+  }
+  // an AoE clearer is above its usual against three illusion heroes
+  assert.ok(noData.heroes.slice(0, 12).some((h) => h.reasons.some((x) => x.tool === "aoe_clear" && x.reliance === "illusion_based")));
+  const bare = resolve({ ...engine.kb, matchups: undefined, baselines: undefined }, draft);
+  assert.ok(bare.heroes.every((h) => h.edge!.byEnemy.every((x) => x.baseline === 0)));
+});
+
+test("ADR-061: the first pick depends on the draft, not on who has the most tags", () => {
+  const kb = engine.kb;
+  const heroes = Object.keys(kb.taxonomy.hero_tags);
+  const byPos: Record<number, string[]> = { 1: [], 2: [], 3: [], 4: [], 5: [] };
+  for (const h of heroes) byPos[kb.taxonomy.hero_tags[h]!.pos[0]!]!.push(h);
+  let seed = 2026;
+  const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  for (const role of [1, 3, 5]) {
+    const first = new Map<string, number>();
+    const N = 40;
+    for (let i = 0; i < N; i++) {
+      const enemies = [1, 2, 3, 4, 5].map((p) => byPos[p]![Math.floor(rnd() * byPos[p]!.length)]!);
+      const top = engine.recommend({ enemyHeroes: enemies, myRole: role }).heroes[0];
+      if (top) first.set(top.code, (first.get(top.code) ?? 0) + 1);
+    }
+    const [hero, count] = [...first].sort((a, b) => b[1] - a[1])[0]!;
+    // before ADR-061 Doom was the first position 3 in 62% of such drafts
+    assert.ok(count / N <= 0.3, `pos ${role}: ${hero} is the first pick in ${count} of ${N} random drafts`);
+    assert.ok(first.size >= 12, `pos ${role}: only ${first.size} different first picks`);
+  }
+});
+
+test("ADR-061: a hero is offered for a position it is played on in a fifth of its games", async () => {
+  const { positionsOf } = await import("../src/resolver.js");
+  const kb = engine.kb;
+  // the KB lists Chaos Knight as a carry; in our bracket he is mostly an offlaner
+  assert.ok(!kb.taxonomy.hero_tags["chaos_knight"]!.pos.includes(3));
+  assert.ok(positionsOf(kb, "chaos_knight").includes(3));
+  assert.deepEqual(positionsOf(kb, "axe"), kb.taxonomy.hero_tags["axe"]!.pos);
+  const r = engine.recommend({ enemyHeroes: ["sniper", "drow_ranger", "zeus", "lion", "crystal_maiden"], myRole: 3 }, { all: true });
+  const ck = rec(r.heroes, "chaos_knight");
+  assert.ok(ck && ck.pos!.includes(3));
+  assert.deepEqual(positionsOf({ ...kb, posShare: undefined } as typeof kb, "chaos_knight"), kb.taxonomy.hero_tags["chaos_knight"]!.pos);
 });

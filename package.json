@@ -7,6 +7,8 @@
   "scripts": {
     "demo": "tsx src/cli.ts",
     "build:web": "tsx scripts/build-web.ts",
+    "build:baselines": "tsx scripts/build-baselines.ts",
+    "kb:validate": "tsx scripts/kb-validate.ts",
     "build:roster": "tsx scripts/build-roster.ts",
     "scrape:counters": "tsx scripts/scrape-counters.ts",
     "fetch:portraits": "tsx scripts/fetch-portraits.ts",

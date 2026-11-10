@@ -119,8 +119,13 @@ export function readRawKB(root: string = REPO_ROOT): RawKB {
  *  minutes 5..40 for our bracket). Both optional; a pair with under 300 games is left
  *  to the position average. */
 const DAMAGE_MIN_GAMES = 300;
-function loadDamage(root: string): Pick<RawKB, "heroDamage" | "damageRate" | "posShare"> {
-  const out: Pick<RawKB, "heroDamage" | "damageRate" | "posShare"> = {};
+function loadDamage(root: string): Pick<RawKB, "heroDamage" | "damageRate" | "posShare" | "baselines"> {
+  const out: Pick<RawKB, "heroDamage" | "damageRate" | "posShare" | "baselines"> = {};
+  try {
+    out.baselines = readYaml<NonNullable<RawKB["baselines"]>>(join(root, "data", "baselines.json"));
+  } catch {
+    /* optional layer: without it the KB score is used as is */
+  }
   try {
     const doc = readYaml<{ hero_damage?: Record<string, [number, number, number]> }>(join(root, "data", "hero_damage.yaml"));
     if (doc.hero_damage) out.heroDamage = doc.hero_damage;

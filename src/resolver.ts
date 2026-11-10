@@ -44,7 +44,13 @@ interface Subject {
   tags?: HeroTags;
 }
 
-export function resolve(kb: KnowledgeBase, draft: DraftState): EngineResult {
+export interface ResolveOptions {
+  /** hero picks: keep every candidate with evidence, also those at or below their own
+   *  usual against this draft (edge <= 0) - for "why not X" and for inspecting the KB. */
+  all?: boolean;
+}
+
+export function resolve(kb: KnowledgeBase, draft: DraftState, opts: ResolveOptions = {}): EngineResult {
   const census = buildCensus(kb, draft.enemyHeroes, draft.enemyItems);
   const allies = new Set(draft.allyHeroes ?? []);
   const synergy = buildSynergyIndex(kb, allies);
@@ -53,7 +59,7 @@ export function resolve(kb: KnowledgeBase, draft: DraftState): EngineResult {
   const heroLocked = Boolean(draft.myHero);
   const heroes = heroLocked
     ? []
-    : rankSubjects(heroCandidates(kb, draft, census, allies), kb, census, synergy, team);
+    : rankHeroes(heroCandidates(kb, draft, census, allies), kb, census, synergy, team, opts.all === true);
   // item builds tailored to the hero you play: a counter item that does not belong in
   // that hero's build (Eul's on a carry Sniper) sinks instead of topping the list.
   const fit = itemFitFor(kb, draft);
@@ -279,7 +285,8 @@ function heroCandidates(
     if (enemySet.has(code)) continue; // can't pick an enemy
     if (allies.has(code)) continue; // already on your team
     if (draft.myHero && code === draft.myHero) continue;
-    if (draft.myRole !== undefined && !tags.pos.includes(draft.myRole)) continue;
+    const positions = positionsOf(kb, code);
+    if (draft.myRole !== undefined && !positions.includes(draft.myRole)) continue;
     // ADR-060: the KB lists the position, but in our bracket the hero is practically never
     // played there - not a pick to offer for it
     if (draft.myRole !== undefined && (kb.posShare?.[code]?.[String(draft.myRole)] ?? (kb.posShare?.[code] ? 0 : 1)) < P.ROLE_MIN_SHARE) continue;
@@ -287,7 +294,7 @@ function heroCandidates(
       kind: "hero",
       code,
       label: prettifyHero(code),
-      pos: tags.pos,
+      pos: positions,
       toolTable: tags.tool ?? {},
       resist: tags.resist ?? {},
       tags,
@@ -592,8 +599,6 @@ function attachWinrate(rec: Recommendation, kb: KnowledgeBase, census: Census): 
   const breakdown: Array<{ enemy: string; wr: number; n: number; expected?: number }> = [];
   let weighted = 0;
   let games = 0;
-  let gap = 0;
-  let gapGames = 0;
   for (const enemy of census.allSelected) {
     const pair = mu[enemy];
     if (!pair) continue;
@@ -603,34 +608,15 @@ function attachWinrate(rec: Recommendation, kb: KnowledgeBase, census: Census): 
     breakdown.push({ enemy, wr, n, ...(expected !== undefined ? { expected: round3(expected) } : {}) });
     weighted += wr * n;
     games += n;
-    if (expected !== undefined) {
-      gap += (wr - expected) * n;
-      gapGames += n;
-    }
   }
   if (games === 0) return;
   const winrate = weighted / games;
   rec.winrate = round3(winrate);
   rec.winrateGames = games;
   rec.matchups = breakdown.sort((a, b) => a.wr - b.wr);
-  if (gapGames === 0) return;
-
-  const advantage = gap / gapGames;
-  const confidence = Math.min(1, gapGames / P.WINRATE_FULL_CONF);
-  const factor = clamp(1 + P.WINRATE_TILT * advantage * confidence, 1 - P.WINRATE_CAP, 1 + P.WINRATE_CAP);
-  const kbScore = rec.score;
-  rec.score = round(rec.score * factor);
-  rec.stat = {
-    advantage: round3(advantage),
-    ...(own !== undefined ? { base: round3(own) } : {}),
-    confidence: round3(confidence),
-    factor: round3(factor),
-    kbScore,
-    delta: round(rec.score - kbScore),
-  };
 }
 
-// WINRATE_TILT / WINRATE_CAP / WINRATE_FULL_CONF: src/params.ts (ADR-035, ADR-039)
+
 
 /** each hero's games-weighted win rate over all its recorded matchups (cached per table). */
 const baseCache = new WeakMap<object, Map<string, number>>();
@@ -658,49 +644,142 @@ function clamp(x: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, x));
 }
 
-function rankSubjects(
+/** KB reasons for one hero candidate against the draft: counters, risks and resilience
+ *  per enemy (lane weight, target weight and per-enemy saturation applied), then what the
+ *  pick adds to the allied lineup. */
+function heroReasons(subject: Subject, kb: KnowledgeBase, census: Census, synergy: SynergyIndex, team: TeamContext): Reason[] {
+  const reasons: Reason[] = scoreSubject(subject, kb, census).map((r) =>
+    team.lane.has(r.enemy)
+      ? { ...r, contribution: r.contribution * P.LANE_WEIGHT, notes: [...(r.notes ?? []), "lane opponent"] }
+      : r,
+  );
+  focusReasons(reasons, team.enemyPos);
+  reasons.push(...teamReasons(kb, team, subject.code, subject.tags));
+  for (const s of synergy.get(subject.code) ?? []) {
+    reasons.push({
+      enemy: s.partner,
+      basis: "synergy",
+      mechanism: s.mechanism.trim(),
+      contribution: P.SYNERGY_WEIGHT,
+      factors: { edgeWeight: P.SYNERGY_WEIGHT },
+    });
+  }
+  return reasons;
+}
+
+const isTeamReason = (r: Reason) => r.basis === "synergy" || r.basis === "team";
+
+/** KB reasons of every hero candidate against ONE enemy (no baseline, no statistics, no
+ *  role fit): the input of the baselines (src/baseline.ts) and of the KB validation. */
+export function kbPairReasons(kb: KnowledgeBase, enemy: string, myRole?: number): Map<string, Reason[]> {
+  const draft: DraftState = { enemyHeroes: [enemy], ...(myRole !== undefined ? { myRole } : {}) };
+  const census = buildCensus(kb, draft.enemyHeroes, undefined);
+  const team = readTeam(kb, draft);
+  const out = new Map<string, Reason[]>();
+  for (const subject of heroCandidates(kb, draft, census, new Set())) {
+    out.set(subject.code, heroReasons(subject, kb, census, new Map(), team).filter((r) => !isTeamReason(r)));
+  }
+  return out;
+}
+export function kbPairScores(kb: KnowledgeBase, enemy: string, myRole?: number): Map<string, number> {
+  return new Map([...kbPairReasons(kb, enemy, myRole)].map(([hero, rs]) => [hero, rs.reduce((s, r) => s + r.contribution, 0)]));
+}
+
+/** Hero picks (ADR-061). The score is an estimated win-rate edge against this draft, in
+ *  percentage points, built per enemy:
+ *
+ *    lift   = KB score against the enemy - the hero's baseline (what it scores against an
+ *             average hero of that position; data/baselines.json). A hero with many tool
+ *             tags scores high against everyone; only the part above its own usual is
+ *             about THIS draft.
+ *    prior  = KB_PP_PER_POINT x lift            (mechanics, in pp)
+ *    gap    = measured win rate of the pair - the rate expected from both base rates
+ *    edge   = (games x gap + STAT_PRIOR_GAMES x prior) / (games + STAT_PRIOR_GAMES)
+ *
+ *  i.e. the measured matchup shrunk toward the mechanics by sample size: with no games
+ *  the KB decides, with thousands the data does. What the pick adds to the allied lineup
+ *  (team gaps, combos) is KB-only, converted with the same KB_PP_PER_POINT. */
+function rankHeroes(
   subjects: Subject[],
   kb: KnowledgeBase,
   census: Census,
   synergy: SynergyIndex,
   team: TeamContext,
+  keepAll: boolean,
 ): Recommendation[] {
   const recs: Recommendation[] = [];
+  const base = kb.matchups ? baseWinrates(kb.matchups) : undefined;
+  const roleKey = String(team.myRole ?? 0);
   for (const subject of subjects) {
-    const reasons: Reason[] = scoreSubject(subject, kb, census).map((r) =>
-      team.lane.has(r.enemy)
-        ? { ...r, contribution: r.contribution * P.LANE_WEIGHT, notes: [...(r.notes ?? []), "lane opponent"] }
-        : r,
-    );
-    if (subject.kind === "hero") {
-      focusReasons(reasons, team.enemyPos);
-      reasons.push(...teamReasons(kb, team, subject.code, subject.tags));
-    }
-    // synergy with allied team (only when picking a hero)
-    for (const s of synergy.get(subject.code) ?? []) {
-      reasons.push({
-        enemy: s.partner,
-        basis: "synergy",
-        mechanism: s.mechanism.trim(),
-        contribution: P.SYNERGY_WEIGHT,
-        factors: { edgeWeight: P.SYNERGY_WEIGHT },
+    const reasons = heroReasons(subject, kb, census, synergy, team);
+    const baseline = kb.baselines?.[roleKey]?.[subject.code];
+    const own = base?.get(subject.code);
+    const byEnemy: NonNullable<Recommendation["edge"]>["byEnemy"] = [];
+    let evidence = reasons.some((r) => r.contribution > 0);
+    for (const enemy of census.enemies) {
+      const kbScore = reasons.filter((r) => r.enemy === enemy && !isTeamReason(r)).reduce((s, r) => s + r.contribution, 0);
+      const usual = baseline?.[(team.enemyPos.get(enemy) ?? 3) - 1] ?? 0;
+      const prior = P.KB_PP_PER_POINT * (kbScore - usual);
+      const pair = kb.matchups?.[subject.code]?.[enemy];
+      const theirs = base?.get(enemy);
+      let edge = prior;
+      let gap: number | undefined;
+      let games = 0;
+      if (pair && own !== undefined && theirs !== undefined) {
+        games = pair[1];
+        gap = (pair[0] - sigmoid(logit(own) - logit(theirs))) * 100;
+        edge = (games * gap + P.STAT_PRIOR_GAMES * prior) / (games + P.STAT_PRIOR_GAMES);
+        evidence = true;
+      }
+      byEnemy.push({
+        enemy,
+        kb: round(kbScore),
+        baseline: round(usual),
+        ...(gap !== undefined ? { gap: round(gap), games } : {}),
+        dataWeight: round(games / (games + P.STAT_PRIOR_GAMES)),
+        edge: round(edge),
       });
     }
-    // a candidate needs at least one argument FOR it; resilience/exposure alone
-    // only re-rank (a hero with nothing but risks is simply not suggested)
-    if (!reasons.some((r) => r.contribution > 0)) continue;
-    const rec = finalizeRec(subject.kind, subject.code, subject.label, subject.pos, reasons);
-    // net negative = the enemy's kit beats this pick more than it answers them (ADR-022)
-    if (rec.score <= 0) continue;
-    if (subject.kind === "hero" && team.myRole !== undefined) {
+    // a candidate needs something to stand on: a mechanism for it or a measured matchup
+    if (!evidence) continue;
+    const teamPart = P.KB_PP_PER_POINT * reasons.filter(isTeamReason).reduce((s, r) => s + r.contribution, 0);
+    const total = byEnemy.reduce((s, x) => s + x.edge, 0) + teamPart;
+    // not better than its own usual against this draft: not a counter-pick
+    if (total <= 0 && !keepAll) continue;
+    const rec = finalizeRec("hero", subject.code, subject.label, subject.pos, reasons);
+    rec.edge = { total: round(total), team: round(teamPart), byEnemy };
+    rec.score = round(total);
+    // "answers X": a mechanism against X, or a clearly winning measured matchup
+    for (const x of byEnemy) {
+      if (x.edge >= EDGE_COVERS && x.dataWeight >= 0.5 && !rec.coverage.includes(x.enemy)) rec.coverage.push(x.enemy);
+    }
+    if (team.myRole !== undefined) {
       const fit = roleFit(kb, subject.code, team.myRole);
       rec.roleFit = fit;
-      rec.score = round(rec.score * fit.factor);
+      if (rec.score > 0) rec.score = round(rec.score * fit.factor);
     }
-    if (subject.kind === "hero") attachWinrate(rec, kb, census);
+    attachWinrate(rec, kb, census);
     recs.push(rec);
   }
   return recs.sort(rankCompare);
+}
+
+/** a measured matchup at least this good (pp, with the data weighing over half) counts as
+ *  "answers this enemy" even without a KB mechanism. */
+const EDGE_COVERS = 1;
+
+/** The positions a hero is offered for and shown with: the KB list, plus any position it
+ *  is played on in at least ROLE_DATA_SHARE of its games in our bracket (data/benchmarks.json),
+ *  most played first. The KB list goes stale between reviews; the data does not. */
+export function positionsOf(kb: KnowledgeBase, hero: string): number[] {
+  const own = kb.taxonomy.hero_tags[hero]?.pos ?? [];
+  const shares = kb.posShare?.[hero];
+  if (!shares) return own;
+  const extra = Object.entries(shares)
+    .filter(([p, s]) => s >= P.ROLE_DATA_SHARE && !own.includes(Number(p)))
+    .sort((a, b) => b[1] - a[1])
+    .map(([p]) => Number(p));
+  return extra.length ? [...own, ...extra] : own;
 }
 
 /** How usual a hero is on a position (ADR-060): its share of games there relative to its

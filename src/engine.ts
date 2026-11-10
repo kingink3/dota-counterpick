@@ -7,7 +7,7 @@
 // =============================================================================
 
 import { loadKB, type KnowledgeBase } from "./kb.js";
-import { resolve } from "./resolver.js";
+import { resolve, type ResolveOptions } from "./resolver.js";
 import type { DraftState, EngineResult } from "./types.js";
 
 export class CounterPickEngine {
@@ -19,8 +19,8 @@ export class CounterPickEngine {
   }
 
   /** ADR-012: enemies[] (+ role/hero) -> ranked, explainable candidates. */
-  recommend(draft: DraftState): EngineResult {
-    return resolve(this.kb, draft);
+  recommend(draft: DraftState, opts?: ResolveOptions): EngineResult {
+    return resolve(this.kb, draft, opts);
   }
 
   get warnings(): string[] {

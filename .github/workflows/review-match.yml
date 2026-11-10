@@ -124,7 +124,7 @@ jobs:
           recent=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).recent)' "$todo")
           rflag="--recent no"; [ "$recent" = "true" ] && rflag=""
           if [ "$latest" = "true" ]; then
-            if [ "$EVENT" = "schedule" ] || [ "$AUTO" = "true" ]; then
+            if [ "$AUTO" = "true" ]; then
               npx tsx scripts/stratz-fetch.ts --mode auto --skip /tmp/stored-ids.json --max 3 --out /tmp/match
             else
               npx tsx scripts/stratz-fetch.ts --mode match --out /tmp/match $rflag

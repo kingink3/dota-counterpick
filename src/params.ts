@@ -235,26 +235,26 @@ export const PARAM_DOCS = {
     range: [0.3, 0.7],
   },
   // ---- stat layer (ADR-035) -------------------------------------------------
-  WINRATE_CAP: {
-    value: 0.06,
-    kind: "design",
-    area: "stat",
-    why: "The stat layer moves a score by at most ±6%: enough to reorder near-ties, never enough to lift a hero without a mechanism over one with it (KB first, ADR-004). In practice the cap rarely binds: matchup gaps are mostly within ±2 pp, i.e. a factor within ±2.4%.",
-    range: [0.03, 0.1],
-  },
-  WINRATE_TILT: {
+  KB_PP_PER_POINT: {
     value: 1.2,
     kind: "derived",
     area: "stat",
-    why: "Set so a +5 pp matchup gap at full confidence reaches the cap: 1 + 1.2 x 0.05 = 1.06. +5 pp is a large, well-known counter in public data; observed gaps are mostly within ±2 pp (ADR-035).",
-    range: [0.8, 2.0],
+    why: "Converts KB points into percentage points of win rate: the slope of the measured matchup gap on the KB lift (score against the enemy minus the hero's baseline) over 12 199 hero pairs with at least 1000 games, weighted by precision - 1.19 (npm run kb:validate, KB_VALIDATION.md). Noise in the gap does not bias a slope. Re-derive after a statistics refresh or a KB pass.",
+    range: [0.8, 1.6],
   },
-  WINRATE_FULL_CONF: {
-    value: 150,
+  STAT_PRIOR_GAMES: {
+    value: 1600,
     kind: "derived",
     area: "stat",
-    why: "Games for full confidence: with 150 games the standard error of a ~50% win rate is ~4 pp, the size of the effect being measured; fewer games scale the tilt down linearly. Public matchup samples are mostly in the thousands, so in practice confidence is 1 and the value rarely matters.",
-    range: [100, 400],
+    why: "Games at which a measured matchup weighs as much as the mechanics: edge = (games x gap + 1600 x prior) / (games + 1600). It is the sampling variance of a win rate per game (2500 pp^2) divided by the variance of the true gap around the KB prior (1.25 pp squared, estimated on pairs with 5000+ games after removing sampling noise) - the standard shrinkage weight, not a tuned number. At 1600 games the two count equally; at 16 000 the data is 91% of the estimate. Replaces the +-6% cap of ADR-035 (ADR-061).",
+    range: [800, 3200],
+  },
+  ROLE_DATA_SHARE: {
+    value: 0.2,
+    kind: "design",
+    area: "counter",
+    why: "A hero is also offered for a position missing from its KB list when it is played there in at least a fifth of its games in our bracket (data/benchmarks.json): Broodmother 2, Chaos Knight 3, Wraith King 3, Gyrocopter 4. One game in five is a real role, not an experiment; the role-fit factor still lowers it against the hero's main position.",
+    range: [0.15, 0.3],
   },
 } satisfies Record<string, ParamDoc>;
 

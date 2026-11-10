@@ -18,11 +18,11 @@
       },
       "expect": {
         "heroes": [
-          "bloodseeker",
-          "juggernaut",
           "slark",
-          "medusa",
-          "anti_mage"
+          "drow_ranger",
+          "troll_warlord",
+          "viper",
+          "templar_assassin"
         ],
         "items": [
           "bloodthorn",
@@ -54,11 +54,11 @@
       },
       "expect": {
         "heroes": [
-          "rattletrap",
-          "pudge",
-          "axe",
-          "omniknight",
-          "magnus"
+          "kunkka",
+          "lycan",
+          "legion_commander",
+          "earthshaker",
+          "undying"
         ],
         "items": [
           "force_staff",
@@ -90,11 +90,11 @@
       },
       "expect": {
         "heroes": [
+          "ember_spirit",
           "outworld_destroyer",
-          "huskar",
-          "skywrath_mage",
-          "sniper",
-          "necrophos"
+          "necrophos",
+          "tiny",
+          "dragon_knight"
         ],
         "items": [
           "orchid",
@@ -126,11 +126,11 @@
       },
       "expect": {
         "heroes": [
-          "lion",
-          "bane",
-          "skywrath_mage",
-          "tusk",
-          "oracle"
+          "rattletrap",
+          "pudge",
+          "snapfire",
+          "zeus",
+          "shadow_demon"
         ],
         "items": [
           "euls_scepter",
@@ -162,11 +162,11 @@
       },
       "expect": {
         "heroes": [
+          "shadow_fiend",
+          "phantom_assassin",
+          "terrorblade",
           "sven",
-          "juggernaut",
-          "ursa",
-          "luna",
-          "bloodseeker"
+          "meepo"
         ],
         "items": [
           "battlefury",
@@ -198,11 +198,11 @@
       },
       "expect": {
         "heroes": [
+          "grimstroke",
+          "nyx_assassin",
           "silencer",
-          "batrider",
-          "treant",
-          "rattletrap",
-          "shadow_demon"
+          "disruptor",
+          "earthshaker"
         ],
         "items": [
           "scythe_of_vyse",
@@ -264,11 +264,11 @@
       },
       "expect": {
         "heroes": [
-          "ursa",
-          "juggernaut",
-          "phantom_assassin",
-          "chaos_knight",
-          "visage"
+          "meepo",
+          "beastmaster",
+          "sven",
+          "wraith_king",
+          "bristleback"
         ],
         "items": [
           "gem_of_true_sight",

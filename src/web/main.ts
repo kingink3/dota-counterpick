@@ -72,7 +72,9 @@ async function boot(): Promise<void> {
     kb: kbIndexed,
     grid: [],
     ...(stats ? { itemStats: stats } : {}),
-    ...(matchups && "source" in matchups && typeof matchups.source === "string" ? { matchupSource: matchups.source } : {}),
+    ...(matchups && "source" in matchups && typeof matchups.source === "string"
+      ? { matchupSource: `${matchups.source}${"fetchedAt" in matchups && typeof matchups.fetchedAt === "string" ? `, ${matchups.fetchedAt.slice(0, 10)}` : ""}` }
+      : {}),
   });
   setRender(renderAll);
   const optJson = <T,>(f: string): Promise<T | undefined> => fetch(f).then((r) => (r.ok ? (r.json() as Promise<T>) : undefined)).catch(() => undefined);
@@ -573,6 +575,18 @@ function renderInner(): void {
   if (recs.length === 0) panel.appendChild(note("Nothing here for this enemy team."));
   else for (const rec of recs.slice(0, 12)) panel.appendChild(recCard(rec));
   out.appendChild(panel);
+  if (state.enemies.size) {
+    // what the recommendations stand on, and how fresh it is (PATCH_RUNBOOK B8)
+    const src = document.createElement("p");
+    src.className = "muted plan-src";
+    const patch = kb.taxonomy.meta?.["patch"];
+    src.textContent = [
+      state.activeTab === "heroes" ? "Hero picks: estimated win-rate edge against this draft, pp." : "",
+      patch ? `Mechanics: KB for patch ${String(patch)}.` : "",
+      state.activeTab === "heroes" && kb.matchups ? `Measured matchups: ${matchupSource}.` : "",
+    ].filter(Boolean).join(" ");
+    out.appendChild(src);
+  }
 
   if (result.uncovered.length > 0) {
     const gap = document.createElement("div");

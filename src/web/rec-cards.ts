@@ -33,6 +33,33 @@ export function damageRead(d: DamageRead): HTMLElement {
       : `They are softer to ${school(d.offenseLean)} damage.`);
   return p;
 }
+const signed = (x: number, digits = 1) => `${x >= 0 ? "+" : "\u2212"}${Math.abs(x).toFixed(digits)}`;
+
+/** ADR-061: the estimated edge by enemy, best first - measured matchups where there are
+ *  games, mechanics where there are none. */
+function edgeLine(rec: Recommendation): string {
+  const parts = [...rec.edge!.byEnemy]
+    .sort((a, b) => b.edge - a.edge)
+    .map((x) => {
+      const cls = x.edge >= 0.5 ? "good" : x.edge <= -0.5 ? "bad" : "";
+      const how = x.games
+        ? `measured ${signed(x.gap!)} pp over ${x.games} games (weight ${Math.round(x.dataWeight * 100)}%); mechanics ${signed(x.kb - x.baseline, 2)} above this hero's usual`
+        : `no matchup data: mechanics only, ${signed(x.kb - x.baseline, 2)} above this hero's usual`;
+      return `<span class="${cls}" title="${esc(how)}">${esc(labelFor(x.enemy))} ${signed(x.edge)}</span>`;
+    });
+  if (Math.abs(rec.edge!.team) >= 0.05) parts.push(`<span title="What the pick adds to your lineup (KB)">team ${signed(rec.edge!.team)}</span>`);
+  return `<span class="muted">By enemy, pp:</span> ${parts.join(" · ")}`;
+}
+
+function edgeTip(rec: Recommendation): string {
+  const e = rec.edge!;
+  return [
+    "Estimated win-rate edge against this draft, percentage points.",
+    "Per enemy: the measured matchup (vs the rate expected from both heroes' base rates), shrunk toward the KB mechanics by sample size.",
+    `Sum ${signed(e.total, 2)}${rec.roleFit && rec.roleFit.factor < 1 ? ` x role fit ${rec.roleFit.factor} = ${signed(rec.score, 2)}` : ""}.`,
+  ].join("\n");
+}
+
 /** below this share of games relative to the hero's main position the card says "rare on pos N". */
 const ROLE_NOTE_REL = 0.6;
 
@@ -74,12 +101,13 @@ export function winrateBadge(rec: Recommendation): string {
   if (rec.winrate === undefined) return "";
   const pct = Math.round(rec.winrate * 100);
   const cls = pct >= 52 ? "wr good" : pct <= 48 ? "wr bad" : "wr";
-  const st = rec.stat;
-  const pp = st ? Math.round(st.advantage * 1000) / 10 : undefined;
+  // measured part of the edge: the games-weighted gap over the enemies with data
+  const withData = (rec.edge?.byEnemy ?? []).filter((x) => x.gap !== undefined && x.games);
+  const games = withData.reduce((n, x) => n + x.games!, 0);
+  const pp = games ? Math.round((withData.reduce((g, x) => g + x.gap! * x.games!, 0) / games) * 10) / 10 : undefined;
   const tip = [
     `${pct}% win rate vs their team across ${rec.winrateGames} matches (${matchupSource})`,
-    st?.base !== undefined ? `hero's own win rate ${Math.round(st.base * 1000) / 10}%` : "",
-    st ? `vs expected from both heroes' base rates: ${pp! >= 0 ? "+" : ""}${pp} pp -> score x${st.factor.toFixed(3)} (${st.delta >= 0 ? "+" : ""}${st.delta.toFixed(2)} of ${rec.score.toFixed(1)}; KB ${st.kbScore.toFixed(2)})` : "",
+    pp !== undefined ? `vs expected from both heroes' base rates: ${pp >= 0 ? "+" : ""}${pp} pp on average` : "",
   ].filter(Boolean).join("\n");
   const gapTxt = pp !== undefined && Math.abs(pp) >= 0.5 ? ` <small>${pp >= 0 ? "+" : ""}${pp} pp</small>` : "";
   return `<span class="${cls}" title="${esc(tip)}">${pct}% WR${gapTxt}</span>`;
@@ -93,7 +121,23 @@ export function archetypeLabel(a: Archetype, attack?: AttackType): string {
 /** the single strongest counter reason (synergy shown in meta instead). */
 export function leadReason(rec: Recommendation): Reason | undefined {
   const counters = rec.reasons.filter((r) => r.basis !== "synergy" && r.contribution > 0);
+  // ADR-061: lead with the mechanism against the enemy this pick is best against
+  const best = rec.edge ? [...rec.edge.byEnemy].sort((a, b) => b.edge - a.edge)[0] : undefined;
+  if (best && best.edge > 0) {
+    const vsBest = counters.filter((r) => r.enemy === best.enemy && r.basis !== "team").sort((a, b) => b.contribution - a.contribution)[0];
+    if (vsBest) return vsBest;
+    // the best matchup is a measured one with no mechanism in the KB: the card says so (measuredLead)
+    if (best.games) return undefined;
+  }
   return (counters.length ? counters : rec.reasons).slice().sort((a, b) => b.contribution - a.contribution)[0];
+}
+
+/** The lead line of a pick whose best matchup is known from data only (ADR-061). */
+function measuredLead(rec: Recommendation): string | undefined {
+  const best = rec.edge ? [...rec.edge.byEnemy].sort((a, b) => b.edge - a.edge)[0] : undefined;
+  if (!best || best.edge <= 0 || !best.games || best.gap === undefined) return undefined;
+  const games = best.games >= 1000 ? `${(best.games / 1000).toFixed(1)}k` : String(best.games);
+  return `<b>vs ${esc(labelFor(best.enemy))}:</b> wins ${signed(best.gap)} pp more often than both heroes' base win rates predict (${games} games). <span class="muted">Measured; no mechanism for it in the KB yet.</span>`;
 }
 
 export function recCard(rec: Recommendation): HTMLElement {
@@ -152,15 +196,24 @@ export function recCard(rec: Recommendation): HTMLElement {
 
   const sc = document.createElement("div");
   sc.className = "sc";
-  sc.innerHTML = `<b title="${esc(rec.stat ? `KB ${rec.stat.kbScore.toFixed(2)} x stat ${rec.stat.factor.toFixed(3)} = ${rec.score.toFixed(2)}` : "KB score")}">${rec.score.toFixed(1)}</b>${winrateBadge(rec)}`;
+  sc.innerHTML = rec.edge
+    ? `<b title="${esc(edgeTip(rec))}">${signed(rec.score)}<small> pp</small></b>${winrateBadge(rec)}`
+    : `<b title="KB score">${rec.score.toFixed(1)}</b>${winrateBadge(rec)}`;
   card.appendChild(sc);
 
   const lead = leadReason(rec);
-  if (lead) {
+  const measured = lead ? undefined : measuredLead(rec);
+  if (lead || measured) {
     const why = document.createElement("p");
     why.className = "why";
-    why.innerHTML = reasonSummary(lead, rec);
+    why.innerHTML = lead ? reasonSummary(lead, rec) : measured!;
     card.appendChild(why);
+  }
+  if (rec.edge?.byEnemy.length) {
+    const line = document.createElement("p");
+    line.className = "edge-line";
+    line.innerHTML = edgeLine(rec);
+    card.appendChild(line);
   }
   const rest = rec.reasons.filter((r) => r !== lead);
   if (rest.length) {

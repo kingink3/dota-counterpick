@@ -381,10 +381,18 @@ export interface Recommendation {
   winrateGames?: number;
   /** per-enemy win rate breakdown; `expected` = from both heroes' base win rates. */
   matchups?: Array<{ enemy: string; wr: number; n: number; expected?: number }>;
-  /** how the stat layer moved the score (ADR-035): advantage = games-weighted
-   *  (actual - expected) win rate vs these enemies; base = the hero's own win rate;
-   *  factor applied to kbScore (0.94..1.06); delta = score - kbScore. */
-  stat?: { advantage: number; base?: number; confidence: number; factor: number; kbScore: number; delta: number };
+  /** hero picks (ADR-061): the score as an estimated win-rate edge against this draft, in
+   *  percentage points. Per enemy: kb = KB score against it, baseline = what this hero
+   *  scores against an average hero of that position, gap = measured win rate of the pair
+   *  minus the rate expected from both base rates (pp, over `games`), dataWeight = how
+   *  much the measurement outweighs the mechanics (games / (games + STAT_PRIOR_GAMES)),
+   *  edge = the blend. team = what the pick adds to the allied lineup. total = before
+   *  the role-fit factor. */
+  edge?: {
+    total: number;
+    team: number;
+    byEnemy: Array<{ enemy: string; kb: number; baseline: number; gap?: number; games?: number; dataWeight: number; edge: number }>;
+  };
   /** hero picks with a role (ADR-060): how usual the hero is on that position - its share
    *  of the hero's games there, relative to its most played position - and the factor
    *  already applied to the score (1 = its main role). */

@@ -71,6 +71,9 @@ export interface KnowledgeBase {
   damageRate?: Record<string, Record<string, [number, number, number]>>;
   /** hero -> position -> share of the hero's games played there (data/benchmarks.json, ADR-060). */
   posShare?: Record<string, Record<string, number>>;
+  /** role key ("0" = no role chosen, "1".."5") -> hero -> its KB score against an average
+   *  enemy hero of position 1..5 (data/baselines.json, src/baseline.ts; ADR-061). */
+  baselines?: Record<string, Record<string, number[]>>;
 
   // indices -----------------------------------------------------------------
   relianceByCode: Map<string, Reliance>;
@@ -110,6 +113,7 @@ export interface RawKB {
   heroDamage?: Record<string, [number, number, number]>;
   damageRate?: Record<string, Record<string, [number, number, number]>>;
   posShare?: Record<string, Record<string, number>>;
+  baselines?: Record<string, Record<string, number[]>>;
 }
 
 /** hero damage per minute by position in [lane, mid, late]: the mean over heroes in
@@ -256,6 +260,7 @@ export function indexKB(raw: RawKB): KnowledgeBase {
     ...(raw.heroDamage ? { heroDamage: raw.heroDamage } : {}),
     ...(raw.damageRate ? { damageRate: raw.damageRate } : {}),
     ...(raw.posShare ? { posShare: raw.posShare } : {}),
+    ...(raw.baselines ? { baselines: raw.baselines } : {}),
     relianceByCode,
     toolByCode,
     edgesByTool,

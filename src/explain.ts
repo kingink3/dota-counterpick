@@ -122,7 +122,14 @@ export function renderRecommendation(
     rec.winrate !== undefined
       ? `  [${Math.round(rec.winrate * 100)}% WR / ${rec.winrateGames}g]`
       : "";
-  out.push(`\n  ▸ ${rec.label}${tag} - score ${rec.score}${tail ? `, ${tail}` : ""}${wr}`);
+  const sc = rec.edge ? `edge ${rec.score >= 0 ? "+" : ""}${rec.score} pp` : `score ${rec.score}`;
+  out.push(`\n  ▸ ${rec.label}${tag} - ${sc}${tail ? `, ${tail}` : ""}${wr}`);
+  if (rec.edge) {
+    const by = [...rec.edge.byEnemy]
+      .sort((a, b) => b.edge - a.edge)
+      .map((x) => `${heroLabel(x.enemy)} ${x.edge >= 0 ? "+" : ""}${x.edge}${x.games ? ` (measured ${x.gap! >= 0 ? "+" : ""}${x.gap} over ${x.games}g, kb ${x.kb} vs usual ${x.baseline})` : ` (kb ${x.kb} vs usual ${x.baseline})`}`);
+    out.push(`      by enemy, pp: ${by.join("; ")}${rec.edge.team ? `; team ${rec.edge.team >= 0 ? "+" : ""}${rec.edge.team}` : ""}`);
+  }
   for (const reason of rec.reasons) {
     const line =
       reason.basis === "synergy"

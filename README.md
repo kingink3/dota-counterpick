@@ -1,14 +1,20 @@
-# Dota Counter-Pick Engine - MVP (KB-only)
+# Dota Counter-Pick
 
-Explainable counter-pick / counter-build rule-engine for Dota 2. Implements the
-**ADR-012** engine contract against the knowledge base in
-[`taxonomy.yaml`](taxonomy.yaml). The core ranking is **KB-only** (ADR-004); an optional
-Phase-2 **stat layer** (hero-vs-hero win rates from OpenDota) is layered on top: the
-win rate is shown, and the **matchup gap** (actual win rate vs the one expected from both
-heroes' base win rates) tilts the KB score by at most ±6% (ADR-035). The score tooltip
-shows KB score × factor; a strong meta hero gets no bonus for being strong in general.
-Every engine weight, its argument and how much the ranking depends on it: `src/params.ts`,
-[`PARAMS.md`](PARAMS.md) (`npm run params:report`, ADR-039).
+Explainable counter-pick, item-plan, in-game and match-review tool for Dota 2. The
+knowledge base ([`taxonomy.yaml`](taxonomy.yaml), `data/*.yaml`) covers all 127 heroes and
+gives every recommendation its *mechanism*.
+
+**Hero picks (ADR-061).** The score is an estimated win-rate edge against the draft, in
+percentage points, built per enemy: the measured matchup (STRATZ, our bracket; win rate of
+the pair minus the rate expected from both heroes' base rates) shrunk toward the KB
+mechanics by sample size. The KB part is the hero's score against that enemy minus its own
+baseline (what it scores against an average enemy, `data/baselines.json`), so a hero with
+many tool tags gets no bonus for it. With no games the KB decides; with thousands the data
+does. Both blend numbers are derived from the data: [`KB_VALIDATION.md`](KB_VALIDATION.md)
+(`npm run kb:validate`) also lists which general rules the data supports or refutes.
+Counter items and defensive items stay KB-ranked. Every engine weight, its argument and how
+much the ranking depends on it: `src/params.ts`, [`PARAMS.md`](PARAMS.md)
+(`npm run params:report`, ADR-039).
 
 The differentiator (per [`DECISIONS.md`](DECISIONS.md)) is **explainability**: every
 recommendation comes with the *mechanism* of why it counters the enemy, not just a
@@ -41,13 +47,11 @@ the **full Dota roster** (127 heroes, from `data/roster.json`) in four attribute
 a selected-enemy strip, and a role filter. Click enemy heroes, optionally pick your role,
 and the ranked + explained recommendations recompute on every change (ADR-002).
 
-Heroes that exist in the KB drive the real counter logic; the **~37 not-yet-tagged
-heroes are greyed but still selectable** - picking one honestly yields "no known
-counters" (ADR-004/011) rather than hiding it. The UI runs the **same** engine core as
-the CLI/tests - the browser just fetches pre-built `kb.json` + `roster.json` (ADR-006:
-YAML → static JSON, no runtime DB). Portraits are **self-hosted** under `web/heroes/`
-(downloaded once via `npm run fetch:portraits`) rather than hot-linked from Steam's CDN,
-which is blocked on some networks; any missing file degrades to a named tile.
+The UI runs the **same** engine core as the CLI/tests - the browser just fetches pre-built
+`kb.json` + `roster.json` (ADR-006: YAML → static JSON, no runtime DB). Portraits are
+**self-hosted** under `web/heroes/` (downloaded once via `npm run fetch:portraits`) rather
+than hot-linked from Steam's CDN, which is blocked on some networks; any missing file
+degrades to a named tile.
 
 The roster is regenerated with `npm run build:roster` (one-off static pull from OpenDota
 - hero names/attributes only, **not** a runtime stat dependency; ADR-004/005 stand). It
