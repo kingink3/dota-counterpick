@@ -27,7 +27,7 @@ export interface AbilityInfo {
   cd: number[];
   mc: number[];
   /** p passive, h hidden (shard / scepter / sub-ability), u unit target, t point target, n no target,
-   *  e enemy target, a ally target, c channelled */
+   *  e enemy target, a ally target, c channelled, x control, o attack modifier (orb) */
   f: string;
   /** cast range and effect radius, world units (max over levels). */
   r?: number;
@@ -165,6 +165,15 @@ function lastAt<T extends { time: number }>(evs: readonly T[], t: number): T | u
   return best >= 0 ? evs[best] : undefined;
 }
 
+/** Abilities whose "ready and not cast" moments mean something. Not: passives; attack modifiers
+ *  (orbs - Glaives of Wisdom, Frost Arrows, Arcane Orb: autocast on every attack, never logged as
+ *  a cast); abilities with no cooldown at any level (toggles, charges, Invoker's orbs - "ready"
+ *  cannot be told from a cooldown). */
+export function castChanceAbility(a: AbilityInfo): boolean {
+  if (a.f.includes("p") || a.f.includes("o")) return false;
+  return a.cd.length > 0 && Math.max(...a.cd) > 0;
+}
+
 /** how an ability is used, from its target flags. */
 function abilityUse(a: AbilityInfo): { use: UseKind; reach?: number } | undefined {
   const f = a.f;
@@ -244,7 +253,7 @@ export function analyseBattles(
   const firstCast = new Map<number, number>();
   for (const c of casts) if (!firstCast.has(c.abilityId!)) firstCast.set(c.abilityId!, c.time);
   const myAbilities = [...new Set([...learns.map((l) => l.abilityId), ...casts.map((c) => c.abilityId)])].filter(
-    (id): id is number => id != null && !!AB[String(id)] && !AB[String(id)]!.f.includes("p") && AB[String(id)]!.cd.length > 0,
+    (id): id is number => id != null && !!AB[String(id)] && castChanceAbility(AB[String(id)]!),
   );
   const castTimes = (id: number) => casts.filter((c) => c.abilityId === id).map((c) => c.time);
   const itemTimes = (k: string) => itemUses.filter((u) => u.k === k).map((u) => u.t);

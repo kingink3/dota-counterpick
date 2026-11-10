@@ -76,11 +76,13 @@ for (const [id, key] of Object.entries(abilityIds)) {
   const beh = ([] as string[]).concat(a.behavior ?? []);
   const team = ([] as string[]).concat(a.target_team ?? []);
   // flags: p passive, h hidden (granted by shard / scepter / sub-ability), u unit target, t point target,
-  // n no target, e enemy target, a ally target, c channelled, x control
+  // n no target, e enemy target, a ally target, c channelled, x control, o attack modifier (orb:
+  // autocast on every attack - never a "cast", so never a missed chance)
   const both = team.includes("Both");
   const f = [
     beh.includes("Passive") && "p", beh.includes("Hidden") && "h", beh.includes("Unit Target") && "u", beh.includes("Point Target") && "t",
     beh.includes("No Target") && "n", (team.includes("Enemy") || both) && "e", (team.includes("Friendly") || both) && "a", beh.includes("Channeled") && "c",
+    beh.includes("Attack Modifier") && "o",
     // x = control (weighted x2 in the battle chances, ADR-029f)
     !beh.includes("Passive") && (CONTROL_DESC.test(a.desc ?? "") || (a.attrib ?? []).some((x) => CONTROL_KEY.test(x.key) && !/^(fail|self)_/.test(x.key))) && "x",
   ].filter(Boolean).join("");

@@ -350,3 +350,20 @@ test("battles: a 2v2 is a side lane, not a battle", () => {
   const b = analyseBattles(d.summary, d.me, d.positions, ids as never, (k) => k, new Set(), d.health)!;
   assert.equal(b.battles.length, 0);
 });
+
+test("cast chances skip orbs, toggles and charge abilities (Glaives of Wisdom is not a missed cast)", async () => {
+  const { castChanceAbility } = await import("../src/review-battles.js");
+  const { readFileSync } = await import("node:fs");
+  const ids = JSON.parse(readFileSync(new URL("../data/ids.json", import.meta.url), "utf8")) as { abilities: Record<string, { k: string; f: string; cd: number[]; mc: number[]; n: string }> };
+  const byKey = new Map(Object.values(ids.abilities).map((a) => [a.k, a]));
+  const ab = (k: string) => byKey.get(k)!;
+  // attack modifiers: autocast on every attack, never logged as a cast
+  for (const k of ["silencer_glaives_of_wisdom", "drow_ranger_frost_arrows", "obsidian_destroyer_arcane_orb", "huskar_burning_spear", "jakiro_liquid_fire"]) {
+    assert.ok(ab(k).f.includes("o"), `${k} is flagged as an attack modifier`);
+    assert.equal(castChanceAbility(ab(k) as never), false, k);
+  }
+  // no cooldown at any level: readiness cannot be told (Invoker's orbs, charges)
+  for (const k of ["invoker_quas", "sniper_shrapnel"]) assert.equal(castChanceAbility(ab(k) as never), false, k);
+  // real spells stay
+  for (const k of ["silencer_last_word", "silencer_curse_of_the_silent", "silencer_global_silence", "lion_impale", "ogre_magi_bloodlust"]) assert.equal(castChanceAbility(ab(k) as never), true, k);
+});
