@@ -236,18 +236,18 @@ export const PARAM_DOCS = {
   },
   // ---- stat layer (ADR-035) -------------------------------------------------
   KB_PP_PER_POINT: {
-    value: 1.2,
+    value: 1.8,
     kind: "derived",
     area: "stat",
-    why: "Converts KB points into percentage points of win rate: the slope of the measured matchup gap on the KB lift (score against the enemy minus the hero's baseline) over 12 199 hero pairs with at least 1000 games, weighted by precision - 1.19 (npm run kb:validate, KB_VALIDATION.md). Noise in the gap does not bias a slope. Re-derive after a statistics refresh or a KB pass.",
-    range: [0.8, 1.6],
+    why: "Converts KB points into percentage points of win rate: the slope of the measured matchup gap on the KB lift (score against the enemy minus the hero's baseline) over 12 199 hero pairs with at least 1000 games, weighted by precision (npm run kb:validate, KB_VALIDATION.md). Noise in the gap does not bias a slope. Was 1.2 before the rule weights were set against the same data (ADR-062): with the rules that predict nothing damped, a KB point is worth more. Re-derive after a statistics refresh or a KB pass.",
+    range: [1.2, 2.4],
   },
   STAT_PRIOR_GAMES: {
-    value: 1600,
+    value: 1700,
     kind: "derived",
     area: "stat",
-    why: "Games at which a measured matchup weighs as much as the mechanics: edge = (games x gap + 1600 x prior) / (games + 1600). It is the sampling variance of a win rate per game (2500 pp^2) divided by the variance of the true gap around the KB prior (1.25 pp squared, estimated on pairs with 5000+ games after removing sampling noise) - the standard shrinkage weight, not a tuned number. At 1600 games the two count equally; at 16 000 the data is 91% of the estimate. Replaces the +-6% cap of ADR-035 (ADR-061).",
-    range: [800, 3200],
+    why: "Games at which a measured matchup weighs as much as the mechanics: edge = (games x gap + 1700 x prior) / (games + 1700). It is the sampling variance of a win rate per game (2500 pp^2) divided by the variance of the true gap around the KB prior (1.22 pp squared, estimated on pairs with 5000+ games after removing sampling noise) - the standard shrinkage weight, not a tuned number. At 1700 games the two count equally; at 17 000 the data is 91% of the estimate. Replaces the +-6% cap of ADR-035 (ADR-061).",
+    range: [850, 3400],
   },
   ROLE_DATA_SHARE: {
     value: 0.2,

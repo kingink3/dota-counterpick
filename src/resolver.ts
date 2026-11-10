@@ -159,15 +159,20 @@ function capability(tools: Record<string, number>, factors: Record<string, numbe
   return c;
 }
 
-/** A distinct position for each hero of one team: the cheapest assignment by the
- *  heroes' position lists (index 0 = main role; a position the hero does not play
- *  costs 4). `fixed` pins a known one (the hero you play on your role). */
+/** A distinct position for each hero of one team: the cheapest assignment by how often
+ *  each hero is played on each position (data/benchmarks.json); without the data, by the
+ *  KB position lists (index 0 = main role; a position the hero does not play costs 4).
+ *  `fixed` pins a known one (the hero you play on your role). */
 export function assignPositions(kb: KnowledgeBase, heroes: string[], fixed?: { hero: string; pos: number }): Map<string, number> {
   const out = new Map<string, number>();
   const list = [...new Set(heroes)].filter((e) => kb.taxonomy.hero_tags[e]).slice(0, 5);
   if (!list.length) return out;
   const cost = (e: string, p: number) => {
     if (fixed && fixed.hero === e) return p === fixed.pos ? 0 : 100;
+    // where the hero is actually played in our bracket (ADR-062): 0 for its most played
+    // position, rising to 4 for one it is never played on
+    const shares = kb.posShare?.[e];
+    if (shares) return (1 - (shares[String(p)] ?? 0) / Math.max(...Object.values(shares), 1e-9)) * 4;
     const i = kb.taxonomy.hero_tags[e]!.pos.indexOf(p);
     return i < 0 ? 4 : i;
   };
@@ -728,6 +733,14 @@ function rankHeroes(
       if (pair && own !== undefined && theirs !== undefined) {
         games = pair[1];
         gap = (pair[0] - sigmoid(logit(own) - logit(theirs))) * 100;
+        // the same matchup as recorded from the enemy's side: the two do not sum to exactly
+        // 100% (separate samples), their mean is the unbiased estimate
+        const mirror = kb.matchups?.[enemy]?.[subject.code];
+        if (mirror) {
+          const back = -(mirror[0] - sigmoid(logit(theirs) - logit(own))) * 100;
+          gap = (gap * pair[1] + back * mirror[1]) / (pair[1] + mirror[1]);
+          games = Math.round((pair[1] + mirror[1]) / 2);
+        }
         edge = (games * gap + P.STAT_PRIOR_GAMES * prior) / (games + P.STAT_PRIOR_GAMES);
         evidence = true;
       }
@@ -959,7 +972,8 @@ function scoreSubject(
         );
         if (!guard.ok) continue;
 
-        const contribution = toolWeight * edge.weight * relianceWeight;
+        const edgeWeight = subject.kind === "hero" ? (edge.pick_weight ?? edge.weight) : edge.weight;
+        const contribution = toolWeight * edgeWeight * relianceWeight;
         reasons.push({
           enemy,
           basis: "edge",
@@ -969,7 +983,7 @@ function scoreSubject(
           contribution,
           factors: {
             toolWeight,
-            edgeWeight: edge.weight,
+            edgeWeight,
             relianceWeight,
           },
           ...(guard.notes.length ? { notes: guard.notes } : {}),
@@ -1073,8 +1087,8 @@ function scoreTwoSided(subject: Subject, kb: KnowledgeBase, census: Census, out:
             tool: toolCode,
             reliance: edge.target,
             mechanism: edge.mechanism,
-            contribution: -P.RISK_WEIGHT * tw * edge.weight * cw,
-            factors: { toolWeight: tw, edgeWeight: edge.weight, relianceWeight: cw },
+            contribution: -P.RISK_WEIGHT * tw * (edge.pick_weight ?? edge.weight) * cw,
+            factors: { toolWeight: tw, edgeWeight: edge.pick_weight ?? edge.weight, relianceWeight: cw },
             ...viaField(census.viaOf(enemy, "tool", toolCode)),
           });
         }

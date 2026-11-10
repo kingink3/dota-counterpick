@@ -10,9 +10,12 @@ import { test } from "node:test";
 import type { Census } from "../src/census.js";
 import { evaluateConditions } from "../src/conditions.js";
 import { CounterPickEngine } from "../src/engine.js";
+import { P } from "../src/params.js";
 import type { EngineResult, Recommendation } from "../src/types.js";
 
 const engine = CounterPickEngine.load();
+/** the two derived numbers of the hero-pick blend (ADR-061). */
+const BLEND = { pp: P.KB_PP_PER_POINT, games: P.STAT_PRIOR_GAMES };
 
 function rec(list: Recommendation[], code: string): Recommendation | undefined {
   return list.find((r) => r.code === code);
@@ -677,9 +680,9 @@ test("stat tilt: a hero strong vs everyone gains ~nothing; a real counter gains"
     assert.ok(ctrEdge.gap! > 5, `counter gap > 5 pp, got ${ctrEdge.gap}`);
     assert.ok(ctr.score > meta.score, "a measured counter outranks a meta hero with the same mechanics");
     // the blend: (games x gap + STAT_PRIOR_GAMES x prior) / (games + STAT_PRIOR_GAMES)
-    const prior = 1.2 * (ctrEdge.kb - ctrEdge.baseline);
-    assert.ok(Math.abs(ctrEdge.edge - (1000 * ctrEdge.gap! + 1600 * prior) / 2600) < 0.02);
-    assert.equal(ctrEdge.dataWeight, Math.round((1000 / 2600) * 1000) / 1000);
+    const prior = BLEND.pp * (ctrEdge.kb - ctrEdge.baseline);
+    assert.ok(Math.abs(ctrEdge.edge - (1000 * ctrEdge.gap! + BLEND.games * prior) / (1000 + BLEND.games)) < 0.02);
+    assert.equal(ctrEdge.dataWeight, Math.round((1000 / (1000 + BLEND.games)) * 1000) / 1000);
   } finally {
     engine.kb.matchups = real;
   }
@@ -886,8 +889,8 @@ test("ADR-061: the score is a per-enemy edge - measured gap shrunk toward the KB
     // total = sum of the per-enemy edges + the team part
     assert.ok(Math.abs(e.total - (e.byEnemy.reduce((s, x) => s + x.edge, 0) + e.team)) < 0.01, h.code);
     for (const x of e.byEnemy) {
-      const prior = 1.2 * (x.kb - x.baseline);
-      const want = x.games ? (x.games * x.gap! + 1600 * prior) / (x.games + 1600) : prior;
+      const prior = BLEND.pp * (x.kb - x.baseline);
+      const want = x.games ? (x.games * x.gap! + BLEND.games * prior) / (x.games + BLEND.games) : prior;
       assert.ok(Math.abs(x.edge - want) < 0.01, `${h.code} vs ${x.enemy}: ${x.edge} != ${want}`);
       assert.ok(x.dataWeight >= 0 && x.dataWeight < 1);
     }
@@ -948,4 +951,61 @@ test("ADR-061: a hero is offered for a position it is played on in a fifth of it
   const ck = rec(r.heroes, "chaos_knight");
   assert.ok(ck && ck.pos!.includes(3));
   assert.deepEqual(positionsOf({ ...kb, posShare: undefined } as typeof kb, "chaos_knight"), kb.taxonomy.hero_tags["chaos_knight"]!.pos);
+});
+
+test("ADR-062: a rule's pick_weight applies to hero picks, the mechanics weight to items", () => {
+  const edge = engine.kb.taxonomy.edges.find((e) => e.tool === "silence" && e.target === "spell_reliant")!;
+  assert.ok(edge.pick_weight !== undefined && edge.pick_weight < edge.weight);
+  const r = engine.recommend({ enemyHeroes: ["storm_spirit"] }, { all: true });
+  const heroReason = r.heroes.flatMap((h) => h.reasons).find((x) => x.basis === "edge" && x.tool === "silence" && x.reliance === "spell_reliant")!;
+  assert.equal(heroReason.factors.edgeWeight, edge.pick_weight);
+  // items: every reason from a rule that has a pick weight still carries the mechanics weight
+  const items = engine.recommend({ enemyHeroes: ["zeus", "phantom_lancer", "riki", "medusa", "huskar"] }).items;
+  let checked = 0;
+  for (const x of items.flatMap((i) => i.reasons)) {
+    if (x.basis !== "edge") continue;
+    const rule = engine.kb.taxonomy.edges.find((e) => e.tool === x.tool && e.target === x.reliance);
+    if (rule?.pick_weight === undefined) continue;
+    assert.equal(x.factors.edgeWeight, rule.weight, `${x.tool} -> ${x.reliance}`);
+    checked++;
+  }
+  assert.ok(checked >= 3, `item reasons checked: ${checked}`);
+  // the risk side of the same rule uses the pick weight too
+  const risk = engine
+    .recommend({ enemyHeroes: ["silencer"] }, { all: true })
+    .heroes.flatMap((h) => h.reasons)
+    .find((x) => x.basis === "risk" && x.tool === "silence" && x.reliance === "spell_reliant")!;
+  assert.equal(risk.factors.edgeWeight, edge.pick_weight);
+  // every pick_weight is a positive number on an existing edge
+  for (const e of engine.kb.taxonomy.edges) if (e.pick_weight !== undefined) assert.ok(e.pick_weight > 0 && e.pick_weight <= 2.5, `${e.tool} -> ${e.target}`);
+});
+
+test("ADR-062: enemies get the positions they are actually played on", async () => {
+  const { assignPositions } = await import("../src/resolver.js");
+  const kb = engine.kb;
+  // the KB lists Broodmother as 3/1; in our bracket she is a mid in four games of five
+  assert.ok(!kb.taxonomy.hero_tags["broodmother"]!.pos.includes(2));
+  assert.equal(assignPositions(kb, ["broodmother"]).get("broodmother"), 2);
+  const five = assignPositions(kb, ["broodmother", "chaos_knight", "anti_mage", "lion", "crystal_maiden"]);
+  assert.equal(five.get("broodmother"), 2);
+  assert.equal(five.get("chaos_knight"), 3);
+  assert.equal(five.get("anti_mage"), 1);
+  assert.deepEqual([...five.values()].sort(), [1, 2, 3, 4, 5]);
+  // without the data the KB list decides, as before
+  assert.equal(assignPositions({ ...kb, posShare: undefined } as typeof kb, ["broodmother"]).get("broodmother"), kb.taxonomy.hero_tags["broodmother"]!.pos[0]);
+});
+
+test("ADR-062: the measured gap averages both records of a matchup", () => {
+  const real = engine.kb.matchups;
+  try {
+    // the two sides of one matchup disagree: 56% from one, 48% (i.e. 52%) from the other
+    engine.kb.matchups = { lion: { storm_spirit: [0.56, 3000], zeus: [0.5, 3000] }, storm_spirit: { lion: [0.48, 1000], zeus: [0.5, 3000] }, zeus: { lion: [0.5, 3000], storm_spirit: [0.5, 3000] } };
+    const lion = engine.recommend({ enemyHeroes: ["storm_spirit"] }, { all: true }).heroes.find((h) => h.code === "lion")!;
+    const x = lion.edge!.byEnemy[0]!;
+    assert.equal(x.games, 2000);
+    // direct: 56% vs 53.5% expected = +2.5 pp over 3000 games; mirrored: -(48% - 46.5%) = -1.5 pp over 1000
+    assert.ok(Math.abs(x.gap! - 1.5) < 0.3, `games-weighted mean of the two records, got ${x.gap}`);
+  } finally {
+    engine.kb.matchups = real;
+  }
 });

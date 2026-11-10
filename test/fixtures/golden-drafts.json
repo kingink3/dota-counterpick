@@ -20,16 +20,16 @@
         "heroes": [
           "slark",
           "drow_ranger",
-          "troll_warlord",
           "viper",
+          "troll_warlord",
           "templar_assassin"
         ],
         "items": [
           "bloodthorn",
           "silver_edge",
-          "monkey_king_bar",
           "diffusal_blade",
-          "hurricane_pike"
+          "disperser",
+          "monkey_king_bar"
         ],
         "defense": [
           "black_king_bar",
@@ -55,17 +55,17 @@
       "expect": {
         "heroes": [
           "kunkka",
+          "earthshaker",
           "lycan",
           "legion_commander",
-          "earthshaker",
-          "undying"
+          "tidehunter"
         ],
         "items": [
+          "abyssal_blade",
           "force_staff",
           "scythe_of_vyse",
-          "abyssal_blade",
           "euls_scepter",
-          "linkens_sphere"
+          "silver_edge"
         ],
         "defense": [
           "linkens_sphere",
@@ -93,21 +93,21 @@
           "ember_spirit",
           "outworld_destroyer",
           "necrophos",
-          "tiny",
+          "queen_of_pain",
           "dragon_knight"
         ],
         "items": [
-          "orchid",
           "euls_scepter",
+          "orchid",
+          "black_king_bar",
           "bloodthorn",
-          "force_staff",
-          "black_king_bar"
+          "force_staff"
         ],
         "defense": [
           "linkens_sphere",
           "lotus_orb",
-          "ghost_scepter",
-          "aeon_disk"
+          "aeon_disk",
+          "ghost_scepter"
         ],
         "damage": "mixed"
       }
@@ -163,10 +163,10 @@
       "expect": {
         "heroes": [
           "shadow_fiend",
-          "phantom_assassin",
-          "terrorblade",
           "sven",
-          "meepo"
+          "meepo",
+          "phantom_assassin",
+          "terrorblade"
         ],
         "items": [
           "battlefury",
@@ -200,8 +200,8 @@
         "heroes": [
           "grimstroke",
           "nyx_assassin",
-          "silencer",
           "disruptor",
+          "silencer",
           "earthshaker"
         ],
         "items": [
@@ -266,9 +266,9 @@
         "heroes": [
           "meepo",
           "beastmaster",
-          "sven",
           "wraith_king",
-          "bristleback"
+          "bristleback",
+          "omniknight"
         ],
         "items": [
           "gem_of_true_sight",
@@ -281,9 +281,9 @@
           "black_king_bar",
           "glimmer_cape",
           "lotus_orb",
-          "eternal_shroud"
+          "ghost_scepter"
         ],
-        "damage": "magic"
+        "damage": "mixed"
       }
     }
   ]

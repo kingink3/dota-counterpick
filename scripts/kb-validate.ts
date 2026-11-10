@@ -51,6 +51,21 @@ for (const h of heroes) {
 }
 const mainPos = new Map(heroes.map((h) => [h, assignPositions(kb, [h]).get(h) ?? 3]));
 
+/** Measured gap of h against e, pp: win rate of the pair minus the rate expected from both
+ *  base rates, averaged with the mirrored record (the two sides of one matchup are
+ *  reported separately and do not sum to exactly 100%: their mean is the unbiased one). */
+function gapOf(h: string, e: string): number | undefined {
+  const a = mu![h]?.[e];
+  const bh = base.get(h);
+  const be = base.get(e);
+  if (!a || bh === undefined || be === undefined) return undefined;
+  const direct = (a[0] - sig(logit(bh) - logit(be))) * 100;
+  const b = mu![e]?.[h];
+  if (!b) return direct;
+  const mirrored = -(b[0] - sig(logit(be) - logit(bh))) * 100;
+  return (direct * a[1] + mirrored * b[1]) / (a[1] + b[1]);
+}
+
 interface Row { h: string; e: string; kb: number; lift: number; gap: number; n: number; reasons: Reason[] }
 const rows: Row[] = [];
 for (const e of heroes) {
@@ -60,7 +75,7 @@ for (const e of heroes) {
     if (!pair || pair[1] < MIN_GAMES || base.get(h) === undefined || base.get(e) === undefined) continue;
     const score = reasons.reduce((s, r) => s + r.contribution, 0);
     const usual = kb.baselines?.["0"]?.[h]?.[mainPos.get(e)! - 1] ?? 0;
-    rows.push({ h, e, kb: score, lift: score - usual, gap: (pair[0] - sig(logit(base.get(h)!) - logit(base.get(e)!))) * 100, n: pair[1], reasons });
+    rows.push({ h, e, kb: score, lift: score - usual, gap: gapOf(h, e)!, n: pair[1], reasons });
   }
 }
 
@@ -119,33 +134,76 @@ const slice = (lo: number, hi: number) => sorted.slice(Math.floor(lo * sorted.le
 const f = (x: number, d = 2) => (x >= 0 ? "+" : "") + x.toFixed(d);
 
 // ---- per general rule: the pairs it fires on ------------------------------------------
-const rules = new Map<string, { n: number; w: number; wg: number; side: string }>();
+//  Only the side where the rule argues FOR the pick: the other side (the same rule as a
+//  risk for the hero it targets) is the same pairs mirrored, with the gap's sign flipped.
+const rules = new Map<string, { n: number; w: number; wg: number; wc: number }>();
 for (const r of rows) {
-  const seen = new Set<string>();
+  const byKey = new Map<string, number>();
   for (const x of r.reasons) {
-    if (x.basis === "hero_edge" || !x.contribution) continue;
-    const side = x.contribution > 0 ? "for" : "against";
-    const what = x.tool && x.reliance ? `${x.tool} → ${x.reliance}` : x.selfGrant ? `resist ${x.selfGrant}${x.tool ? ` vs ${x.tool}` : ""}` : `${x.basis} ${x.tool ?? x.reliance ?? ""}`.trim();
-    const key = `${side}: ${what}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
+    if (x.basis === "hero_edge" || x.contribution <= 0) continue;
+    const what = x.tool && x.reliance ? `${x.tool} → ${x.reliance}` : x.selfGrant ? `resists ${x.tool ?? "?"} (${x.selfGrant})` : `${x.basis} ${x.tool ?? x.reliance ?? ""}`.trim();
+    byKey.set(what, (byKey.get(what) ?? 0) + x.contribution);
+  }
+  for (const [key, c] of byKey) {
     const w = 1 / (tau2 + NOISE / r.n);
-    const cur = rules.get(key) ?? { n: 0, w: 0, wg: 0, side };
+    const cur = rules.get(key) ?? { n: 0, w: 0, wg: 0, wc: 0 };
     cur.n++;
     cur.w += w;
     cur.wg += w * r.gap;
+    cur.wc += w * c;
     rules.set(key, cur);
   }
 }
 const ruleRows = [...rules]
-  .map(([key, v]) => ({ key, n: v.n, gap: v.wg / v.w, se: Math.sqrt(1 / v.w), side: v.side }))
+  .map(([key, v]) => ({ key, n: v.n, gap: v.wg / v.w, se: Math.sqrt(1 / v.w), kb: v.wc / v.w }))
   .filter((x) => x.n >= 15);
-const verdict = (x: (typeof ruleRows)[number]) => {
-  const signed = x.side === "for" ? x.gap : -x.gap;
-  if (signed >= 2 * x.se) return "supported";
-  if (signed <= -2 * x.se) return "**refuted**";
-  return "no signal";
-};
+const verdict = (x: (typeof ruleRows)[number]) => (x.gap >= 2 * x.se ? "supported" : x.gap <= -2 * x.se ? "**refuted**" : "no signal");
+
+// ---- tag suggestions for the supported rules ---------------------------------------------
+//  A supported rule "tool T -> reliance R" says: carriers of T beat carriers of R more
+//  often than their base rates predict. So a hero WITHOUT the tool that beats the R
+//  carriers the same way probably has the tool (and a hero without the reliance that
+//  loses to the T carriers probably has the reliance). Data proposes; the tag is added
+//  only when the mechanism is real (an ability that does it).
+const tags = kb.taxonomy.hero_tags;
+const suggestions: string[] = [];
+function suggest(tool: string, reliance: string): void {
+  const relCarriers = heroes.filter((h) => (tags[h]!.reliance?.[reliance] ?? 0) >= 0.4);
+  const toolCarriers = heroes.filter((h) => (tags[h]!.tool?.[tool] ?? 0) >= 0.4);
+  const mean = (h: string, others: string[], sign: 1 | -1) => {
+    let w = 0;
+    let wg = 0;
+    let k = 0;
+    for (const o of others) {
+      if (o === h) continue;
+      const g = sign === 1 ? gapOf(h, o) : gapOf(o, h);
+      const n = mu![h]?.[o]?.[1] ?? 0;
+      if (g === undefined || n < 300) continue;
+      const wt = 1 / (tau2 + NOISE / n);
+      w += wt;
+      wg += wt * g;
+      k++;
+    }
+    return k >= 2 ? { gap: wg / w, se: Math.sqrt(1 / w), k } : undefined;
+  };
+  const asTool = heroes
+    .filter((h) => (tags[h]!.tool?.[tool] ?? 0) < 0.4 && (tags[h]!.reliance?.[reliance] ?? 0) < 0.4)
+    .map((h) => ({ h, m: mean(h, relCarriers, 1), has: tags[h]!.tool?.[tool] ?? 0 }))
+    .filter((x) => x.m && x.m.gap >= 1 && x.m.gap >= 2.5 * x.m.se)
+    .sort((a, b) => b.m!.gap - a.m!.gap);
+  const asRel = heroes
+    .filter((h) => (tags[h]!.reliance?.[reliance] ?? 0) < 0.4 && (tags[h]!.tool?.[tool] ?? 0) < 0.4)
+    .map((h) => ({ h, m: mean(h, toolCarriers, -1), has: tags[h]!.reliance?.[reliance] ?? 0 }))
+    .filter((x) => x.m && x.m.gap >= 1 && x.m.gap >= 2.5 * x.m.se)
+    .sort((a, b) => b.m!.gap - a.m!.gap);
+  suggestions.push(`### ${tool} → ${reliance}`);
+  suggestions.push("");
+  suggestions.push(`Carriers now: tool ${toolCarriers.length}, reliance ${relCarriers.length} (${relCarriers.map(label).join(", ")}).`);
+  suggestions.push("");
+  suggestions.push(`- Beat the ${reliance} heroes without having \`${tool}\`: ${asTool.length ? asTool.slice(0, 20).map((x) => `${label(x.h)} ${f(x.m!.gap, 1)}${x.has ? ` (has ${x.has})` : ""}`).join(", ") : "nobody"}.`);
+  suggestions.push(`- Lose to the \`${tool}\` heroes without having ${reliance}: ${asRel.length ? asRel.slice(0, 20).map((x) => `${label(x.h)} ${f(x.m!.gap, 1)}${x.has ? ` (has ${x.has})` : ""}`).join(", ") : "nobody"}.`);
+  suggestions.push("");
+}
 
 const real = rows.filter((r) => r.gap >= 4);
 const claims = rows.filter((r) => r.lift >= 0.6);
@@ -184,14 +242,23 @@ out.push(`Strong KB claims (lift ≥ 0.6): ${claims.length}; gap > +1 pp in ${Ma
 out.push("");
 out.push("## General rules: mean gap of the pairs each one fires on");
 out.push("");
-out.push("\"for\" = the rule argues for the pick (expected gap > 0); \"against\" = a risk or a blunted tool (expected gap < 0). Verdict at two standard errors. Rules firing on fewer than 15 pairs are left out. With this many rules a few verdicts are expected by chance alone (about one in twenty): treat a single verdict as a lead, not as proof.");
+out.push("Pairs where the rule argues for the pick. \"KB\" is the mean contribution of the rule on those pairs; \"pp per point\" = mean gap / KB, to compare with the global slope above (a rule far below it is over-weighted, far above - under-weighted). Verdict at two standard errors; rules firing on fewer than 15 pairs are left out. With this many rules a few verdicts are expected by chance alone (about one in twenty): treat a single verdict as a lead, not as proof.");
 out.push("");
-out.push("| Rule | Pairs | Mean gap, pp | ± | Verdict |");
-out.push("|---|---|---|---|---|");
-for (const x of ruleRows.sort((a, b) => (a.side === b.side ? (a.side === "for" ? b.gap - a.gap : a.gap - b.gap) : a.side === "for" ? -1 : 1))) {
-  out.push(`| ${x.key} | ${x.n} | ${f(x.gap)} | ${x.se.toFixed(2)} | ${verdict(x)} |`);
+out.push("| Rule | Pairs | Mean gap, pp | ± | KB | pp per point | Verdict |");
+out.push("|---|---|---|---|---|---|---|");
+for (const x of ruleRows.sort((a, b) => b.gap / b.se - a.gap / a.se)) {
+  out.push(`| ${x.key} | ${x.n} | ${f(x.gap)} | ${x.se.toFixed(2)} | ${x.kb.toFixed(2)} | ${f(x.gap / x.kb, 1)} | ${verdict(x)} |`);
 }
 out.push("");
+out.push("## Tag suggestions from the supported rules");
+out.push("");
+out.push("Heroes that behave like carriers of a tag they do not have (mean gap ≥ +1 pp at 2.5 standard errors, against at least two carriers with 300+ games). The data proposes; a tag is added only when an ability really does it.");
+out.push("");
+for (const x of ruleRows.filter((r) => verdict(r) === "supported" && r.key.includes(" → "))) {
+  const [tool, reliance] = x.key.split(" → ");
+  suggest(tool!, reliance!);
+}
+out.push(...suggestions);
 out.push("## Measured counters the KB does not see (gap ≥ +4 pp, lift < 0.2)");
 out.push("");
 out.push("| Hero | Against | Gap, pp | Games | KB | Lift |");
@@ -206,4 +273,4 @@ for (const r of claims.filter((x) => x.gap <= -1.5).sort((a, b) => a.gap * Math.
 out.push("");
 writeFileSync(join(ROOT, "KB_VALIDATION.md"), out.join("\n"), "utf8");
 console.log(`pairs ${rows.length} | KB_PP_PER_POINT ${beta.toFixed(3)} | tau ${Math.sqrt(tau2).toFixed(2)} pp | STAT_PRIOR_GAMES ${Math.round(priorGames)} | rho ${s1.rho.toFixed(3)} / ${s5.rho.toFixed(3)} / ${s15.rho.toFixed(3)}`);
-console.log(`rules: ${ruleRows.length}; supported ${ruleRows.filter((x) => verdict(x) === "supported").length}, refuted ${ruleRows.filter((x) => verdict(x) === "**refuted**").length}`);
+console.log(`rules: ${ruleRows.length}; supported ${ruleRows.filter((x) => verdict(x) === "supported").length}, refuted ${ruleRows.filter((x) => verdict(x) === "**refuted**").length}; mean gap over all pairs ${meanGap(rows).toFixed(3)} pp`);

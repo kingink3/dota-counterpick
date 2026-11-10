@@ -70,6 +70,10 @@ export interface Edge {
   target: string;
   mechanism: string;
   weight: number;
+  /** the weight of this rule for HERO PICKS, when the measured hero matchups say it
+   *  differs from the mechanics (KB_VALIDATION.md, ADR-062). Counter items keep `weight`:
+   *  the evidence is about heroes carrying the tool, not about an item that grants it. */
+  pick_weight?: number;
   conditions?: Conditions;
 }
 
