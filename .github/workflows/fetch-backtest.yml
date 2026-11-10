@@ -1,0 +1,81 @@
+# Public ranked matches for the draft backtest (ADR-063): who picked what and who won.
+# The dev container cannot reach OpenDota, so this runs here.
+#
+# Only drafts and outcomes are kept - hero ids, radiant_win, average rank tier, start time,
+# duration, match id. publicMatches carries no player accounts. Matches are taken from the
+# newest backwards, so they are all played AFTER the statistics snapshot in
+# data/matchups.json: the backtest is out of time for the measured matchups.
+#
+# Output: branch `backtest-raw` (force-pushed, one commit), file matches.ndjson, one match
+# per line: [match_id, start_time, avg_rank_tier, radiant_win (0/1), duration, [5 radiant
+# hero ids], [5 dire hero ids]]. Ranked All Pick (lobby 7, mode 22), 15+ minutes, rank tiers
+# 20-59 (Crusader to Ancient, the bracket of data/matchups.json).
+# OpenDota free tier: 60 calls/min -> 1.1 s between calls.
+name: Fetch backtest matches
+
+on:
+  workflow_dispatch:
+    inputs:
+      want:
+        description: "Matches to collect"
+        default: "25000"
+      max_pages:
+        description: "Stop after this many API pages"
+        default: "700"
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Download
+        env:
+          WANT: ${{ inputs.want }}
+          MAX_PAGES: ${{ inputs.max_pages }}
+        run: |
+          set -u
+          mkdir -p /tmp/bt
+          out=/tmp/bt/matches.ndjson
+          : > "$out"
+          lt=""
+          pages=0
+          while [ "$(wc -l < "$out")" -lt "$WANT" ] && [ "$pages" -lt "$MAX_PAGES" ]; do
+            url="https://api.opendota.com/api/publicMatches?min_rank=20&max_rank=59${lt:+&less_than_match_id=$lt}"
+            ok=0
+            for i in 1 2 3 4; do
+              code=$(curl -s -m 60 -A "dota-counterpick-backtest" -o /tmp/bt/page.json -w "%{http_code}" "$url")
+              [ "$code" = "200" ] && { ok=1; break; }
+              echo "  $code (try $i)"; sleep $((i * 15))
+            done
+            [ "$ok" = "1" ] || { echo "giving up at page $pages"; break; }
+            n=$(jq 'length' /tmp/bt/page.json)
+            [ "$n" -gt 0 ] || break
+            lt=$(jq '[.[].match_id] | min' /tmp/bt/page.json)
+            jq -c '.[]
+              | select(.lobby_type == 7 and .game_mode == 22 and .duration >= 900)
+              | . as $m
+              | [ (.radiant_team | if type == "string" then split(",") | map(tonumber) else . end),
+                  (.dire_team    | if type == "string" then split(",") | map(tonumber) else . end) ] as [$r, $d]
+              | select(($r | length) == 5 and ($d | length) == 5)
+              | [$m.match_id, $m.start_time, $m.avg_rank_tier, (if $m.radiant_win then 1 else 0 end), $m.duration, $r, $d]' \
+              /tmp/bt/page.json >> "$out"
+            pages=$((pages + 1))
+            [ $((pages % 50)) -eq 0 ] && echo "pages $pages, matches $(wc -l < "$out")"
+            sleep 1.1
+          done
+          sort -u -o "$out" "$out"
+          echo "pages $pages, matches $(wc -l < "$out")"
+          date -u +%Y-%m-%dT%H:%MZ > /tmp/bt/fetched-at.txt
+      - name: Push to the backtest-raw branch
+        run: |
+          cd /tmp/bt
+          rm -f page.json
+          git init -q -b backtest-raw
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Backtest matches $(cat fetched-at.txt): $(wc -l < matches.ndjson)"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" backtest-raw
