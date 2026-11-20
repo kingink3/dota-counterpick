@@ -11,8 +11,8 @@ import type { Module } from "./types.js";
 export const DRAFTING: Module = {
   id: "drafting",
   title: "Draft and items",
-  patch: "7.41f",
-  checked: "2026-11-09",
+  patch: "7.42",
+  checked: "2026-11-20",
   lessons: [
     // ------------------------------------------------------------------ 1 ----
     {
@@ -25,7 +25,7 @@ export const DRAFTING: Module = {
           p: [
             "A hero is countered when the enemy has the **answer to what he relies on**. The knowledge base behind the Draft tab is built from such pairs. The most important ones:",
             "- **Invisibility** -> **detection** (Sentry Ward, Dust, Gem): seen, the invisible hero can neither start nor escape.",
-            "- **Evasion** -> **true strike** (Monkey King Bar, Bloodthorn); passive evasion also falls to **break**.",
+            "- **Evasion** -> **true strike** (Monkey King Bar); passive evasion also falls to **break**.",
             "- **Healing and lifesteal** -> **healing reduction** (Spirit Vessel, Eye of Skadi and others).",
             "- **Illusions and fragile summons** -> **area damage** that clears them and exposes the real hero.",
             "- **Mana-hungry spells** -> **mana burn**.",
@@ -84,7 +84,7 @@ export const DRAFTING: Module = {
       ],
       quiz: [
         { id: "it1", q: "Which item answers invisible enemies?", options: ["Gem of True Sight (or Sentry Ward / Dust)", "Black King Bar", "Blink Dagger", "Power Treads"], correct: 0, why: "Gem, Sentries and Dust give detection." },
-        { id: "it2", q: "Which item gives true strike?", options: ["Monkey King Bar", "Desolator", "Battle Fury", "Glimmer Cape"], correct: 0, why: "Monkey King Bar (and Bloodthorn) make attacks unable to miss." },
+        { id: "it2", q: "Which item gives true strike?", options: ["Monkey King Bar", "Desolator", "Battle Fury", "Glimmer Cape"], correct: 0, why: "Monkey King Bar makes attacks unable to miss (Bloodthorn lost its true strike in 7.42)." },
         { id: "it3", q: "Which item gives break?", options: ["Silver Edge", "Orchid Malevolence", "Rod of Atos", "Desolator"], correct: 0, why: "Silver Edge's active applies break to the hero it hits from invisibility." },
         { id: "it4", q: "Two teammates both want to buy Spirit Vessel. What is better?", options: ["Agree: one buys it, the other buys a different answer", "Both buy it", "Nobody buys it", "Sell it after 10 minutes"], correct: 0, why: "The second copy adds little; the gold is better spent on what is still missing." },
       ],
@@ -165,7 +165,7 @@ export const DRAFTING: Module = {
             "- **Linken's Sphere**: blocks one targeted spell. Pop it with a cheap targeted spell or item first, then cast the one that matters.",
             "- **Aeon Disk**: when the holder falls low, it saves him once. Plan to kill him twice, or keep a disable for after it.",
             "- **Manta Style**: a strong self-dispel. Silences and roots on him can be removed - time them after Manta is used.",
-            "- **Butterfly**: evasion. True strike (Monkey King Bar, Bloodthorn) or magic damage.",
+            "- **Butterfly** / **Skypiercer**: evasion. True strike (Monkey King Bar) or magic damage.",
             "- **Blink Dagger**: the hero can start or escape a fight from a distance - keep vision and do not stand in a clump.",
           ],
         },

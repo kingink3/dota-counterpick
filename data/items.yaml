@@ -27,7 +27,7 @@ items:
   battlefury:        { label: "Battle Fury",           tool: { aoe_clear: 0.8 } }
   mjollnir:          { label: "Mjollnir",              tool: { aoe_clear: 0.7 } }
   monkey_king_bar:   { label: "Monkey King Bar",       tool: { true_strike: 1.0 } }
-  bloodthorn:        { label: "Bloodthorn",            tool: { true_strike: 1.0, silence: 1.0 } }
+  bloodthorn:        { label: "Bloodthorn",            tool: { silence: 1.0 } }                  # 7.42: Pierce (true strike) removed with the Javelin
   silver_edge:       { label: "Silver Edge",           tool: { break: 1.0 } }
   euls_scepter:      { label: "Eul's Scepter",         tool: { interrupt: 0.8, kite: 0.7, purge: 0.4 } }   # cyclone on an enemy applies a basic dispel
   scythe_of_vyse:    { label: "Scythe of Vyse (Hex)",  tool: { interrupt: 0.9, lockdown_root: 0.8, illusion_execute: 0.4 } }   # hex locks a blink-escape (like a root), but it is magical -> not through BKB
@@ -36,7 +36,9 @@ items:
   desolator:         { label: "Desolator",             tool: { armor_reduction: 1.0 } }
   solar_crest:       { label: "Solar Crest",           tool: { armor_reduction: 0.8 } }
   orchid:            { label: "Orchid Malevolence",    tool: { silence: 1.0 } }
-  heavens_halberd:   { label: "Heaven's Halberd",      tool: { disarm: 1.0 } }
+  heavens_halberd:   { label: "Heaven's Halberd",      tool: { disarm: 1.0 } }                   # 7.42: 3 s, cast range 500, no evasion
+  skypiercer:        { label: "Skypiercer",            tool: { disarm: 1.0 } }                   # 7.42: Halberd + Sange + Talisman; same 3 s disarm, faster cooldown near enemy heroes
+  caduceus:          { label: "Caduceus",              tool: { kite: 0.8, ally_save: 0.6 } }     # 7.42: Force Staff active + Phylactery; ally cast heals 200
   force_staff:       { label: "Force Staff",           tool: { kite: 0.8, ally_save: 0.4 } }
   hurricane_pike:    { label: "Hurricane Pike",        tool: { kite: 0.9 } }
   glimmer_cape:      { label: "Glimmer Cape",          tool: { kite: 0.6, ally_save: 0.5 } }
@@ -92,6 +94,6 @@ items:
   yasha_and_kaya:    { label: "Yasha and Kaya",        tool: {} }
   # --- v0.8 (howdoiplay review, 2026-11-04; effects checked against dotaconstants 7.41) ---
   nullifier:         { label: "Nullifier",             tool: { purge: 1.0 } }                     # Nullify: basic dispel + continuous dispel for 4 s
-  orb_of_frost:      { label: "Orb of Frost",          tool: { healing_reduction: 0.3 } }         # attacks: -13% health restoration (cheap component)
-  orb_of_corrosion:  { label: "Orb of Corrosion",      tool: { healing_reduction: 0.4, armor_reduction: 0.3 } }   # -16% restoration, -2 armor
+  orb_of_frost:      { label: "Orb of Frost",          tool: { healing_reduction: 0.3 } }         # attacks: -13% health restoration (cheap component); 7.42: pierces debuff immunity
+  orb_of_corrosion:  { label: "Orb of Corrosion",      tool: { healing_reduction: 0.4, armor_reduction: 0.3 } }   # -16% restoration, -2 armor; 7.42: pierces debuff immunity
   essence_distiller: { label: "Essence Distiller",     tool: { detection: 0.4 } }                 # True Sight on the debuffed enemy (ground-targetable)

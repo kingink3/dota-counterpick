@@ -234,7 +234,7 @@ function main(): void {
         }
       }
     }
-    if (curves) curveFrom = "win rate by match length, Archon + Legend, latest patch (STRATZ)";
+    if (curves) curveFrom = "win rate by match length, Archon + Legend, the patch current at the fetch (STRATZ)";
     for (const hs of Object.values(heroes)) {
       if (!hs.byPos) continue;
       hs.mainPos = Object.entries(hs.byPos).sort((a, b) => (b[1].games ?? 0) - (a[1].games ?? 0))[0]![0];

@@ -17,14 +17,14 @@ gap = win rate of the pair minus the rate expected from both heroes' base rates,
 
 | Min games | Pairs | Spearman (lift vs gap) |
 |---|---|---|
-| 1000 | 12199 | 0.164 |
+| 1000 | 12199 | 0.163 |
 | 5000 | 4252 | 0.219 |
 | 15000 | 792 | 0.263 |
 
-Mean gap by KB lift: bottom 10% -0.57 pp, middle -0.02 pp, top 10% +0.85 pp, top 2% +1.69 pp.
+Mean gap by KB lift: bottom 10% -0.57 pp, middle -0.03 pp, top 10% +0.84 pp, top 2% +1.67 pp.
 
 Measured counters (gap ≥ +4 pp): 146; the KB lifts them by ≥ 0.2 in 52%.
-Strong KB claims (lift ≥ 0.6): 139; gap > +1 pp in 64%, gap < -1 pp in 9%.
+Strong KB claims (lift ≥ 0.6): 138; gap > +1 pp in 64%, gap < -1 pp in 9%.
 
 ## General rules: mean gap of the pairs each one fires on
 
@@ -36,23 +36,23 @@ Pairs where the rule argues for the pick. "KB" is the mean contribution of the r
 | healing_reduction → sustain_dependent | 103 | +0.89 | 0.14 | 0.41 | +2.2 | supported |
 | mana_burn → mana_dependent | 88 | +0.72 | 0.15 | 0.37 | +1.9 | supported |
 | aoe_clear → summon_clearable | 220 | +0.36 | 0.10 | 0.20 | +1.8 | supported |
-| detection → relies_on_invisibility | 40 | +0.67 | 0.23 | 0.40 | +1.7 | supported |
+| detection → relies_on_invisibility | 41 | +0.61 | 0.23 | 0.40 | +1.5 | supported |
 | silence → spell_reliant | 660 | +0.13 | 0.06 | 0.14 | +0.9 | supported |
 | armor_reduction → summon_tanky | 16 | +0.83 | 0.41 | 0.21 | +4.0 | supported |
 | break → key_passive | 16 | +0.62 | 0.36 | 0.30 | +2.0 | no signal |
 | resist lockdown_early | 108 | +0.23 | 0.14 | 0.15 | +1.5 | no signal |
 | ally_save → pickoff_reliant | 166 | +0.16 | 0.11 | 0.11 | +1.5 | no signal |
 | magic_burst → magic_burst_vulnerable | 379 | +0.10 | 0.08 | 0.24 | +0.4 | no signal |
-| purge → dispellable_buffs | 33 | +0.34 | 0.26 | 0.10 | +3.3 | no signal |
 | resist magic_damage | 50 | +0.27 | 0.21 | 0.12 | +2.3 | no signal |
 | resist attack_reliant | 242 | +0.12 | 0.10 | 0.16 | +0.8 | no signal |
+| purge → dispellable_buffs | 35 | +0.30 | 0.26 | 0.10 | +2.9 | no signal |
 | lockdown_root → mobility_dependent | 208 | +0.12 | 0.10 | 0.32 | +0.4 | no signal |
 | resist magic_burst | 381 | +0.08 | 0.08 | 0.21 | +0.4 | no signal |
 | bkb_piercing_disable → channeling_ultimate | 219 | +0.09 | 0.10 | 0.24 | +0.4 | no signal |
 | magic_damage → high_armor | 31 | +0.22 | 0.27 | 0.23 | +0.9 | no signal |
-| disarm → attack_reliant | 159 | +0.10 | 0.12 | 0.26 | +0.4 | no signal |
 | out_scales → snowball_dependent | 42 | +0.17 | 0.25 | 0.21 | +0.8 | no signal |
 | break → evasion | 21 | +0.18 | 0.32 | 0.14 | +1.2 | no signal |
+| disarm → attack_reliant | 167 | +0.06 | 0.12 | 0.24 | +0.3 | no signal |
 | early_pressure → greedy_farmer | 38 | +0.13 | 0.27 | 0.34 | +0.4 | no signal |
 | magic_burst → high_armor | 75 | +0.08 | 0.18 | 0.21 | +0.4 | no signal |
 | interrupt → channeling_ultimate | 144 | +0.05 | 0.12 | 0.20 | +0.3 | no signal |
@@ -162,7 +162,7 @@ Carriers now: tool 10, reliance 2 (Lone Druid, Warlock).
 | Sven | Dark Seer | +4.3 | 2.8k | 0.00 | -0.06 |
 | Arc Warden | Doom | +5.6 | 1.6k | -0.19 | -0.20 |
 | Wisp | Spectre | +5.0 | 2.0k | -0.03 | +0.04 |
-| Spirit Breaker | Broodmother | +5.3 | 1.7k | 0.00 | -0.10 |
+| Spirit Breaker | Broodmother | +5.3 | 1.7k | 0.00 | -0.09 |
 | Alchemist | Wraith King | +4.3 | 2.6k | 0.00 | +0.00 |
 | Tinker | Phoenix | +5.1 | 1.9k | -0.10 | +0.01 |
 | Slark | Medusa | +4.4 | 2.5k | 0.29 | +0.17 |
@@ -170,8 +170,8 @@ Carriers now: tool 10, reliance 2 (Lone Druid, Warlock).
 | Puck | Queen Of Pain | +4.4 | 2.4k | 0.01 | -0.13 |
 | Dawnbreaker | Meepo | +6.6 | 1.1k | 0.00 | -0.03 |
 | Storm Spirit | Venomancer | +4.1 | 2.7k | 0.13 | +0.13 |
-| Leshrac | Necrophos | +4.4 | 2.3k | 0.17 | +0.12 |
-| Monkey King | Ember Spirit | +4.5 | 2.2k | 0.00 | +0.01 |
+| Leshrac | Necrophos | +4.4 | 2.3k | 0.17 | +0.07 |
+| Monkey King | Ember Spirit | +4.5 | 2.2k | 0.00 | +0.02 |
 
 ## Strong KB claims the data contradicts (lift ≥ 0.6, gap ≤ -1.5 pp)
 

@@ -23,7 +23,7 @@ export const CUE_CATS: Array<{ id: CueCat; label: string; hint: string }> = [
   { id: "pulls", label: "Pulls", hint: "lane pulls every 30 s" },
   { id: "jungle", label: "Shrines & lotus", hint: "wisdom shrines, healing lotus" },
   { id: "wards", label: "Observer wards", hint: "a new observer ward in the shop every 2:15 - keep them placed" },
-  { id: "objectives", label: "Tormentor", hint: "first spawn at 20:00, a minute ahead" },
+  { id: "objectives", label: "Tormentor", hint: "first spawn at 15:00 (7.42), a minute ahead" },
   { id: "neutrals", label: "Neutral items", hint: "next tier" },
   { id: "items", label: "Item targets", hint: "next item of the plan and its typical time; late warning (off by default)" },
   { id: "windows", label: "Game-length tendency", hint: "which lineup tends to win games of this length (past games, not this match)" },

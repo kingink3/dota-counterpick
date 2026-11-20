@@ -12,8 +12,8 @@ import type { Module } from "./types.js";
 export const ROLES: Module = {
   id: "roles",
   title: "Roles",
-  patch: "7.41f",
-  checked: "2026-11-09",
+  patch: "7.42",
+  checked: "2026-11-20",
   lessons: [
     // ------------------------------------------------------------------ 1 ----
     {

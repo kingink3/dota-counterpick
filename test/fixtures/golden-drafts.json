@@ -25,11 +25,11 @@
           "troll_warlord"
         ],
         "items": [
-          "bloodthorn",
           "silver_edge",
           "diffusal_blade",
           "disperser",
-          "monkey_king_bar"
+          "monkey_king_bar",
+          "hurricane_pike"
         ],
         "defense": [
           "black_king_bar",
@@ -241,7 +241,7 @@
         "items": [
           "euls_scepter",
           "orchid",
-          "bloodthorn",
+          "caduceus",
           "force_staff",
           "hurricane_pike"
         ],

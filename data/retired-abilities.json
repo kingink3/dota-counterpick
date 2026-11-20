@@ -1,10 +1,11 @@
 {
   "note": "written by npm run patch:check - ability names in wiki-counters.json that are not in the current game",
-  "constants": "10.8.0",
+  "constants": "10.9.0",
   "names": [
     "+275 Attack Range",
     "Death Pact Steal creep abilities",
     "Defense Matrix",
+    "Drums of Slom",
     "Morph Targets Allies",
     "Poison Nova",
     "Remote Mines",

@@ -23,8 +23,11 @@
 meta:
   schema_version: 0.1
   # patch the KB was reviewed against (patch:check compares this with dotaconstants)
-  patch: "7.41"
-  reviewed: "2026-11-03: full pass on supports/flex (v0.6); 2026-11-10: rule pick weights and tags of the data-supported rules set against measured matchups (ADR-062); the other core tags carried over from the early-2026 draft"
+  patch: "7.42"
+  # release date of that patch (dotaconstants patch.json); statistics older than this are labelled
+  # "from before patch X" in the UI (ADR-064)
+  patch_date: "2026-11-18"
+  reviewed: "2026-11-20: 7.42 pass - tags changed only where an ability mechanic changed (patch-notes lines in DECISIONS ADR-064); 2026-11-03: full pass on supports/flex (v0.6); 2026-11-10: rule pick weights and tags of the data-supported rules set against measured matchups (ADR-062); the other core tags carried over from the early-2026 draft"
   weight_semantics: >
     Membership is almost binary. weight (0.0-1.0) encodes how CENTRAL the tag is
     to the hero: 1.0 = the hero's whole identity rests on it, 0.5 = one of several
@@ -777,7 +780,7 @@ hero_tags:
   # ===========================================================================
   anti_mage:       { pos: [1], reliance: {mobility_dependent: 0.8, greedy_farmer: 0.7, attack_reliant: 0.6, bkb_reliant: 1.0}, tool: {mana_burn: 1.0}, resist: {magic_resistance: 0.8} }  # high magic resist - NOT magic_burst
   juggernaut:      {pos: [1], reliance: {attack_reliant: 0.7, spell_reliant: 0.4, bkb_reliant: 0.7}, tool: {physical_burst: 0.8, pickoff: 0.5, aoe_clear: 0.3}, resist: {self_debuff_immunity: 0.7} }   # tools: Omnislash single-target burst; Blade Fury clears
-  phantom_assassin: { pos: [1], reliance: {evasion: 1.0, attack_reliant: 0.9, melee_commit: 0.7, bkb_reliant: 1.0, dispellable_buffs: 0.3}, tool: {physical_burst: 0.9, true_strike: 0.7, break: 0.2}, resist: {evades_attacks: 0.6} }
+  phantom_assassin: { pos: [1], reliance: {evasion: 1.0, attack_reliant: 0.9, melee_commit: 0.7, bkb_reliant: 1.0, dispellable_buffs: 0.3}, tool: {physical_burst: 0.9, true_strike: 0.7, break: 0.2}, resist: {evades_attacks: 0.6} }   # 7.42: Blur vanish = invisible with True Sight immunity - NOT relies_on_invisibility (detection does not answer it)
   faceless_void:   { pos: [1], reliance: {dodge_backtrack: 0.9, attack_reliant: 0.7, melee_commit: 0.6, bkb_reliant: 0.8}, tool: {bkb_piercing_disable: 1.0} }   # backtrack = dodge, NOT evasion (ADR-010); Chrono = bkb-pierce. true_strike intentionally NOT applicable
   spectre:         { pos: [1], reliance: {greedy_farmer: 0.8, melee_commit: 0.3, key_passive: 0.6, illusion_based: 0.4}, tool: {pickoff: 0.4}, resist: {passive_damage_reduction: 0.5} }   # tanky; break removes Dispersion + Desolate   # ADR-062: illusion_based - Haunt illusions
   medusa:          { pos: [1,2], reliance: {mana_dependent: 1.0, greedy_farmer: 0.8, attack_reliant: 0.7, low_mobility: 0.6, low_armor: 0.3}, tool: {aoe_clear: 0.6, bkb_piercing_disable: 0.5, lockdown_root: 0.4}, resist: {mana_shield: 1.0} }
@@ -812,7 +815,7 @@ hero_tags:
   # ===========================================================================
   #  POSITION 2 - MID
   # ===========================================================================
-  invoker:         { pos: [2], reliance: {mana_dependent: 0.7, spell_reliant: 0.8, squishy_to_burst: 0.5}, tool: {magic_burst: 0.7, aoe_clear: 0.4, purge: 0.3, mana_burn: 0.3, lockdown_early: 0.6, disarm: 0.5, interrupt: 0.5} }
+  invoker:         { pos: [2], reliance: {mana_dependent: 0.7, spell_reliant: 0.8, squishy_to_burst: 0.5}, tool: {magic_burst: 0.7, aoe_clear: 0.4, purge: 0.3, mana_burn: 0.3, lockdown_early: 0.6, disarm: 0.4, interrupt: 0.5} }   # 7.42: Deafening Blast disarm is dispellable
   storm_spirit:    {pos: [2], reliance: {mana_dependent: 1.0, mobility_dependent: 0.9, snowball_dependent: 0.6, spell_reliant: 0.5, bkb_reliant: 0.6}, tool: {pickoff: 0.7, lockdown_early: 0.6, magic_burst: 0.6, interrupt: 0.4} }   # tools: Electric Vortex pull; Ball Lightning pickoff; Overload burst
   queen_of_pain:   { pos: [2], reliance: {mobility_dependent: 0.7, magic_burst_vulnerable: 0.4, spell_reliant: 0.6}, tool: {magic_burst: 0.7, silence: 0.5, aoe_clear: 0.4} }
   puck:            { pos: [2], reliance: {mobility_dependent: 0.9, magic_burst_vulnerable: 0.4, spell_reliant: 0.6}, tool: {magic_burst: 0.5, silence: 0.4} }
@@ -822,7 +825,7 @@ hero_tags:
   tinker:          { pos: [2], reliance: {spell_reliant: 0.9, mobility_dependent: 0.7, mana_dependent: 0.5, squishy_to_burst: 0.7, magic_burst_vulnerable: 0.5, low_armor: 0.3}, tool: {magic_burst: 0.7, aoe_clear: 0.5} }
   death_prophet:   { pos: [2,3], reliance: {spell_reliant: 0.6, low_mobility: 0.5, magic_burst_vulnerable: 0.4}, tool: {aoe_clear: 0.3} }
   outworld_destroyer: { pos: [2], reliance: {mana_dependent: 0.8, spell_reliant: 0.6, magic_burst_vulnerable: 0.3}, tool: {ally_save: 0.5} }
-  leshrac:         { pos: [2,3], reliance: {spell_reliant: 0.7, squishy_to_burst: 0.5, magic_burst_vulnerable: 0.5}, tool: {magic_burst: 0.6, aoe_clear: 0.6, lockdown_early: 0.5} }
+  leshrac:         { pos: [2,3], reliance: {spell_reliant: 0.7, squishy_to_burst: 0.5, magic_burst_vulnerable: 0.5}, tool: {magic_burst: 0.6, aoe_clear: 0.6, lockdown_early: 0.5, disarm: 0.3, purge: 0.3} }   # 7.42: Greater Lightning Storm (Aghanim upgrade) disarms and basic-dispels enemies in 550 for 4 s
   pugna:           { pos: [2,4], reliance: {spell_reliant: 0.7, squishy_to_burst: 0.7, low_mobility: 0.6}, tool: {magic_burst: 0.6, disarm: 0.4} }
   zeus:            { pos: [2,4], reliance: {squishy_to_burst: 0.7, low_mobility: 0.7, spell_reliant: 0.8, magic_burst_vulnerable: 0.5}, tool: {magic_burst: 0.8, detection: 0.5, health_based_damage: 0.3} }
   lina:            { pos: [2,4], reliance: {squishy_to_burst: 0.6, low_mobility: 0.5, spell_reliant: 0.7, attack_reliant: 0.4, low_armor: 0.3, pickoff_reliant: 0.3}, tool: {magic_burst: 0.9, aoe_clear: 0.4, lockdown_early: 0.5} }
@@ -852,8 +855,8 @@ hero_tags:
   brewmaster:      { pos: [3], reliance: {evasion: 0.6, melee_commit: 0.5, bkb_reliant: 0.6}, tool: {bkb_piercing_disable: 0.5, purge: 0.3, illusion_execute: 0.5} }
   legion_commander: { pos: [3], reliance: {melee_commit: 0.7, low_mobility: 0.5, bkb_reliant: 0.7, pickoff_reliant: 0.8}, tool: {bkb_piercing_disable: 0.8}, resist: {self_dispel: 0.4} }
   magnus:          { pos: [3,2], reliance: {spell_reliant: 0.6, low_mobility: 0.5}, tool: {bkb_piercing_disable: 0.7, aoe_clear: 0.4} }
-  primal_beast:    { pos: [3], reliance: {melee_commit: 0.6, spell_reliant: 0.4, dispellable_buffs: 0.3}, tool: {bkb_piercing_disable: 0.5, aoe_clear: 0.5} }   # ADR-062: aoe_clear - Trample, Pulverize splash
-  lycan:           {pos: [3,1], reliance: {summon_clearable: 0.5, snowball_dependent: 0.6, attack_reliant: 0.5, bkb_reliant: 0.6}, tool: {early_pressure: 0.8, pickoff: 0.5, physical_burst: 0.5, armor_reduction: 0.3} }   # tools: Shapeshift ganks / push
+  primal_beast:    { pos: [3], reliance: {melee_commit: 0.6, spell_reliant: 0.4, dispellable_buffs: 0.2}, tool: {bkb_piercing_disable: 0.5, aoe_clear: 0.5} }   # 7.42: Onslaught buff undispellable (Uproar still is)   # ADR-062: aoe_clear - Trample, Pulverize splash
+  lycan:           {pos: [3,1], reliance: {summon_clearable: 0.5, snowball_dependent: 0.6, attack_reliant: 0.5, bkb_reliant: 0.6}, tool: {early_pressure: 0.8, pickoff: 0.5, physical_burst: 0.5, armor_reduction: 0.3, detection: 0.2} }   # tools: Shapeshift ganks / push; 7.42: Pack Hunter marks reveal invisible targets they hit (after the first hit only - weak detection)
   broodmother:     {pos: [3,1], reliance: {summon_clearable: 0.9, snowball_dependent: 0.6, sustain_dependent: 0.5, melee_commit: 0.4}, tool: {early_pressure: 0.7, pickoff: 0.6, lockdown_root: 0.4} }   # tools: Spinner's Snare root; spiderlings pressure
   sand_king:       { pos: [3,4], reliance: {channeling_ultimate: 0.7, relies_on_invisibility: 0.3, spell_reliant: 0.5}, tool: {magic_burst: 0.6, aoe_clear: 0.8, true_strike: 0.2, lockdown_early: 0.7, interrupt: 0.4} }   # ADR-062: aoe_clear 0.3 -> 0.8 - Sand Storm, Caustic Finale, Epicenter
   enigma:          { pos: [3,4], reliance: {summon_clearable: 0.6, channeling_ultimate: 1.0, low_mobility: 0.5}, tool: {aoe_clear: 0.7, bkb_piercing_disable: 0.9, health_based_damage: 0.5} }

@@ -12,8 +12,8 @@ import type { Module } from "./types.js";
 export const MACRO: Module = {
   id: "macro",
   title: "Macro",
-  patch: "7.41f",
-  checked: "2026-11-09",
+  patch: "7.42",
+  checked: "2026-11-20",
   lessons: [
     // ------------------------------------------------------------------ 1 ----
     {
@@ -98,8 +98,8 @@ export const MACRO: Module = {
         {
           h: "Where and when",
           p: [
-            "Roshan has **two dens**: one active by day, the other at night - the active den is **marked on the minimap**. After a kill he returns **8-11 minutes** later; count from the kill.",
-            "There is **one Tormentor**, on the opposite side of the map from Roshan. It first appears at **20:00** and returns 10 minutes after it is killed.",
+            "Roshan has **two dens**: one active by day, the other at night - the active den is **marked on the minimap**. After a kill he returns **8-11 minutes** later, and since 7.42 each kill makes the timer **1 minute shorter** (never below 5): count from the kill, and expect the third or fourth Roshan sooner.",
+            "There is **one Tormentor**, on the opposite side of the map from Roshan. It first appears at **15:00** (7.42) and returns 10 minutes after it is killed; the Shard drops from its second kill on.",
           ],
         },
         {
@@ -117,14 +117,14 @@ export const MACRO: Module = {
         },
       ],
       quiz: [
-        { id: "ro1", q: "How long after a kill can Roshan be back?", options: ["8 to 11 minutes", "Exactly 5 minutes", "1 minute", "He does not return"], correct: 0, why: "Since 7.38 the respawn is random between 8 and 11 minutes." },
+        { id: "ro1", q: "How long after the first kill can Roshan be back?", options: ["About 8 to 11 minutes", "Exactly 2 minutes", "1 minute", "He does not return"], correct: 0, why: "The respawn is random in an 8-11 minute window (7.38); since 7.42 each kill takes a minute off the base timer, down to 5 minutes." },
         { id: "ro2", q: "How do you know which den Roshan is in?", options: ["The active den is marked on the minimap (one by day, one by night)", "Always the same den", "You have to scout both every time", "Only the team that killed him knows"], correct: 0, why: "Since 7.38 Roshan switches dens with day and night; the minimap shows the active one." },
         { id: "ro3", q: "Who usually gets the Aegis?", options: ["The hero who wins the next fight - usually the carry", "The support with the least gold", "Whoever picks it up first", "Nobody: it is sold"], correct: 0, why: "An extra life is worth most on the hero the team fights around." },
         { id: "ro4", q: "When is a Roshan attempt risky?", options: ["When the enemy is alive, unseen and can reach the pit", "After a won fight", "When three enemies are dead", "With vision around the den"], correct: 0, why: "Being caught in the pit at low health is how teams throw." },
         { id: "ro5", q: "Where is the Tormentor relative to Roshan?", options: ["On the opposite side of the map", "Next to Roshan", "In the middle lane", "In each team's base"], correct: 0, why: "There is one Tormentor, always opposite Roshan's active den." },
       ],
       situations: [
-        { id: "ros1", scene: "Roshan was killed at 21:00. It is 29:30; the enemy team has disappeared from the map.", q: "What is most likely and what do you do?", options: ["They may be at Roshan: check the active den and prepare to fight them there", "Nothing: Roshan cannot be up yet", "Go to their base", "Farm safely in your jungle"], correct: 0, why: "29:30 is inside the 8-11 minute window after 21:00 (29:00-32:00)." },
+        { id: "ros1", scene: "Roshan was killed for the first time at 21:00. It is 29:30; the enemy team has disappeared from the map.", q: "What is most likely and what do you do?", options: ["They may be at Roshan: check the active den and prepare to fight them there", "Nothing: Roshan cannot be up yet", "Go to their base", "Farm safely in your jungle"], correct: 0, why: "29:30 is 8.5 minutes after the kill - inside the respawn window (8-11 minutes after a first kill; later kills shorten it)." },
         { id: "ros2", scene: "Your team wants Roshan; two enemy heroes are visible farming the far side, three are unseen.", q: "What should come first?", options: ["Vision around the den and finding the three missing heroes", "Go in immediately", "Split the team: two on Roshan, three farm", "Skip Roshan forever"], correct: 0, why: "Three unseen enemies can trap you in the pit; see them first." },
       ],
       practice: [

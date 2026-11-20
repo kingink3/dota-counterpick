@@ -12,8 +12,8 @@
 #  roles: positions that see the reminder (1..5). lead: seconds of warning.
 # =============================================================================
 
-patch: "7.41"
-reviewed: 2026-11-04
+patch: "7.42"
+reviewed: 2026-11-20
 
 events:
   - id: bounty_rune
@@ -45,8 +45,8 @@ events:
     every: 420
     roles: [1, 2, 3, 4, 5]
     lead: 30
-    note: "first 200 XP, then +300 each (200/500/800...); the countdown runs back while an enemy hero stands in it"
-    source: "7.38: Wisdom Runes replaced by Shrines, active every 7 minutes; 7.41: XP 200 base +300 per shrine, contested countdown reverses"
+    note: "first 200 XP, then +200 each (200/400/600...); the countdown runs back while an enemy hero stands in it"
+    source: "7.38: Wisdom Runes replaced by Shrines, active every 7 minutes; 7.41: contested countdown reverses; 7.42: XP 200 + 200 per subsequent use (was +300)"
 
   - id: lotus
     label: "Healing Lotus (+1 per pool)"
@@ -54,8 +54,8 @@ events:
     every: 180
     roles: [1, 2, 3, 4, 5]
     lead: 15
-    note: "pools hold up to 6; Great Lotuses after Tier 4 neutrals, Greater after Tier 5"
-    source: "7.33: every 3 minutes each pool spawns 1 Healing Lotus, up to 6; 7.38: Great/Greater Lotus after T4/T5"
+    note: "pools hold up to 6; late game the pools upgrade to Great / Greater Lotuses (7.38 tied this to T4/T5 neutrals - 7.42 cut the tiers to 4 and does not restate it)"
+    source: "7.33: every 3 minutes each pool spawns 1 Healing Lotus, up to 6; 7.38: Great/Greater Lotus after T4/T5; 7.42: 4 neutral tiers, lotus upgrade timing not restated"
 
   - id: stack
     label: "Stack window"
@@ -100,11 +100,11 @@ events:
 
   - id: tormentor
     label: "Tormentor"
-    at: [1200]
+    at: [900]
     roles: [1, 2, 3, 4, 5]
     lead: 60
-    note: "one Tormentor at a time; Radiant side at night, Dire side at day"
-    source: "7.39: first spawn increased from 15:00 to 20:00; 7.38: single Tormentor, follows day/night"
+    note: "one Tormentor at a time; Radiant side at night, Dire side at day; always drops Greater Horn of Battle, Aghanim's Shard from its 2nd death"
+    source: "7.42: initial spawn decreased from 20:00 to 15:00, drops Greater Horn of Battle, Shard from the 2nd death; 7.38: single Tormentor, follows day/night"
 
   - id: tormentor_respawn
     label: "Tormentor back"
@@ -121,8 +121,8 @@ events:
     window: 180
     roles: [1, 2, 3, 4, 5]
     lead: 60
-    note: "respawns 8-11 minutes after death"
-    source: "7.38: Roshan's respawn takes between 8 to 11 minutes"
+    note: "8-11 min after the first kill; each later kill makes the base timer 1 min shorter, down to 5 min"
+    source: "7.38: Roshan's respawn takes between 8 to 11 minutes; 7.42: base respawn timer decreases by 1 minute every time Roshan is defeated, to a minimum of 5 minutes"
 
   - id: observer_restock
     label: "Observer ward restocked (shop)"
@@ -136,9 +136,9 @@ events:
 
   - id: neutral_tier
     label: "Neutral tier"
-    at: [900, 1500, 2100, 3600]
-    names: ["Tier 2 neutrals", "Tier 3 neutrals", "Tier 4 neutrals", "Tier 5 neutrals"]
+    at: [900, 1800, 3000, 3900]
+    names: ["Tier 2 neutrals", "Tier 3 neutrals", "Tier 4 neutrals", "Infinite Madstone"]
     roles: [1, 2, 3, 4, 5]
     lead: 30
-    note: "Tier 1 from 0:00 (7.41); each tier needs 10 Madstone"
-    source: "7.38: Madstone cap 15/25/35/45 at 15:00/25:00/35:00/60:00 (enough for T2..T5); 7.41: T1 from 0:00"
+    note: "4 tiers since 7.42 (no Tier 5); Tier 1 from 0:00; a Tier 4 item costs 14 Madstone"
+    source: "7.42: item tiers decreased from 5 to 4 - T1 0:00, T2 15:00, T3 30:00, T4 50:00, infinite Madstone 65:00; T4 Madstone cost 10 -> 14"

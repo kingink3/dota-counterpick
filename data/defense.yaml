@@ -74,7 +74,7 @@ defense:
   - { school: physical, item: assault_cuirass, label: "Assault Cuirass",
       mechanism: "plus armor for you and the team vs physical damage (and minus armor on them)", weight: 0.9 }
   - { school: physical, item: heavens_halberd, label: "Heaven's Halberd",
-      mechanism: "disarm shuts off the carry's right-click for 4s - survive its window", weight: 0.9 }
+      mechanism: "disarm shuts off the carry's right-click for 3s (cast range 500, 7.42) - survive its window", weight: 0.9 }
   - { school: physical, item: blade_mail, label: "Blade Mail",
       mechanism: "damage return punishes a carry that commits onto you", weight: 0.7 }
 

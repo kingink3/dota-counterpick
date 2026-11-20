@@ -66,6 +66,7 @@ fit:
   euls_scepter:         [0.25,  1.0,   0.5,    0.9]
   eye_of_skadi:         [1.0,   0.3,   0.6,    0.1]
   force_staff:          [0.5,   0.8,   0.7,    1.0]
+  caduceus:             [0.3,   0.8,   0.6,    0.6]   # 7.42: Force + Phylactery (5400) - a caster upgrade; for supports situational (Force Staff stays their pick)
   gem_of_true_sight:    [0.4,   0.4,   0.6,    1.0]
   ghost_scepter:        [0.6,   0.7,   0.5,    0.9]
   gleipnir:             [0.9,   0.8,   0.5,    0.4]
@@ -74,6 +75,7 @@ fit:
   hand_of_midas:        [0.7,   0.7,   0.4,    0.2]
   heart_of_tarrasque:   [0.7,   0.3,   1.0,    0.2]
   heavens_halberd:      [0.4,   0.3,   1.0,    0.6]
+  skypiercer:           [0.6,   0.1,   1.0,    0.2]   # 7.42: Halberd upgrade (+Sange, +evasion) - an offlane/strength core
   hood_of_defiance:     [0.4,   0.5,   0.9,    0.5]
   hurricane_pike:       [1.0,   0.7,   0.3,    0.5]
   infused_raindrops:    [0.5,   0.7,   0.7,    0.7]
@@ -160,7 +162,9 @@ unavailable:
   - dragon_scale          # removed neutral item
   - book_of_the_dead      # neutral item now (tier 5)
   - medallion_of_courage  # neutral item now (tier 2)
+  - helm_of_the_overlord  # 7.42: removed from the game
+  - revenant_s_brooch     # 7.42: neutral item now (tier 3 pool)
 
 # attack-type restrictions (the other type is capped at wrong_attack)
 melee_only: [battlefury, echo_sabre]        # cleave / Echo Strike are melee-only
-ranged_only: [dragon_lance, hurricane_pike, hydras_breath, specialists_array]  # range bonus, Pike active, multishot procs on ranged attacks
+ranged_only: [dragon_lance, hurricane_pike, hydras_breath, specialists_array]  # range bonus, Pike active, multishot procs on ranged attacks; 7.42: Dragon Lance gives melee only +25 range (it is the Abyssal component - Abyssal itself stays open to melee)

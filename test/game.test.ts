@@ -51,7 +51,7 @@ test("GameClock: counting down = pre-horn (negative), stalled = paused", () => {
 test("timers: schedule from data/timings.yaml, filtered by role", () => {
   const kb = loadKB();
   const tm = kb.timings!;
-  assert.equal(tm.patch, "7.41");
+  assert.equal(tm.patch, "7.42");
   for (const e of tm.events) assert.ok(e.source.length > 10, `${e.id} has a source`);
   // 6:40 as a support: stack window at 6:53, shrine at 7:00, power rune not for pos 5
   const sup = upcoming(tm, 400, 5);
@@ -63,10 +63,13 @@ test("timers: schedule from data/timings.yaml, filtered by role", () => {
   assert.equal(stack.state, "later");
   assert.equal(upcoming(tm, 408, 5).find((u) => u.id === "stack")!.state, "soon");
   assert.equal(upcoming(tm, 414, 5).find((u) => u.id === "stack")!.state, "now", "inside the 3 s window");
-  // bounty runes every 4 min since 7.38, Tormentor first at 20:00 since 7.39
+  // bounty runes every 4 min since 7.38, Tormentor first at 15:00 since 7.42
   assert.equal(upcoming(tm, 255, 1).find((u) => u.id === "bounty_rune")!.at, 480);
   assert.equal(upcoming(tm, 245, 1).find((u) => u.id === "bounty_rune")!.state, "now", "shown 10 s after it spawned");
-  assert.equal(upcoming(tm, 1000, 1).find((u) => u.id === "tormentor")!.at, 1200);
+  assert.equal(upcoming(tm, 800, 1).find((u) => u.id === "tormentor")!.at, 900);
+  // 7.42: four neutral tiers (T4 at 50:00), then infinite Madstone at 65:00
+  const nt = upcoming(tm, 2000, 1).find((u) => u.id === "neutral_tier")!;
+  assert.deepEqual([nt.at, nt.label], [3000, "Tier 4 neutrals"]);
   // neutral camps appear at 1:00: no stack before 1:53, no pull before 1:15
   assert.equal(upcoming(tm, 27, 5).find((u) => u.id === "stack")!.at, 113);
   assert.equal(upcoming(tm, 27, 5).find((u) => u.id === "pull")!.at, 75);

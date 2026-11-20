@@ -116,12 +116,12 @@ export interface BattleReport {
 const ITEM_USE: Record<string, [UseKind, number?]> = {
   // on an enemy
   orchid: ["enemy", 900], bloodthorn: ["enemy", 900], sheepstick: ["enemy", 800], rod_of_atos: ["enemy", 1100], gungir: ["enemy", 1375],
-  nullifier: ["enemy", 900], abyssal_blade: ["enemy", 150], heavens_halberd: ["enemy", 750], diffusal_blade: ["enemy", 600],
+  nullifier: ["enemy", 900], abyssal_blade: ["enemy", 175], heavens_halberd: ["enemy", 500], skypiercer: ["enemy", 500], diffusal_blade: ["enemy", 600],
   disperser: ["enemy", 600], harpoon: ["enemy", 700], ethereal_blade: ["enemy", 800], spirit_vessel: ["enemy", 750],
   urn_of_shadows: ["enemy", 750], medallion_of_courage: ["enemy", 1000], dagon: ["enemy", 700], dagon_2: ["enemy", 730],
   dagon_3: ["enemy", 760], dagon_4: ["enemy", 790], dagon_5: ["enemy", 820], shivas_guard: ["enemy", 900], veil_of_discord: ["enemy", 1200],
   // on an allied core (and yourself at death)
-  glimmer_cape: ["ally", 600], lotus_orb: ["ally", 900], solar_crest: ["ally", 1000], force_staff: ["ally", 550], hurricane_pike: ["ally", 650],
+  glimmer_cape: ["ally", 600], lotus_orb: ["ally", 900], solar_crest: ["ally", 1000], force_staff: ["ally", 550], caduceus: ["ally", 550], hurricane_pike: ["ally", 650],
   wind_waker: ["ally", 550], holy_locket: ["ally", 600], mekansm: ["ally", 1200], guardian_greaves: ["ally", 1200], pipe: ["ally", 1200],
   crimson_guard: ["ally", 1200],
   // on yourself
@@ -130,7 +130,7 @@ const ITEM_USE: Record<string, [UseKind, number?]> = {
   cyclone: ["save"], magic_wand: ["save"], magic_stick: ["save"], faerie_fire: ["save"],
 };
 /** items that disable (weighted x2 like control spells). */
-const CONTROL_ITEMS = new Set(["sheepstick", "orchid", "bloodthorn", "abyssal_blade", "rod_of_atos", "gungir", "heavens_halberd", "harpoon", "wind_waker", "cyclone"]);
+const CONTROL_ITEMS = new Set(["sheepstick", "orchid", "bloodthorn", "abyssal_blade", "rod_of_atos", "gungir", "heavens_halberd", "skypiercer", "harpoon", "wind_waker", "cyclone"]);
 /** weighted share of chances used: the ultimate and control count double. */
 export function castRate(us: readonly UseStat[]): { used: number; windows: number; rate?: number } {
   const used = us.reduce((a, u) => a + u.used * (u.weight ?? 1), 0);

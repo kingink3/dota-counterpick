@@ -1,8 +1,8 @@
 // =============================================================================
 //  Module 1: Foundations (ADR-046). From "what is Dota" to reading a draft.
-//  Facts checked for patch 7.41f (2026-11-09): map timings come from
+//  Facts checked for patch 7.42 (2026-11-20): map timings come from
 //  data/timings.yaml (reviewed per patch, sources there); damage / resistances from
-//  Liquipedia (base magic resistance 25%, +0.1% per Intelligence; debuff immunity).
+//  Liquipedia (base magic resistance 25%, +0.125% per Intelligence since 7.42; debuff immunity).
 //  Numbers that change often are left out on purpose: the lessons teach the rule,
 //  not this week's value.
 // =============================================================================
@@ -12,8 +12,8 @@ import type { Module } from "./types.js";
 export const FOUNDATIONS: Module = {
   id: "foundations",
   title: "Foundations",
-  patch: "7.41f",
-  checked: "2026-11-09",
+  patch: "7.42",
+  checked: "2026-11-20",
   lessons: [
     // ------------------------------------------------------------------ 1 ----
     {
@@ -81,7 +81,7 @@ export const FOUNDATIONS: Module = {
             "Every hero has three attributes that grow each level:",
             "- **Strength**: health and health regeneration.",
             "- **Agility**: armor and attack speed.",
-            "- **Intelligence**: mana, mana regeneration and a little magic resistance (+0.1% per point).",
+            "- **Intelligence**: mana, mana regeneration and a little magic resistance (+0.125% per point: 8 points = 1%).",
             "A hero's **primary attribute** also adds attack damage. **Universal** heroes have no single primary attribute: they get attack damage from all three, a smaller share of each.",
           ],
         },
@@ -112,7 +112,7 @@ export const FOUNDATIONS: Module = {
       ],
       quiz: [
         { id: "h1", q: "Which attribute gives armor and attack speed?", options: ["Agility", "Strength", "Intelligence", "Universal"], correct: 0, why: "Agility: armor and attack speed. Strength: health. Intelligence: mana and a little magic resistance." },
-        { id: "h2", q: "What does Intelligence add besides mana and mana regeneration?", options: ["A little magic resistance (+0.1% per point)", "Movement speed", "Evasion", "Health regeneration"], correct: 0, why: "Since patch 7.33, Intelligence gives base magic resistance: +0.1% per point." },
+        { id: "h2", q: "What does Intelligence add besides mana and mana regeneration?", options: ["A little magic resistance (+0.125% per point)", "Movement speed", "Evasion", "Health regeneration"], correct: 0, why: "Since patch 7.33 Intelligence gives magic resistance; 7.42 raised it from 0.1% to 0.125% per point." },
         { id: "h3", q: "How do Universal heroes get attack damage?", options: ["From all three attributes, a smaller share of each", "Only from Strength", "They have no attack damage from attributes", "From their level only"], correct: 0, why: "Universal heroes have no single primary attribute: all three add damage, each a smaller share than a primary attribute would." },
         { id: "h4", q: "At which level do ultimates become available?", options: ["6", "1", "10", "4"], correct: 0, why: "The ultimate can be learned from level 6 (a few heroes differ, but 6 is the rule)." },
         { id: "h5", q: "Which position usually plays the safe lane and farms the most?", options: ["Position 1 (carry)", "Position 3 (offlane)", "Position 5 (hard support)", "Position 4 (soft support)"], correct: 0, why: "Position 1 is the carry: safest lane, most farm, strongest late." },
@@ -151,7 +151,7 @@ export const FOUNDATIONS: Module = {
         {
           h: "Magic resistance",
           p: [
-            "Every hero starts with **25% magic resistance** and gets +0.1% per point of Intelligence. Other sources (items, abilities) stack **multiplicatively**: two sources of 30% and 40% leave 0.7 x 0.6 = 42% of the damage, not 30%.",
+            "Every hero starts with **25% magic resistance** and gets +0.125% per point of Intelligence. Other sources (items, abilities) stack **multiplicatively**: two sources of 30% and 40% leave 0.7 x 0.6 = 42% of the damage, not 30%.",
           ],
         },
         {
@@ -165,7 +165,7 @@ export const FOUNDATIONS: Module = {
       quiz: [
         { id: "d1", q: "What reduces physical damage?", options: ["Armor", "Magic resistance", "Intelligence", "Debuff immunity only"], correct: 0, why: "Armor reduces physical damage; magic resistance reduces magical damage." },
         { id: "d2", q: "With 10 armor, what share of physical damage do you take?", options: ["62.5%", "40%", "90%", "10%"], correct: 0, why: "1 / (1 + 0.06 x 10) = 1 / 1.6 = 0.625." },
-        { id: "d3", q: "What is a hero's base magic resistance?", options: ["25%", "0%", "50%", "10%"], correct: 0, why: "All heroes start at 25%; Intelligence adds 0.1% per point." },
+        { id: "d3", q: "What is a hero's base magic resistance?", options: ["25%", "0%", "50%", "10%"], correct: 0, why: "All heroes start at 25%; Intelligence adds 0.125% per point." },
         { id: "d4", q: "You have two magic resistance sources: 30% and 40%. How much magical damage gets through?", options: ["42%", "30%", "0%", "70%"], correct: 0, why: "They stack multiplicatively: 0.7 x 0.6 = 0.42." },
         { id: "d5", q: "Pure damage is reduced by...", options: ["Neither armor nor magic resistance", "Armor only", "Magic resistance only", "Both"], correct: 0, why: "That is what pure means; debuff immunity is the main thing that blocks it." },
         { id: "d6", q: "What does Black King Bar give?", options: ["Debuff immunity: blocks most disables, adds magic resistance", "Invisibility", "Armor only", "Full immunity to every spell including piercing ones"], correct: 0, why: "BKB gives debuff immunity for a few seconds. Abilities marked as piercing still work." },
@@ -205,14 +205,14 @@ export const FOUNDATIONS: Module = {
           h: "Lotuses and Wisdom Shrines",
           p: [
             "Each **Healing Lotus** pool grows one lotus every **3 minutes** (up to 6): a free heal.",
-            "**Wisdom Shrines** in the jungle give experience every **7 minutes**; the first gives 200, each next one 300 more. Standing in the enemy's shrine reverses its countdown.",
+            "**Wisdom Shrines** in the jungle give experience every **7 minutes**; the first gives 200, each next one 200 more (7.42). Standing in the enemy's shrine reverses its countdown.",
           ],
         },
         {
           h: "Tormentor, Roshan, day and night",
           p: [
-            "**Tormentor** first appears at **20:00** and returns 10 minutes after it is killed. The reward is an **Aghanim's Shard** for one of your two poorest heroes (by net worth) who does not have one yet.",
-            "**Roshan** is the strongest neutral; killing him gives the **Aegis** (one extra life) and more. He respawns **8 to 11 minutes** after death.",
+            "**Tormentor** first appears at **15:00** and returns 10 minutes after it is killed. Every kill gives gold and a **Greater Horn of Battle** (a wave of Mega creeps in each of your lanes); from its **second** kill it also drops an **Aghanim's Shard** for one of your two poorest heroes (by net worth) who does not have one yet.",
+            "**Roshan** is the strongest neutral; killing him gives the **Aegis** (one extra life) and more. He respawns **8 to 11 minutes** after death, and since 7.42 every kill makes that timer **1 minute shorter** (never below 5 minutes): late Roshans come faster.",
             "**Day and night** switch every **5 minutes** (night first at 5:00). At night most heroes see less - good for ganks and moving unseen.",
           ],
         },
@@ -227,8 +227,8 @@ export const FOUNDATIONS: Module = {
       quiz: [
         { id: "m1", q: "When do power runes start spawning?", options: ["6:00, then every 2 minutes", "0:00, then every 4 minutes", "2:00 and 4:00 only", "20:00"], correct: 0, why: "Water runes at 2:00/4:00, power runes from 6:00 every 2 minutes, bounty runes at 0:00 and every 4 minutes." },
         { id: "m2", q: "When should you pull a camp to stack it?", options: ["At about :53-:55", "At exactly :00", "At :30", "Any time"], correct: 0, why: "The area must be empty at :00 for a new camp to spawn; pulling at :53-:55 leads the creeps out just in time." },
-        { id: "m3", q: "When does Tormentor first appear?", options: ["20:00", "10:00", "15:00", "It is always there"], correct: 0, why: "Since patch 7.39 the first Tormentor spawns at 20:00 (it was 15:00 before)." },
-        { id: "m4", q: "How long after its death does Roshan come back?", options: ["8 to 11 minutes", "Exactly 5 minutes", "Never", "1 minute"], correct: 0, why: "Since 7.38, Roshan's respawn is a random time between 8 and 11 minutes." },
+        { id: "m3", q: "When does Tormentor first appear?", options: ["15:00", "10:00", "20:00", "It is always there"], correct: 0, why: "Patch 7.42 moved the first Tormentor back to 15:00 (it was 20:00 since 7.39)." },
+        { id: "m4", q: "What happens to Roshan's respawn time as the game goes on?", options: ["It gets 1 minute shorter after every kill, never below 5 minutes", "It is always exactly 8 minutes", "It gets longer after every kill", "He does not come back"], correct: 0, why: "The respawn is a random time in an 8-11 minute window (7.38); since 7.42 every kill shortens the base timer by a minute, down to 5." },
         { id: "m5", q: "What does a sentry ward do?", options: ["Reveals invisible units and enemy wards nearby", "Gives vision like an observer for 10 minutes", "Heals allies", "Stuns enemies"], correct: 0, why: "Sentries give true sight in a small area: invisible heroes and wards become visible." },
         { id: "m6", q: "How many observer wards can the shop hold at most?", options: ["4", "2", "10", "Unlimited"], correct: 0, why: "Stock: 2 at the start, +1 every 2:15, up to 4. If it is full, the restock is wasted." },
         { id: "m7", q: "When is the first night?", options: ["5:00", "0:00", "10:00", "There is no night"], correct: 0, why: "Day and night switch every 5 minutes; the first night is at 5:00." },
@@ -238,7 +238,7 @@ export const FOUNDATIONS: Module = {
       situations: [
         { id: "ms1", scene: "It is 5:50. You are position 5 standing next to a large camp near your safe lane. The lane is calm.", q: "What is the best use of the next few seconds?", options: ["Hit the camp at about 5:53-5:55 and pull it away to stack it", "Wait until 6:00 and attack the camp", "Go to the enemy fountain", "Stand in the camp at 6:00"], correct: 0, why: "Pulling at :53-:55 empties the camp area at :00: a second camp spawns, doubling the farm for your carry later." },
         { id: "ms2", scene: "Minute 7. The shop shows 4 observer wards in stock and you have none.", q: "What does that mean?", options: ["The stock is capped: every 2:15 that passes wastes a ward - buy and place them", "Nothing: wards are useless before 10:00", "The enemy has no wards", "You should sell your boots"], correct: 0, why: "At 4 the stock stops growing; unused restocks are lost vision for the whole game." },
-        { id: "ms3", scene: "19:30. Your team is ahead and healthy; the enemy is farming far away.", q: "Which objective is about to appear?", options: ["Tormentor at 20:00 (an Aghanim's Shard)", "The first power rune", "A water rune", "The first Roshan respawn"], correct: 0, why: "Tormentor's first spawn is 20:00; a healthy, ahead team can take it right away. The Shard goes to one of your two poorest heroes." },
+        { id: "ms3", scene: "14:30. Your team is ahead and healthy; the enemy is farming far away.", q: "Which objective is about to appear?", options: ["Tormentor at 15:00 (gold and a Greater Horn of Battle)", "The first power rune", "A water rune", "The first Roshan respawn"], correct: 0, why: "Tormentor's first spawn is 15:00 (7.42); a healthy, ahead team can take it right away. The Horn pushes all three lanes with Mega creeps; the Shard comes from its second kill." },
       ],
       practice: [
         { id: "observers", text: "As position 4 or 5: place at least 8 observer wards.", roles: [4, 5], need: 2, of: 3 },

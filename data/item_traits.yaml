@@ -14,7 +14,8 @@
 
 traits:
   black_king_bar:    { label: "Black King Bar",      reliance: { bkb_reliant: 1.0 }, resist: { self_debuff_immunity: 0.6 } }
-  butterfly:         { label: "Butterfly",           reliance: { evasion: 0.6 }, resist: { evades_attacks: 0.6 } }
+  butterfly:         { label: "Butterfly",           reliance: { evasion: 0.6 }, resist: { evades_attacks: 0.6 } }   # 7.42: 30% evasion
+  skypiercer:        { label: "Skypiercer",          reliance: { evasion: 0.5 }, resist: { evades_attacks: 0.5 } }   # 7.42: 25% evasion (Halberd lost its own)
   satanic:           { label: "Satanic",             reliance: { sustain_dependent: 0.6 }, resist: { self_dispel: 0.3 } }
   heart_of_tarrasque: { label: "Heart of Tarrasque", reliance: { sustain_dependent: 0.4 } }
   blink_dagger:      { label: "Blink Dagger",        reliance: { mobility_dependent: 0.5 } }

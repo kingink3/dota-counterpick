@@ -1,7 +1,7 @@
 // =============================================================================
 //  Draft backtest (ADR-063): does the engine predict who wins a real draft?
 //
-//    npx tsx scripts/backtest.ts <matches.ndjson> [--variants]   -> BACKTEST.md
+//    npx tsx scripts/backtest.ts <matches.ndjson> [--variants] [--after <ISO date>]   -> BACKTEST.md
 //
 //  Matches: public ranked All Pick games from OpenDota (.github/workflows/fetch-backtest.yml,
 //  branch backtest-raw), drafts and outcomes only. Only matches played AFTER the statistics
@@ -37,6 +37,11 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const file = process.argv[2];
 if (!file) throw new Error("usage: tsx scripts/backtest.ts <matches.ndjson> [--variants]");
 const VARIANTS = process.argv.includes("--variants");
+// --after <ISO date>: keep only matches started after it (e.g. a patch release, to test how
+// statistics measured on the previous patch carry over to the new one).
+const afterArg = process.argv.indexOf("--after");
+const after = afterArg > 0 ? Date.parse(process.argv[afterArg + 1] ?? "") : 0;
+if (afterArg > 0 && !Number.isFinite(after)) throw new Error("--after needs an ISO date");
 
 const kb = loadKB(ROOT);
 const mu = kb.matchups!;
@@ -58,7 +63,7 @@ for (const line of readFileSync(file, "utf8").split("\n")) {
   const rc = r.map((x) => idToCode[String(x)]);
   const dc = d.map((x) => idToCode[String(x)]);
   if ([...rc, ...dc].some((c) => !c || !kb.taxonomy.hero_tags[c])) { unknown++; continue; }
-  if (at * 1000 <= statsAt) { early++; continue; }
+  if (at * 1000 <= statsAt || at * 1000 <= after) { early++; continue; }
   matches.push({ id, at: at * 1000, rank, radiantWin: win, duration, r: rc as string[], d: dc as string[] });
 }
 if (matches.length < 500) throw new Error(`only ${matches.length} matches after the statistics snapshot: not enough for a backtest`);
@@ -277,6 +282,9 @@ const variants: Variant[] = [
   { name: "LANE_WEIGHT 1 (lane opponents not special)", set: () => tweak("LANE_WEIGHT", 1) },
   { name: "RISK_WEIGHT 0 (no risks)", set: () => tweak("RISK_WEIGHT", 0) },
   { name: "SYNERGY_WEIGHT 0 (no KB combos)", set: () => tweak("SYNERGY_WEIGHT", 0) },
+  { name: "STAT_PRIOR_GAMES x2 (measured games count half - an old patch)", set: () => tweak("STAT_PRIOR_GAMES", P.STAT_PRIOR_GAMES * 2) },
+  { name: "STAT_PRIOR_GAMES x4 (measured games count a quarter)", set: () => tweak("STAT_PRIOR_GAMES", P.STAT_PRIOR_GAMES * 4) },
+  { name: "SYN_DATA_WEIGHT 0.3 (measured synergy halved)", set: () => tweak("SYN_DATA_WEIGHT", P.SYN_DATA_WEIGHT / 2) },
   { name: "no pick_weight (rule weights before ADR-062)", set: () => {
     const saved = kb.taxonomy.edges.map((e) => e.pick_weight);
     for (const e of kb.taxonomy.edges) delete e.pick_weight;

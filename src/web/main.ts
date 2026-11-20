@@ -65,6 +65,7 @@ async function boot(): Promise<void> {
     } | null>,
   ]);
   const kbIndexed = indexKB(rawKb);
+  PATCH = { name: String(kbIndexed.taxonomy.meta?.["patch"] ?? ""), date: String(kbIndexed.taxonomy.meta?.["patch_date"] ?? "") };
   if (matchups?.heroes) kbIndexed.matchups = matchups.heroes;
   if (matchups?.allies) kbIndexed.allyMatchups = matchups.allies;
   const stats: ItemStats | undefined =
@@ -75,7 +76,7 @@ async function boot(): Promise<void> {
     grid: [],
     ...(stats ? { itemStats: stats } : {}),
     ...(matchups && "source" in matchups && typeof matchups.source === "string"
-      ? { matchupSource: `${matchups.source}${"fetchedAt" in matchups && typeof matchups.fetchedAt === "string" ? `, ${matchups.fetchedAt.slice(0, 10)}` : ""}` }
+      ? { matchupSource: `${matchups.source}${"fetchedAt" in matchups && typeof matchups.fetchedAt === "string" ? `, ${matchups.fetchedAt.slice(0, 10)}${prevPatch(matchups.fetchedAt)}` : ""}` }
       : {}),
   });
   setRender(renderAll);
@@ -269,13 +270,19 @@ function firstSentence(s: string): string {
   const one = cut > 30 ? s.slice(0, cut) : s;
   return one.length > 150 ? `${one.slice(0, 147).replace(/\s+\S*$/, "")}…` : one;
 }
+/** the patch the KB was reviewed for and its release date (taxonomy meta). */
+let PATCH: { name: string; date: string } = { name: "", date: "" };
+/** " - played before patch X" when a statistics snapshot predates the current patch (ADR-064). */
+function prevPatch(iso: string | undefined): string {
+  return iso && PATCH.date && iso.slice(0, 10) < PATCH.date ? ` - games from before patch ${PATCH.name}` : "";
+}
 function planSource(s: ItemStats): string {
   return [
     !s.posFrom && s.phasesFrom && `Builds: ${s.phasesFrom}.`,
     !s.posFrom && s.timingsFrom && `Timings: ${s.timingsFrom}.`,
     s.curveFrom && `Windows: ${s.curveFrom}; correlation with game length, not a cause.`,
-    s.posFetchedAt && `STRATZ, ${s.posFetchedAt.slice(0, 10)}.`,
-    s.fetchedAt && `OpenDota, ${s.fetchedAt.slice(0, 10)}.`,
+    s.posFetchedAt && `STRATZ, ${s.posFetchedAt.slice(0, 10)}${prevPatch(s.posFetchedAt)}.`,
+    s.fetchedAt && `OpenDota, ${s.fetchedAt.slice(0, 10)}${prevPatch(s.fetchedAt)}.`,
   ]
     .filter(Boolean)
     .join(" ");
