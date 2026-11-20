@@ -23,6 +23,8 @@ jobs:
         run: |
           mkdir -p /tmp/dc && cd /tmp/dc && npm pack dotaconstants --silent && tar xzf dotaconstants-*.tgz
       - run: npm run fetch:items -- --constants /tmp/dc/package/build --out /tmp/icons
+      - name: ImageMagick (no longer preinstalled on ubuntu-latest)
+        run: command -v convert || (sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick)
       - name: Convert to 66x48 WebP
         run: |
           shopt -s nullglob
