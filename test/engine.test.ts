@@ -1080,3 +1080,21 @@ test("ADR-065: pick review - the hero played, ranked for its position against th
   assert.equal(off.rank, undefined);
   assert.equal(pickReview(kb, "not_a_hero", allies, enemies, 1), undefined);
 });
+
+test("ADR-066: Captain's Mode bans - full edge, open enemy positions only; banned heroes are never picks", async () => {
+  const { banSuggestions, assignPositions, positionsOf, resolve } = await import("../src/resolver.js");
+  const kb = loadKB();
+  const ours = ["anti_mage", "crystal_maiden"];
+  const theirs = ["pudge", "lion", "axe"];
+  const cm = banSuggestions(kb, ours, theirs, 8, { mode: "cm" });
+  assert.ok(cm.length > 0);
+  for (const b of cm) assert.ok(Math.abs(b.value - b.edge) < 0.01, "CM: value = edge");
+  const filled = new Set(assignPositions(kb, theirs).values());
+  for (const b of cm) assert.ok(positionsOf(kb, b.hero).some((p) => !filled.has(p)), `${b.hero} fits an open enemy position`);
+  // a banned hero is neither suggested again nor offered as a pick
+  const top = cm[0]!.hero;
+  assert.ok(!banSuggestions(kb, ours, theirs, 8, { mode: "cm", banned: [top] }).some((b) => b.hero === top));
+  const free = resolve(kb, { enemyHeroes: theirs, allyHeroes: ours }, { all: true }).heroes.map((r) => r.code);
+  const banned = resolve(kb, { enemyHeroes: theirs, allyHeroes: ours, bannedHeroes: [free[0]!] }, { all: true }).heroes.map((r) => r.code);
+  assert.ok(!banned.includes(free[0]!));
+});

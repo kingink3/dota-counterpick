@@ -26,7 +26,11 @@ export interface UIState {
   enemies: Set<string>; // engineIds
   allies: Set<string>; // engineIds (your own team)
   myHero?: string; // which ally is the hero you are playing (tailors item builds)
-  addTarget: "enemy" | "ally"; // which side a grid click adds to
+  addTarget: "enemy" | "ally" | "ban"; // which side a grid click adds to
+  /** banned heroes (ADR-066). */
+  bans: Set<string>;
+  /** how ban suggestions are weighted: ranked All Pick or Captain's Mode. */
+  banMode: "ap" | "cm";
   role?: number;
   showFactors: boolean;
   search: string;
@@ -40,6 +44,8 @@ export const state: UIState = {
   enemies: new Set(),
   allies: new Set(),
   addTarget: "enemy",
+  bans: new Set(),
+  banMode: "ap",
   showFactors: false,
   search: "",
   activeTab: "heroes",

@@ -410,13 +410,14 @@ function buildRoleBar(): void {
   el("#clear-btn").addEventListener("click", () => {
     state.enemies.clear();
     state.allies.clear();
+    state.bans.clear();
     state.myHero = undefined;
     render();
   });
   // which team a grid click adds to
   for (const btn of document.querySelectorAll<HTMLElement>(".tgl")) {
     btn.addEventListener("click", () => {
-      state.addTarget = btn.dataset.target as "enemy" | "ally";
+      state.addTarget = btn.dataset.target as "enemy" | "ally" | "ban";
       render();
     });
   }
@@ -426,7 +427,9 @@ function buildRoleBar(): void {
 /** Clicking a hero: remove it if already picked (either side), else add to the active side. */
 function toggleHero(engineId: string): void {
   if (assignSlot && assignHero(engineId)) return;
-  if (state.enemies.has(engineId)) state.enemies.delete(engineId);
+  if (state.bans.has(engineId)) state.bans.delete(engineId);
+  else if (state.enemies.has(engineId)) state.enemies.delete(engineId);
+  else if (state.addTarget === "ban") state.bans.add(engineId);
   else if (state.allies.has(engineId)) {
     state.allies.delete(engineId);
     if (state.myHero === engineId) state.myHero = undefined;
@@ -456,13 +459,14 @@ function renderAll(): void {
 }
 
 function renderInner(): void {
-  const activeFull = (state.addTarget === "enemy" ? state.enemies : state.allies).size >= MAX_TEAM;
+  const activeFull = state.addTarget !== "ban" && (state.addTarget === "enemy" ? state.enemies : state.allies).size >= MAX_TEAM;
   for (const tile of document.querySelectorAll<HTMLElement>("#roster .hero-tile")) {
     const id = tile.dataset.engineId!;
     const isEnemy = state.enemies.has(id);
     const isAlly = state.allies.has(id);
     tile.classList.toggle("picked-enemy", isEnemy);
     tile.classList.toggle("picked-ally", isAlly);
+    tile.classList.toggle("banned", state.bans.has(id));
     tile.classList.toggle("locked", activeFull && !isEnemy && !isAlly);
   }
   syncCount("#enemy-count", state.enemies.size);
@@ -494,6 +498,7 @@ function renderInner(): void {
     ...(state.myHero ? { myHero: state.myHero } : {}),
     ...(state.role !== undefined ? { myRole: state.role } : {}),
     ...(state.enemyItems.size ? { enemyItems: Object.fromEntries(state.enemyItems) } : {}),
+    ...(state.bans.size ? { bannedHeroes: [...state.bans] } : {}),
   };
 
   const out = el("#results");
@@ -519,9 +524,8 @@ function renderInner(): void {
     out.appendChild(banner);
   }
 
-  if (state.allies.size && state.enemies.size < 5) {
-    const bans = banBlock([...state.allies], [...state.enemies]);
-    if (bans) out.appendChild(bans);
+  if ((state.allies.size || state.bans.size) && state.enemies.size < 5) {
+    out.appendChild(banBlock([...state.allies], [...state.enemies]));
   }
 
   const result = resolveDraft(kb, draft);

@@ -298,6 +298,8 @@ export interface DraftState {
   allyHeroes?: string[];
   /** items seen on enemy heroes (Tab scoreboard / manual), our item ids (ADR-024). */
   enemyItems?: Record<string, string[]>;
+  /** banned heroes (Captain's Mode, ranked bans): never offered as picks (ADR-066). */
+  bannedHeroes?: string[];
 }
 
 /** What holding an item adds to an enemy hero's tags (data/item_traits.yaml, ADR-024). */

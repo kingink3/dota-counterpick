@@ -288,10 +288,12 @@ function heroCandidates(
   allies: Set<string>,
 ): Subject[] {
   const enemySet = new Set(census.enemies);
+  const banned = new Set(draft.bannedHeroes ?? []);
   const subjects: Subject[] = [];
   for (const [code, tags] of Object.entries(kb.taxonomy.hero_tags)) {
     if (enemySet.has(code)) continue; // can't pick an enemy
     if (allies.has(code)) continue; // already on your team
+    if (banned.has(code)) continue;
     if (draft.myHero && code === draft.myHero) continue;
     const positions = positionsOf(kb, code);
     if (draft.myRole !== undefined && !positions.includes(draft.myRole)) continue;
@@ -1221,7 +1223,8 @@ export interface BanSuggestion {
   edge: number;
   /** share of games the hero appears in (either team), from the matchup sample. */
   pickShare: number;
-  /** expected cost avoided by the ban, pp: pickShare / 2 (it lands on their side) x edge. */
+  /** expected cost avoided by the ban, pp: All Pick - pickShare / 2 (it lands on their side)
+   *  x edge; Captain's Mode - the edge itself. */
   value: number;
   /** per our hero: the hero's edge against it. */
   vs: Array<{ hero: string; edge: number }>;
@@ -1246,14 +1249,28 @@ export function pickShares(kb: KnowledgeBase): Map<string, number> {
  *  each candidate scored as a pick against us (the enemy's side of heroEdge) and weighted by
  *  how likely the enemy is to take it. In ranked All Pick bans come before the picks, so
  *  `ours` is what you plan to play, not a finished lineup. `theirs` = enemy picks known so far. */
-export function banSuggestions(kb: KnowledgeBase, ours: string[], theirs: string[] = [], limit = 5): BanSuggestion[] {
+export interface BanOptions {
+  /** "ap" (ranked All Pick, default): weighted by how often the hero is played - a pub
+   *  enemy picks what they like. "cm" (Captain's Mode): the enemy captain picks on purpose,
+   *  so the edge counts in full, but only for heroes that fit a position the enemy has not
+   *  filled yet. */
+  mode?: "ap" | "cm";
+  /** heroes already banned. */
+  banned?: string[];
+}
+
+export function banSuggestions(kb: KnowledgeBase, ours: string[], theirs: string[] = [], limit = 5, opts: BanOptions = {}): BanSuggestion[] {
   const own = [...new Set(ours)].filter((h) => kb.taxonomy.hero_tags[h]);
   if (!own.length) return [];
-  const taken = new Set([...own, ...theirs]);
+  const taken = new Set([...own, ...theirs, ...(opts.banned ?? [])]);
+  const cm = opts.mode === "cm";
+  const filled = new Set(cm && theirs.length ? assignPositions(kb, theirs.filter((h) => kb.taxonomy.hero_tags[h])).values() : []);
+  const open = [1, 2, 3, 4, 5].filter((p) => !filled.has(p));
   const share = pickShares(kb);
   const out: BanSuggestion[] = [];
   for (const hero of Object.keys(kb.taxonomy.hero_tags)) {
     if (taken.has(hero)) continue;
+    if (cm && !positionsOf(kb, hero).some((p) => open.includes(p))) continue;
     const rec = heroEdge(kb, { enemyHeroes: own, allyHeroes: theirs }, hero);
     const edge = rec?.edge?.total ?? 0;
     if (edge <= 0) continue;
@@ -1262,7 +1279,7 @@ export function banSuggestions(kb: KnowledgeBase, ours: string[], theirs: string
       hero,
       edge: round(edge),
       pickShare: round3(p),
-      value: round3((p / 2) * edge),
+      value: round3(cm ? edge : (p / 2) * edge),
       vs: (rec?.edge?.byEnemy ?? []).map((b) => ({ hero: b.enemy, edge: round(b.edge) })),
     });
   }

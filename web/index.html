@@ -410,6 +410,12 @@
       .tgl:hover { color: var(--text); }
       .tgl.active[data-target="enemy"] { background: var(--enemy); color: #fff; }
       .tgl.active[data-target="ally"] { background: var(--ally); color: #0d1406; }
+      .tgl.active[data-target="ban"] { background: var(--muted); color: #0d1406; }
+      .hero-tile.banned { filter: grayscale(1) brightness(0.45); outline: 2px solid var(--muted); outline-offset: -2px; }
+      .bans .ban-mode { float: right; }
+      .bans .ban-mode button { background: none; border: 1px solid var(--line); color: var(--muted); font: 600 12px/1 var(--cond); padding: 4px 8px; cursor: pointer; }
+      .bans .ban-mode button.active { color: var(--text); border-color: var(--gold); }
+      .bans .chip { display: inline-block; border: 1px solid var(--line); padding: 1px 6px; margin: 2px 4px 2px 0; cursor: pointer; font-size: 13px; }
       #clear-btn { margin-left: auto; background: none; border: 1px solid var(--line); border-radius: 3px; color: var(--muted);
         font: 600 15px/1 var(--cond); padding: 8px 12px; cursor: pointer; }
       #clear-btn:hover { color: var(--text); border-color: var(--line2); }
@@ -618,6 +624,7 @@
             <div class="seg" role="group" aria-label="Clicking a hero adds to">
               <button class="tgl active" data-target="enemy">Add to enemy</button>
               <button class="tgl" data-target="ally">Add to my team</button>
+              <button class="tgl" data-target="ban" title="Mark banned heroes: they are never suggested">Ban</button>
             </div>
             <button id="clear-btn">Clear draft</button>
           </div>
