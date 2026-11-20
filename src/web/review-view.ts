@@ -9,7 +9,7 @@ import { mmss } from "../item-plan.js";
 import { MISSING_LABEL, reviewMatch, type Finding, type MatchReview, type ReviewContext } from "../review.js";
 import type { BattleReport, UseStat } from "../review-battles.js";
 import { adviceText, GRADE_LABEL, matchOverview, matchStory, type MatchOverview, type OverviewRow } from "../review-match.js";
-import { resolve } from "../resolver.js";
+import { pickReview, resolve } from "../resolver.js";
 import { loadHistory, loadSettings, openPlayer, saveReview, saveSettings, type MatchBase, type ReviewSettings } from "./review-local.js";
 import { canDispatch, dispatchReview, loadIndex, loadMatch, loadRecent, reviewRuns, storeAvailable, workflowUrl, type RecentList, type StoreEntry } from "./github-store.js";
 
@@ -600,6 +600,21 @@ export class ReviewView {
     return tr;
   }
 
+  /** ADR-065: the pick in hindsight - the hero against the full enemy lineup, with its allies. */
+  private draftCard(r: MatchReview, radiant: boolean, ps: Array<{ isRadiant: boolean; heroId: number }>): HTMLElement | undefined {
+    const ctx = this.d.ctx();
+    if (!ctx || ps.length < 10) return undefined;
+    const allies = ps.filter((p) => p.isRadiant === radiant).map((p) => this.d.heroOf(p.heroId));
+    const enemies = ps.filter((p) => p.isRadiant !== radiant).map((p) => this.d.heroOf(p.heroId));
+    const pr = pickReview(ctx.kb, r.hero, allies, enemies, r.position);
+    if (!pr) return undefined;
+    const c = card("Draft in hindsight");
+    c.append(el("p", "rv-sum", draftLine(pr, this.d.heroLabel)));
+    if (pr.top.length) c.append(el("p", "", `Best for that slot against this lineup: ${pr.top.map((t) => `${this.d.heroLabel(t.hero)} ${t.score >= 0 ? "+" : "−"}${Math.abs(t.score).toFixed(1)}`).join(" · ")} pp.`));
+    c.append(el("p", "muted", "Uses all ten heroes - in All Pick some enemies picked after you, so this is hindsight, not a verdict on the draft call. Estimated win-rate edge, the same as the Draft tab; the matchup data is from public games."));
+    return c;
+  }
+
   private report(r: MatchReview): HTMLElement {
     const box = el("div", "rv-report");
     const head = el("div", "rv-head");
@@ -640,6 +655,8 @@ export class ReviewView {
     box.append(head);
 
     box.append(this.mainCard(r));
+    const dc = them ? this.draftCard(r, them.isRadiant, ps) : undefined;
+    if (dc) box.append(dc);
     const grid = el("div", "rv-grid");
     grid.append(this.itemsCard(r), this.farmCard(r));
     box.append(grid);
@@ -940,6 +957,12 @@ function el(tag: string, cls: string, text = ""): HTMLElement {
   if (text) e.textContent = text;
   return e;
 }
+function draftLine(pr: NonNullable<ReturnType<typeof pickReview>>, label: (c: string) => string): string {
+  const pp = (x: number) => `${x >= 0 ? "+" : "−"}${Math.abs(x).toFixed(1)} pp`;
+  const where = pr.rank ? `#${pr.rank} of ${pr.of} for position ${pr.pos ?? "?"}` : `not among the ${pr.of} candidates the Draft tab ranks for position ${pr.pos ?? "?"} (rare there)`;
+  return `${label(pr.hero)}: ${pp(pr.score)} against their lineup - ${where}.`;
+}
+
 function card(title: string): HTMLElement {
   const c = el("div", "gz-card", "");
   c.append(el("h4", "", title));

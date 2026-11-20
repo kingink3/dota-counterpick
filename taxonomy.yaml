@@ -352,7 +352,7 @@ edges:
     pick_weight: 1.8
   - tool: aoe_clear
     target: summon_clearable
-    mechanism: "AoE wipes fragile summons"
+    mechanism: "AoE wipes fragile summons and clones (a Meepo clone that dies takes all of them)"
     weight: 1.0
     pick_weight: 1.3
   - tool: true_strike
@@ -807,7 +807,7 @@ hero_tags:
   razor:           { pos: [1,2,3], reliance: {attack_reliant: 0.6, mobility_dependent: 0.4}, tool: {armor_reduction: 0.4, aoe_clear: 0.4} }
   weaver:          { pos: [1], reliance: {relies_on_invisibility: 0.6, mobility_dependent: 0.7, attack_reliant: 0.5, snowball_dependent: 0.4, squishy_to_burst: 0.4}, tool: {ally_save: 0.3, armor_reduction: 0.6}, resist: {cheat_death: 0.6, self_dispel: 0.4} }
   arc_warden:      {pos: [1,2], reliance: {greedy_farmer: 0.7, mobility_dependent: 0.5, attack_reliant: 0.5}, tool: {out_scales: 0.7, magic_damage: 0.4, ally_save: 0.3} }   # Tempest Double = a unit, NOT an illusion  # tools: Tempest Double scales; Spark Wraith magic; Magnetic Field protects allies
-  meepo:           {pos: [1,2], reliance: {magic_burst_vulnerable: 0.7, greedy_farmer: 0.6, mana_dependent: 0.3, squishy_to_burst: 0.6}, tool: {pickoff: 0.8, lockdown_root: 0.7, magic_burst: 0.5, early_pressure: 0.5, aoe_clear: 0.6} }   # clones = real units, AoE-magic hits all; NOT illusion_based  # tools: Earthbind net (root) + Poof burst   # ADR-062: aoe_clear - Poof from every clone
+  meepo:           {pos: [1,2], reliance: {magic_burst_vulnerable: 0.7, greedy_farmer: 0.6, mana_dependent: 0.3, squishy_to_burst: 0.6, summon_clearable: 0.8}, tool: {pickoff: 0.8, lockdown_root: 0.7, magic_burst: 0.5, early_pressure: 0.5, aoe_clear: 0.6} }   # clones = real units, AoE-magic hits all; NOT illusion_based  # tools: Earthbind net (root) + Poof burst   # ADR-062: aoe_clear - Poof from every clone
   alchemist:       {pos: [1,2], reliance: {sustain_dependent: 0.5, greedy_farmer: 0.6, attack_reliant: 0.5, bkb_reliant: 0.7}, tool: {lockdown_early: 0.5, armor_reduction: 0.5, out_scales: 0.5} }   # tools: Unstable Concoction stun; Acid Spray armor reduction
   templar_assassin: { pos: [2,1], reliance: {attack_reliant: 0.6, magic_burst_vulnerable: 0.3}, tool: {armor_reduction: 0.4}, resist: {active_damage_reduction: 0.6} }   # Refraction blocks instances
   muerta:          {pos: [1,2], reliance: {attack_reliant: 0.6, magic_burst_vulnerable: 0.4, low_mobility: 0.5}, tool: {magic_damage: 0.6, lockdown_early: 0.5, out_scales: 0.5, silence: 0.3} }   # flex carry  # tools: Dead Shot fear; Pierce the Veil = magic attacks
@@ -887,7 +887,7 @@ hero_tags:
   chen:            { pos: [5,4], reliance: {summon_clearable: 0.8, low_mobility: 0.5, squishy_to_burst: 0.5}, tool: {early_pressure: 0.6, ally_save: 0.4} }
   rattletrap:      { pos: [4,3], reliance: {spell_reliant: 0.6, melee_commit: 0.5}, tool: {pickoff: 0.8, lockdown_early: 0.6, interrupt: 0.5, bkb_piercing_disable: 0.5} }   # Cogs trap; Battery Assault mini-stuns interrupt channels
   dark_willow:     { pos: [4,5], reliance: {squishy_to_burst: 0.6, spell_reliant: 0.7, mobility_dependent: 0.4}, tool: {lockdown_root: 0.6, magic_burst: 0.5, interrupt: 0.4} }   # Bramble Maze roots
-  dawnbreaker:     { pos: [3,4,5], reliance: {melee_commit: 0.5, spell_reliant: 0.5, sustain_dependent: 0.4}, tool: {lockdown_early: 0.4, true_strike: 0.3, bkb_piercing_disable: 0.3} }
+  dawnbreaker:     { pos: [3,4,5], reliance: {melee_commit: 0.5, spell_reliant: 0.5, sustain_dependent: 0.4}, tool: {lockdown_early: 0.4, true_strike: 0.3, bkb_piercing_disable: 0.3, aoe_clear: 0.4} }   # ADR-065: aoe_clear - Starbreaker and Celestial Hammer hit an area
   dazzle:          { pos: [5,4], reliance: {squishy_to_burst: 0.6, spell_reliant: 0.7, low_mobility: 0.6}, tool: {illusion_execute: 0.3, ally_save: 0.8}, resist: {cheat_death: 0.6} }   # Shallow Grave = resist cheat_death (ADR-020)
   disruptor:       { pos: [5,4], reliance: {squishy_to_burst: 0.6, low_mobility: 0.5, spell_reliant: 0.6}, tool: {silence: 0.8, lockdown_root: 0.6, illusion_execute: 0.4} }   # Static Storm; Kinetic Field + Glimpse vs escapers
   earth_spirit:    { pos: [4,3], reliance: {spell_reliant: 0.8, mobility_dependent: 0.5}, tool: {silence: 0.5, lockdown_early: 0.5, pickoff: 0.5} }   # Geomagnetic Grip silences

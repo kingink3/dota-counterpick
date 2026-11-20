@@ -209,3 +209,15 @@ test("match plan: heroes with no tool tags (Bristleback, Storm Spirit, PL...) do
   const m = buildMatchPlan({ kb, result, enemies, allies: [], label: (h) => h, itemLabel: (k) => k, dcKey: (id) => kb.itemDcKey?.[id] });
   assert.ok(Number.isFinite(m.damage.physical) && Number.isFinite(m.damage.magic));
 });
+
+test("ADR-065: no position chosen - the plan says which position it assumed", async () => {
+  const { readFileSync } = await import("node:fs");
+  const real = JSON.parse(readFileSync(new URL("../data/item-stats.json", import.meta.url), "utf8")) as ItemStats;
+  const key = real.heroes.zuus ? "zuus" : "zeus";
+  const main = real.heroes[key]!.mainPos!;
+  const none = buildPlan({ hero: key, stats: real })!;
+  assert.equal(none.assumedPos, Number(main));
+  assert.match(none.basis!, /most played/);
+  const chosen = buildPlan({ hero: key, role: 2, stats: real })!;
+  assert.equal(chosen.assumedPos, undefined);
+});

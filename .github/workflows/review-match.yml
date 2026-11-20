@@ -91,7 +91,11 @@ jobs:
       - name: Start the replay parser (odota/parser)
         if: ${{ inputs.list_only != true && steps.plan.outputs.work != 'false' }}
         run: |
-          docker run -d --name parser -p 5600:5600 odota/parser >/dev/null
+          # pinned by digest when known (supply chain: a new image must not change reviews unseen);
+          # the resolved digest is printed below - copy it here after checking a new image
+          IMAGE=odota/parser
+          docker run -d --name parser -p 5600:5600 "$IMAGE" >/dev/null
+          echo "parser image: $(docker image inspect --format '{{index .RepoDigests 0}}' "$IMAGE")"
           for i in $(seq 1 60); do curl -s -o /dev/null localhost:5600 && break; sleep 2; done
       - name: Matches from their replays (ADR-053)
         if: ${{ steps.plan.outputs.store != 'false' }}

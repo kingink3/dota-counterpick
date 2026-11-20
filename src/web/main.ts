@@ -18,6 +18,7 @@ import { SchoolView } from "./school-view.js";
 import { loadHistory, loadSettings } from "./review-local.js";
 import { indexKB, type KnowledgeBase, type RawKB } from "../knowledge.js";
 import { archetypeOf, resolve as resolveDraft } from "../resolver.js";
+import { banBlock, whyNotBlock } from "./draft-extras.js";
 import { genericCombos, roleFit, type RoleFit } from "../combos.js";
 import { heroLabel } from "../explain.js";
 import { heroImageUrlByValve, heroValveName } from "./hero-art.js";
@@ -55,6 +56,8 @@ interface PagesBundle {
 const BUNDLE = (window as unknown as { __DOTA_BUNDLE?: PagesBundle }).__DOTA_BUNDLE;
 
 async function boot(): Promise<void> {
+  // no screen capture (phones, tablets): hide "Read screen" instead of a button that fails
+  if (!navigator.mediaDevices?.getDisplayMedia) document.body.classList.add("no-capture");
   const [rawKb, roster, matchups] = BUNDLE ? [BUNDLE.kb, BUNDLE.roster, BUNDLE.matchups] : await Promise.all([
     fetch("./kb.json").then((r) => r.json()) as Promise<RawKB>,
     fetch("./roster.json").then((r) => r.json()) as Promise<{ heroes: RosterHero[] }>,
@@ -498,7 +501,7 @@ function renderInner(): void {
   const prompt = hudPrompt();
   if (prompt) out.appendChild(prompt);
   if (state.enemies.size === 0 && state.allies.size === 0) {
-    out.appendChild(note("Add the enemy heroes as they are picked. Recommendations appear here and update with every pick."));
+    out.appendChild(note("Add the enemy heroes as they are picked. Recommendations appear here and update with every pick. Ban phase: add the heroes your side plans to play to your team for ban suggestions."));
     return;
   }
 
@@ -514,6 +517,11 @@ function renderInner(): void {
         : ` <span class="muted">(role unknown: pick your position to tailor items)</span>`) +
       `. <span class="muted">Click ★ again to pick a hero instead.</span>`;
     out.appendChild(banner);
+  }
+
+  if (state.allies.size && state.enemies.size < 5) {
+    const bans = banBlock([...state.allies], [...state.enemies]);
+    if (bans) out.appendChild(bans);
   }
 
   const result = resolveDraft(kb, draft);
@@ -583,6 +591,7 @@ function renderInner(): void {
   }
   if (recs.length === 0) panel.appendChild(note("Nothing here for this enemy team."));
   else for (const rec of recs.slice(0, 12)) panel.appendChild(recCard(rec));
+  if (state.activeTab === "heroes" && state.enemies.size && !state.myHero) panel.appendChild(whyNotBlock(draft));
   out.appendChild(panel);
   if (state.enemies.size) {
     // what the recommendations stand on, and how fresh it is (PATCH_RUNBOOK B8)

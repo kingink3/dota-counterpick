@@ -124,6 +124,8 @@ export interface ItemPlan {
   archetype?: Archetype;
   /** where the standard items come from, e.g. "STRATZ, position 1, 212k games". */
   basis?: string;
+  /** no position was chosen: the plan is for the hero's most played one (ADR-065). */
+  assumedPos?: number;
   phases: PlanPhase[];
   spikes: Spike[];
 }
@@ -174,7 +176,7 @@ export function buildPlan(inp: PlanInput): ItemPlan | undefined {
   const pos = posKey ? base.byPos?.[posKey] : undefined;
   const hs: HeroStats = pos ? { ...pos, ...(pos.curve ?? base.curve ? { curve: pos.curve ?? base.curve } : {}) } : base;
   const basis = pos
-    ? `${inp.stats.posFrom ?? "by position"}: position ${posKey}${inp.role !== undefined && String(inp.role) !== posKey ? ` (no data for position ${inp.role})` : ""}, ${Math.round((pos.games ?? 0) / 1000)}k games`
+    ? `${inp.stats.posFrom ?? "by position"}: position ${posKey}${inp.role !== undefined && String(inp.role) !== posKey ? ` (no data for position ${inp.role})` : ""}${inp.role === undefined ? " - the hero's most played; pick your position to change it" : ""}, ${Math.round((pos.games ?? 0) / 1000)}k games`
     : inp.stats.phasesFrom;
   const items = inp.stats.items;
   const support = inp.archetype === "support";
@@ -384,6 +386,7 @@ export function buildPlan(inp: PlanInput): ItemPlan | undefined {
     hero: inp.hero,
     ...(inp.archetype ? { archetype: inp.archetype } : {}),
     ...(basis ? { basis } : {}),
+    ...(inp.role === undefined && pos && posKey ? { assumedPos: Number(posKey) } : {}),
     phases,
     spikes: itemSpikes(core),
   };

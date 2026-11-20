@@ -1210,3 +1210,97 @@ function prettifyHero(code: string): string {
 function round(n: number): number {
   return Math.round(n * 1000) / 1000;
 }
+
+// ---------------------------------------------------------------------------
+//  Bans (ADR-065)
+// ---------------------------------------------------------------------------
+
+export interface BanSuggestion {
+  hero: string;
+  /** the hero's pick edge against our heroes, pp (heroEdge from the enemy's side). */
+  edge: number;
+  /** share of games the hero appears in (either team), from the matchup sample. */
+  pickShare: number;
+  /** expected cost avoided by the ban, pp: pickShare / 2 (it lands on their side) x edge. */
+  value: number;
+  /** per our hero: the hero's edge against it. */
+  vs: Array<{ hero: string; edge: number }>;
+}
+
+/** How often each hero is played: matchup games over opponents / 5 = its games in the
+ *  sample; share = that / total matches (10 heroes per match). */
+export function pickShares(kb: KnowledgeBase): Map<string, number> {
+  const games = new Map<string, number>();
+  let total = 0;
+  for (const [h, row] of Object.entries(kb.matchups ?? {})) {
+    let g = 0;
+    for (const v of Object.values(row)) g += v[1];
+    games.set(h, g / 5);
+    total += g / 5;
+  }
+  const matches = total / 10;
+  return new Map([...games].map(([h, g]) => [h, matches > 0 ? g / matches : 0]));
+}
+
+/** Heroes worth banning when we plan to play `ours` (our picked or planned heroes):
+ *  each candidate scored as a pick against us (the enemy's side of heroEdge) and weighted by
+ *  how likely the enemy is to take it. In ranked All Pick bans come before the picks, so
+ *  `ours` is what you plan to play, not a finished lineup. `theirs` = enemy picks known so far. */
+export function banSuggestions(kb: KnowledgeBase, ours: string[], theirs: string[] = [], limit = 5): BanSuggestion[] {
+  const own = [...new Set(ours)].filter((h) => kb.taxonomy.hero_tags[h]);
+  if (!own.length) return [];
+  const taken = new Set([...own, ...theirs]);
+  const share = pickShares(kb);
+  const out: BanSuggestion[] = [];
+  for (const hero of Object.keys(kb.taxonomy.hero_tags)) {
+    if (taken.has(hero)) continue;
+    const rec = heroEdge(kb, { enemyHeroes: own, allyHeroes: theirs }, hero);
+    const edge = rec?.edge?.total ?? 0;
+    if (edge <= 0) continue;
+    const p = share.get(hero) ?? 0;
+    out.push({
+      hero,
+      edge: round(edge),
+      pickShare: round3(p),
+      value: round3((p / 2) * edge),
+      vs: (rec?.edge?.byEnemy ?? []).map((b) => ({ hero: b.enemy, edge: round(b.edge) })),
+    });
+  }
+  return out.sort((a, b) => b.value - a.value || b.edge - a.edge).slice(0, limit);
+}
+
+// ---------------------------------------------------------------------------
+//  Pick review (ADR-065): the hero played, scored against the finished draft
+// ---------------------------------------------------------------------------
+
+export interface PickReview {
+  hero: string;
+  pos?: number;
+  /** the hero's edge against the full enemy lineup with its four allies, pp. */
+  score: number;
+  /** place among the heroes the engine would rank for that position (1 = best); absent when
+   *  the hero is not a candidate there (rare on the position). */
+  rank?: number;
+  of: number;
+  /** the best candidates for the position, excluding the hero played. */
+  top: Array<{ hero: string; score: number }>;
+}
+
+/** Hindsight check of one pick: every hero of the match is known here, while in All Pick
+ *  some enemies were picked after it - the review says so. */
+export function pickReview(kb: KnowledgeBase, hero: string, allies: string[], enemies: string[], pos?: number): PickReview | undefined {
+  if (!kb.taxonomy.hero_tags[hero]) return undefined;
+  const others = allies.filter((a) => a !== hero);
+  const draft: DraftState = { enemyHeroes: enemies, allyHeroes: others, ...(pos ? { myRole: pos } : {}) };
+  const all = resolve(kb, draft, { all: true }).heroes;
+  const i = all.findIndex((r) => r.code === hero);
+  const own = i >= 0 ? all[i]! : heroEdge(kb, draft, hero);
+  return {
+    hero,
+    ...(pos ? { pos } : {}),
+    score: round(own?.score ?? 0),
+    ...(i >= 0 ? { rank: i + 1 } : {}),
+    of: all.length,
+    top: all.filter((r) => r.code !== hero).slice(0, 3).map((r) => ({ hero: r.code, score: round(r.score) })),
+  };
+}

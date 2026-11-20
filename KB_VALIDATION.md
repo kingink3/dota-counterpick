@@ -9,22 +9,22 @@ gap = win rate of the pair minus the rate expected from both heroes' base rates,
 
 | | Value | Meaning |
 |---|---|---|
-| `KB_PP_PER_POINT` | **1.85** | slope of gap on lift: one KB point above the hero's usual is worth this many pp |
+| `KB_PP_PER_POINT` | **1.87** | slope of gap on lift: one KB point above the hero's usual is worth this many pp |
 | sd of the true gap around the KB prior | 1.21 pp | what the mechanics do not explain |
-| `STAT_PRIOR_GAMES` | **1700** | 2500 / 1.48: games at which the measurement weighs as much as the prior |
+| `STAT_PRIOR_GAMES` | **1700** | 2500 / 1.47: games at which the measurement weighs as much as the prior |
 
 ## How well the KB orders the pairs
 
 | Min games | Pairs | Spearman (lift vs gap) |
 |---|---|---|
-| 1000 | 12199 | 0.163 |
-| 5000 | 4252 | 0.219 |
+| 1000 | 12199 | 0.166 |
+| 5000 | 4252 | 0.223 |
 | 15000 | 792 | 0.263 |
 
-Mean gap by KB lift: bottom 10% -0.57 pp, middle -0.03 pp, top 10% +0.84 pp, top 2% +1.67 pp.
+Mean gap by KB lift: bottom 10% -0.58 pp, middle -0.02 pp, top 10% +0.86 pp, top 2% +1.71 pp.
 
-Measured counters (gap ≥ +4 pp): 146; the KB lifts them by ≥ 0.2 in 52%.
-Strong KB claims (lift ≥ 0.6): 138; gap > +1 pp in 64%, gap < -1 pp in 9%.
+Measured counters (gap ≥ +4 pp): 146; the KB lifts them by ≥ 0.2 in 53%.
+Strong KB claims (lift ≥ 0.6): 141; gap > +1 pp in 65%, gap < -1 pp in 9%.
 
 ## General rules: mean gap of the pairs each one fires on
 
@@ -32,10 +32,10 @@ Pairs where the rule argues for the pick. "KB" is the mean contribution of the r
 
 | Rule | Pairs | Mean gap, pp | ± | KB | pp per point | Verdict |
 |---|---|---|---|---|---|---|
-| aoe_clear → illusion_based | 129 | +1.25 | 0.13 | 0.62 | +2.0 | supported |
+| aoe_clear → illusion_based | 133 | +1.25 | 0.13 | 0.61 | +2.0 | supported |
 | healing_reduction → sustain_dependent | 103 | +0.89 | 0.14 | 0.41 | +2.2 | supported |
 | mana_burn → mana_dependent | 88 | +0.72 | 0.15 | 0.37 | +1.9 | supported |
-| aoe_clear → summon_clearable | 220 | +0.36 | 0.10 | 0.20 | +1.8 | supported |
+| aoe_clear → summon_clearable | 240 | +0.46 | 0.10 | 0.21 | +2.2 | supported |
 | detection → relies_on_invisibility | 41 | +0.61 | 0.23 | 0.40 | +1.5 | supported |
 | silence → spell_reliant | 660 | +0.13 | 0.06 | 0.14 | +0.9 | supported |
 | armor_reduction → summon_tanky | 16 | +0.83 | 0.41 | 0.21 | +4.0 | supported |
@@ -70,10 +70,10 @@ Pairs where the rule argues for the pick. "KB" is the mean contribution of the r
 | armor_reduction → low_armor | 64 | -0.11 | 0.18 | 0.15 | -0.8 | no signal |
 | resist lockdown_root | 100 | -0.14 | 0.15 | 0.17 | -0.8 | no signal |
 | illusion_execute → illusion_based | 31 | -0.38 | 0.26 | 0.16 | -2.4 | no signal |
-| creep_execute → summon_clearable | 54 | -0.46 | 0.20 | 0.02 | -18.3 | **refuted** |
+| creep_execute → summon_clearable | 58 | -0.42 | 0.20 | 0.03 | -16.6 | **refuted** |
 | armor_reduction → high_armor | 54 | -0.49 | 0.21 | 0.07 | -7.4 | **refuted** |
-| pickoff → greedy_farmer | 131 | -0.33 | 0.13 | 0.08 | -3.9 | **refuted** |
-| resist silence | 114 | -0.35 | 0.14 | 0.09 | -3.7 | **refuted** |
+| pickoff → greedy_farmer | 131 | -0.33 | 0.13 | 0.08 | -4.0 | **refuted** |
+| resist silence | 114 | -0.36 | 0.14 | 0.09 | -3.7 | **refuted** |
 
 ## Tag suggestions from the supported rules
 
@@ -81,10 +81,10 @@ Heroes that behave like carriers of a tag they do not have (mean gap ≥ +1 pp a
 
 ### aoe_clear → illusion_based
 
-Carriers now: tool 34, reliance 5 (Spectre, Terrorblade, Phantom Lancer, Naga Siren, Chaos Knight).
+Carriers now: tool 35, reliance 5 (Spectre, Terrorblade, Phantom Lancer, Naga Siren, Chaos Knight).
 
 - Beat the illusion_based heroes without having `aoe_clear`: Wisp +2.7, Anti Mage +2.2, Necrophos +2.0.
-- Lose to the `aoe_clear` heroes without having illusion_based: Lycan +1.6, Beastmaster +1.4, Broodmother +1.2, Wraith King +1.0.
+- Lose to the `aoe_clear` heroes without having illusion_based: Lycan +1.6, Beastmaster +1.4, Broodmother +1.1, Wraith King +1.1.
 
 ### healing_reduction → sustain_dependent
 
@@ -102,10 +102,10 @@ Carriers now: tool 3, reliance 12 (Medusa, Phantom Lancer, Morphling, Wraith Kin
 
 ### aoe_clear → summon_clearable
 
-Carriers now: tool 34, reliance 10 (Wraith King, Beastmaster, Lycan, Broodmother, Enigma, Visage, Natures Prophet, Chen, Enchantress, Venomancer).
+Carriers now: tool 35, reliance 11 (Wraith King, Meepo, Beastmaster, Lycan, Broodmother, Enigma, Visage, Natures Prophet, Chen, Enchantress, Venomancer).
 
-- Beat the summon_clearable heroes without having `aoe_clear`: Morphling +1.9, Phantom Lancer +1.4.
-- Lose to the `aoe_clear` heroes without having summon_clearable: Phantom Lancer +2.0, Chaos Knight +1.5, Spectre +1.0, Terrorblade +1.0.
+- Beat the summon_clearable heroes without having `aoe_clear`: Morphling +1.7.
+- Lose to the `aoe_clear` heroes without having summon_clearable: Phantom Lancer +2.0, Chaos Knight +1.5, Spectre +1.0.
 
 ### detection → relies_on_invisibility
 
@@ -135,10 +135,9 @@ Carriers now: tool 10, reliance 2 (Lone Druid, Warlock).
 | Undying | Spectre | +6.3 | 6.4k | 0.00 | +0.04 |
 | Slark | Ember Spirit | +5.7 | 6.8k | 0.44 | +0.16 |
 | Underlord | Spirit Breaker | +4.9 | 8.2k | -0.06 | -0.03 |
-| Earthshaker | Meepo | +8.5 | 2.0k | 0.14 | +0.07 |
 | Warlock | Wraith King | +4.9 | 5.9k | 0.12 | +0.14 |
 | Drow Ranger | Slardar | +4.7 | 6.4k | -0.14 | -0.17 |
-| Meepo | Anti Mage | +7.8 | 2.0k | 0.29 | +0.06 |
+| Meepo | Anti Mage | +7.8 | 2.0k | 0.29 | +0.11 |
 | Timbersaw | Tidehunter | +4.7 | 5.7k | 0.00 | -0.04 |
 | Tinker | Necrophos | +5.0 | 5.0k | 0.20 | +0.17 |
 | Slardar | Lifestealer | +4.6 | 5.7k | -0.10 | -0.34 |
@@ -155,7 +154,7 @@ Carriers now: tool 10, reliance 2 (Lone Druid, Warlock).
 | Troll Warlord | Anti Mage | +4.5 | 3.2k | 0.12 | -0.01 |
 | Dark Seer | Templar Assassin | +7.2 | 1.1k | 0.00 | -0.11 |
 | Wisp | Phantom Lancer | +4.0 | 3.5k | -0.05 | +0.02 |
-| Terrorblade | Slardar | +5.8 | 1.7k | -0.18 | +0.03 |
+| Terrorblade | Slardar | +5.8 | 1.7k | -0.18 | +0.04 |
 | Venomancer | Ursa | +4.5 | 2.7k | -0.21 | -0.21 |
 | Undying | Abaddon | +4.8 | 2.3k | -0.24 | -0.20 |
 | Phantom Lancer | Terrorblade | +4.7 | 2.4k | 0.18 | +0.09 |
@@ -168,10 +167,11 @@ Carriers now: tool 10, reliance 2 (Lone Druid, Warlock).
 | Slark | Medusa | +4.4 | 2.5k | 0.29 | +0.17 |
 | Arc Warden | Clinkz | +6.0 | 1.3k | 0.00 | -0.03 |
 | Puck | Queen Of Pain | +4.4 | 2.4k | 0.01 | -0.13 |
-| Dawnbreaker | Meepo | +6.6 | 1.1k | 0.00 | -0.03 |
 | Storm Spirit | Venomancer | +4.1 | 2.7k | 0.13 | +0.13 |
-| Leshrac | Necrophos | +4.4 | 2.3k | 0.17 | +0.07 |
+| Leshrac | Necrophos | +4.4 | 2.3k | 0.17 | +0.06 |
 | Monkey King | Ember Spirit | +4.5 | 2.2k | 0.00 | +0.02 |
+| Marci | Viper | +4.8 | 1.9k | -0.06 | -0.07 |
+| Meepo | Wraith King | +5.2 | 1.6k | -0.08 | -0.02 |
 
 ## Strong KB claims the data contradicts (lift ≥ 0.6, gap ≤ -1.5 pp)
 

@@ -1042,3 +1042,41 @@ test("ADR-063: the KB team part is scaled down (it did not predict outcomes)", (
     assert.ok(Math.abs(h.edge!.team - P.TEAM_KB_SCALE * P.KB_PP_PER_POINT * kbTeam) < 0.01, h.code);
   }
 });
+
+test("ADR-065: ban suggestions - heroes that beat our planned picks, weighted by how often they are played", async () => {
+  const { banSuggestions, pickShares, heroEdge } = await import("../src/resolver.js");
+  const kb = loadKB();
+  const share = pickShares(kb);
+  const sum = [...share.values()].reduce((a, b) => a + b, 0);
+  assert.ok(Math.abs(sum - 10) < 1e-6, "ten heroes per match");
+  const bans = banSuggestions(kb, ["anti_mage"], [], 5);
+  assert.equal(bans.length, 5);
+  for (const b of bans) {
+    assert.ok(b.edge > 0 && b.hero !== "anti_mage");
+    assert.ok(Math.abs(b.value - (b.pickShare / 2) * b.edge) < 0.01);
+    // the edge is the hero's pick edge against our side
+    assert.ok(Math.abs(heroEdge(kb, { enemyHeroes: ["anti_mage"], allyHeroes: [] }, b.hero)!.edge!.total - b.edge) < 0.01);
+  }
+  assert.ok(bans.every((b, i) => i === 0 || bans[i - 1]!.value >= b.value), "sorted by value");
+  // known enemy picks are not suggested
+  assert.ok(!banSuggestions(kb, ["anti_mage"], [bans[0]!.hero]).some((b) => b.hero === bans[0]!.hero));
+  assert.deepEqual(banSuggestions(kb, []), []);
+});
+
+test("ADR-065: pick review - the hero played, ranked for its position against the finished draft", async () => {
+  const { pickReview, resolve } = await import("../src/resolver.js");
+  const kb = loadKB();
+  const allies = ["anti_mage", "crystal_maiden", "zeus", "axe", "lion"];
+  const enemies = ["pudge", "phantom_assassin", "storm_spirit", "bristleback", "dazzle"];
+  const pr = pickReview(kb, "anti_mage", allies, enemies, 1)!;
+  const all = resolve(kb, { enemyHeroes: enemies, allyHeroes: allies.slice(1), myRole: 1 }, { all: true }).heroes;
+  assert.equal(pr.of, all.length);
+  assert.equal(all[pr.rank! - 1]!.code, "anti_mage");
+  assert.ok(Math.abs(all[pr.rank! - 1]!.score - pr.score) < 0.01);
+  assert.ok(pr.top.length === 3 && !pr.top.some((t) => t.hero === "anti_mage"));
+  assert.ok(pr.top.every((t, i) => i === 0 || pr.top[i - 1]!.score >= t.score));
+  // a hero on a position it is practically never played: no rank, still a score
+  const off = pickReview(kb, "crystal_maiden", allies, enemies, 1)!;
+  assert.equal(off.rank, undefined);
+  assert.equal(pickReview(kb, "not_a_hero", allies, enemies, 1), undefined);
+});

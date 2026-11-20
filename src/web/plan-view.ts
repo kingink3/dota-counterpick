@@ -142,6 +142,7 @@ function itemCard(v: PlanView): HTMLElement {
     c.append(p("muted", v.empty ?? "Mark the hero you play (★) in Draft."));
     return c;
   }
+  if (v.plan.assumedPos) c.append(p("plan-assume", `Planned for position ${v.plan.assumedPos} - the hero's most played. Pick your position in Draft if you play it elsewhere.`));
   const cols = document.createElement("div");
   cols.className = "gz-cols";
   const group = (ids: string[]) => {
