@@ -1,0 +1,1 @@
+Error: HTTP 400: {"errors":[{"message":"Argument \u0027groupBy\u0027 has invalid value. Expected type \u0027FilterHeroWinRequestGroupBy\u0027, found HERO.","locations":[{"line":1,"column":1306}],"extensions":{"code":"ARGUMENTS_OF_CORRECT_TYPE","codes":["ARGUMENTS_OF_CORRECT_TYPE"],"number":"5.6.1"}}]}
