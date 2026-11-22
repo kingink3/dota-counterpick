@@ -160,7 +160,7 @@ export const MACRO: Module = {
       quiz: [
         { id: "hg1", q: "Why push buildings together with your creep wave?", options: ["Buildings take much less damage without enemy creeps nearby", "Creeps give armor to heroes", "It is the only way to see the building", "It is not important"], correct: 0, why: "Backdoor protection: a building without creeps near it resists most damage." },
         { id: "hg2", q: "When should you go up the enemy high ground?", options: ["With a clear advantage: Aegis, dead enemies or no buyback, key items", "As soon as the Tier 2 falls", "Alone with your carry", "Whenever you are bored"], correct: 0, why: "Uphill fights favour the defender; you need an advantage to take them." },
-        { id: "hg3", q: "What does the enemy Glyph do?", options: ["Protects their buildings for a few seconds", "Kills your creeps", "Gives vision of your base", "Heals their heroes"], correct: 0, why: "Glyph makes their buildings invulnerable for a short time; bait it before the real push." },
+        { id: "hg3", q: "What does the enemy Glyph do?", options: ["Protects their buildings for a few seconds", "Kills your creeps", "Gives vision of your base", "Heals their heroes"], correct: 0, why: "Glyph makes their buildings invulnerable for a short time; bait it before the real push. Since 7.42 it has 2 charges (one returns every 6 minutes, 7 s between uses) and no longer resets when a building falls - bait both charges." },
         { id: "hg4", q: "Your high-ground push fails: two heroes are low, the enemy bought back. What do you do?", options: ["Back off and keep the lead", "Keep fighting until everyone is dead", "Buy back yourselves and dive", "Attack the Ancient anyway"], correct: 0, why: "Leaving keeps your advantage; one more fight there is how leads are thrown." },
       ],
       situations: [
@@ -213,7 +213,7 @@ export const MACRO: Module = {
         {
           h: "Defend without dying",
           p: [
-            "When behind, **defend with wave clear** from a distance and keep heroes alive: every death gives the enemy the time they need to push. Use your Glyph when the enemy commits to a building, not too early.",
+            "When behind, **defend with wave clear** from a distance and keep heroes alive: every death gives the enemy the time they need to push. Use your Glyph when the enemy commits to a building, not too early - since 7.42 you have 2 charges (6 minutes to recharge one), and losing a building no longer refreshes it.",
           ],
         },
         {
