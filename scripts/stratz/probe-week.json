@@ -1,0 +1,10 @@
+{
+ "brackets": "bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT]",
+ "pairs": [],
+ "batches": [
+  {
+   "name": "probe",
+   "query": "{ heroStats { d: heroVsHeroMatchup(heroId: 1, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], take: 3) { advantage { heroId matchCountVs vs { heroId2 matchCount } } } thu1112: heroVsHeroMatchup(heroId: 1, week: 1794441600, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], take: 3) { advantage { heroId matchCountVs } } thu1119: heroVsHeroMatchup(heroId: 1, week: 1795046400, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], take: 3) { advantage { heroId matchCountVs } } mon1116: heroVsHeroMatchup(heroId: 1, week: 1794787200, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], take: 3) { advantage { heroId matchCountVs } } mon1109: heroVsHeroMatchup(heroId: 1, week: 1794182400, bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], take: 3) { advantage { heroId matchCountVs } } s: stats(heroIds: [1], bracketBasicIds: [CRUSADER_ARCHON, LEGEND_ANCIENT], groupByTime: true) { week time matchCount } } }"
+  }
+ ]
+}
