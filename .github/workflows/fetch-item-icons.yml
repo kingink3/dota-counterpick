@@ -31,9 +31,12 @@ jobs:
           for f in /tmp/icons/*.png; do
             convert "$f" -resize 66x48! -quality 82 "web/items/$(basename "${f%.png}").webp"
           done
-      - name: Commit icons
+      - name: Hero portraits (re-download; changed art = new screen-reading templates)
+        run: npm run fetch:portraits -- --refresh
+      - name: Commit icons and portraits
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add web/items
-          git diff --cached --quiet && echo "no changes" || (git commit -m "Item icons from Valve CDN (fetch-item-icons workflow)" && git push)
+          git add web/items web/heroes
+          git diff --cached --stat
+          git diff --cached --quiet && echo "no changes" || (git commit -m "Item icons and hero portraits from Valve CDN (fetch-item-icons workflow)" && git push)

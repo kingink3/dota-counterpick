@@ -507,7 +507,8 @@
       .combos .lede { margin: 0 0 12px; color: var(--muted); }
       #combos-search { width: 320px; max-width: 100%; background: var(--panel); border: 1px solid var(--line); border-radius: 3px;
         color: var(--text); padding: 7px 11px; font: inherit; margin-bottom: 12px; }
-      #combo-roster { max-height: 40vh; overflow: auto; margin-bottom: 16px; }
+      #combo-roster { margin-bottom: 16px; }
+      .combos-out .combo-grid { grid-template-columns: 1fr; }
       #combo-roster .hero-tile.picked-ally img { filter: none; }
       .combo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 28px; }
       .card.combo { display: block; }
@@ -639,13 +640,18 @@
 
     <!-- ===================== COMBOS VIEW ===================== -->
     <div id="combo-view" hidden>
-      <section class="combos">
-        <h2>Hero combos</h2>
-        <p class="lede">Synergies from the Fandom wiki. Pick a hero to see who works well with them.</p>
-        <input id="combos-search" type="search" placeholder="Find a hero" autocomplete="off" aria-label="Find a hero for combos" />
-        <div id="combo-roster" class="roster"></div>
-        <div id="combos-panel"></div>
-      </section>
+      <!-- same layout as Draft: the full roster on the left, results beside it (no inner scroll box) -->
+      <div class="body">
+        <section class="combos picker">
+          <h2>Hero combos</h2>
+          <p class="lede">Synergies from the Fandom wiki. Pick a hero to see who works well with them.</p>
+          <input id="combos-search" type="search" placeholder="Find a hero" autocomplete="off" aria-label="Find a hero for combos" />
+          <div id="combo-roster" class="roster"></div>
+        </section>
+        <aside class="recs combos-out" aria-label="Combos">
+          <div id="combos-panel"></div>
+        </aside>
+      </div>
     </div>
 
     <!-- ===================== REVIEW VIEW (ADR-029) ===================== -->

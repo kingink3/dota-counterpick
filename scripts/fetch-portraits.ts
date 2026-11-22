@@ -5,6 +5,8 @@
 //  Source: Valve dota_react landscape portraits, keyed by roster valve name.
 //  Idempotent: skips files already present. Run once (needs network):
 //      npm run fetch:portraits
+//  --refresh: download every portrait again and overwrite the ones whose bytes changed
+//  (after a patch: new art = new screen-reading templates). Runs in Actions (fetch-item-icons).
 // =============================================================================
 
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
@@ -15,6 +17,7 @@ import { readFileSync } from "node:fs";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = join(ROOT, "web", "heroes");
 const CDN = "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes";
+const REFRESH = process.argv.includes("--refresh");
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0 Safari/537.36";
 
 async function main(): Promise<void> {
@@ -26,9 +29,10 @@ async function main(): Promise<void> {
   let ok = 0;
   let skipped = 0;
   const failed: string[] = [];
+  const changed: string[] = [];
   for (const { valve } of roster.heroes) {
     const dest = join(OUT, `${valve}.png`);
-    if (existsSync(dest)) {
+    if (existsSync(dest) && !REFRESH) {
       skipped++;
       continue;
     }
@@ -38,13 +42,20 @@ async function main(): Promise<void> {
         failed.push(`${valve} (${res.status})`);
         continue;
       }
-      writeFileSync(dest, Buffer.from(await res.arrayBuffer()));
+      const buf = Buffer.from(await res.arrayBuffer());
+      if (existsSync(dest) && readFileSync(dest).equals(buf)) {
+        skipped++;
+        continue;
+      }
+      if (existsSync(dest)) changed.push(valve);
+      writeFileSync(dest, buf);
       ok++;
     } catch (e) {
       failed.push(`${valve} (${(e as Error).message})`);
     }
   }
-  console.log(`portraits: ${ok} downloaded, ${skipped} already present -> web/heroes/`);
+  console.log(`portraits: ${ok} downloaded, ${skipped} already present (or unchanged) -> web/heroes/`);
+  if (changed.length) console.log(`changed art (${changed.length}): ${changed.join(", ")}`);
   if (failed.length) console.log(`failed (${failed.length}): ${failed.join(", ")}`);
 }
 
