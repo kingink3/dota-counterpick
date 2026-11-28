@@ -12,8 +12,8 @@
 #  roles: positions that see the reminder (1..5). lead: seconds of warning.
 # =============================================================================
 
-patch: "7.42"
-reviewed: 2026-11-20
+patch: "7.42a"
+reviewed: 2026-11-28  # 7.42a: no timing changes (ADR-067)
 
 events:
   - id: bounty_rune

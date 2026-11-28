@@ -11,8 +11,8 @@ import type { Module } from "./types.js";
 export const DRAFTING: Module = {
   id: "drafting",
   title: "Draft and items",
-  patch: "7.42",
-  checked: "2026-11-20",
+  patch: "7.42a",
+  checked: "2026-11-28",
   lessons: [
     // ------------------------------------------------------------------ 1 ----
     {

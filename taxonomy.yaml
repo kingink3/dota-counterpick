@@ -23,11 +23,11 @@
 meta:
   schema_version: 0.1
   # patch the KB was reviewed against (patch:check compares this with dotaconstants)
-  patch: "7.42"
+  patch: "7.42a"
   # release date of that patch (dotaconstants patch.json); statistics older than this are labelled
   # "from before patch X" in the UI (ADR-064)
-  patch_date: "2026-11-18"
-  reviewed: "2026-11-20: 7.42 pass - tags changed only where an ability mechanic changed (patch-notes lines in DECISIONS ADR-064); 2026-11-03: full pass on supports/flex (v0.6); 2026-11-10: rule pick weights and tags of the data-supported rules set against measured matchups (ADR-062); the other core tags carried over from the early-2026 draft"
+  patch_date: "2026-11-24"
+  reviewed: "2026-11-28: 7.42a pass - no tag changes, numbers only except Timbersaw / Lycan notes (ADR-067); 2026-11-20: 7.42 pass - tags changed only where an ability mechanic changed (patch-notes lines in DECISIONS ADR-064); 2026-11-03: full pass on supports/flex (v0.6); 2026-11-10: rule pick weights and tags of the data-supported rules set against measured matchups (ADR-062); the other core tags carried over from the early-2026 draft"
   weight_semantics: >
     Membership is almost binary. weight (0.0-1.0) encodes how CENTRAL the tag is
     to the hero: 1.0 = the hero's whole identity rests on it, 0.5 = one of several
@@ -849,14 +849,14 @@ hero_tags:
   doom:            { pos: [3,2], reliance: {melee_commit: 0.4, mana_dependent: 0.3, low_mobility: 0.4, pickoff_reliant: 0.3}, tool: {break: 1.0, bkb_piercing_disable: 1.0, health_based_damage: 0.4, creep_execute: 0.6, healing_reduction: 0.4} }
   dark_seer:       { pos: [3], reliance: {spell_reliant: 0.6, mana_dependent: 0.3, dispellable_buffs: 0.7}, tool: {aoe_clear: 0.4} }
   beastmaster:     { pos: [3], reliance: {summon_clearable: 0.6, low_mobility: 0.4}, tool: {bkb_piercing_disable: 0.9, detection: 0.5} }
-  timbersaw:       { pos: [3], reliance: {spell_reliant: 0.6, mana_dependent: 0.4, magic_burst_vulnerable: 0.5, high_armor: 0.9, key_passive: 1.0}, tool: {aoe_clear: 0.5} }   # Reactive Armor = stacks armor; bring magic / break it
+  timbersaw:       { pos: [3], reliance: {spell_reliant: 0.6, mana_dependent: 0.4, magic_burst_vulnerable: 0.5, high_armor: 0.9, key_passive: 1.0}, tool: {aoe_clear: 0.5} }   # Reactive Armor = stacks armor; bring magic / break it; 7.42a: misses (evasion, blind, uphill) also add stacks - evasion is no answer
   night_stalker:   { pos: [3,1], reliance: {snowball_dependent: 0.7, attack_reliant: 0.5, melee_commit: 0.5}, tool: {silence: 0.6, creep_execute: 0.4} }
   slardar:         { pos: [3,4], reliance: {melee_commit: 0.5, low_mobility: 0.4}, tool: {detection: 0.7, armor_reduction: 0.9, lockdown_early: 0.5} }
   brewmaster:      { pos: [3], reliance: {evasion: 0.6, melee_commit: 0.5, bkb_reliant: 0.6}, tool: {bkb_piercing_disable: 0.5, purge: 0.3, illusion_execute: 0.5} }
   legion_commander: { pos: [3], reliance: {melee_commit: 0.7, low_mobility: 0.5, bkb_reliant: 0.7, pickoff_reliant: 0.8}, tool: {bkb_piercing_disable: 0.8}, resist: {self_dispel: 0.4} }
   magnus:          { pos: [3,2], reliance: {spell_reliant: 0.6, low_mobility: 0.5}, tool: {bkb_piercing_disable: 0.7, aoe_clear: 0.4} }
   primal_beast:    { pos: [3], reliance: {melee_commit: 0.6, spell_reliant: 0.4, dispellable_buffs: 0.2}, tool: {bkb_piercing_disable: 0.5, aoe_clear: 0.5} }   # 7.42: Onslaught buff undispellable (Uproar still is)   # ADR-062: aoe_clear - Trample, Pulverize splash
-  lycan:           {pos: [3,1], reliance: {summon_clearable: 0.5, snowball_dependent: 0.6, attack_reliant: 0.5, bkb_reliant: 0.6}, tool: {early_pressure: 0.8, pickoff: 0.5, physical_burst: 0.5, armor_reduction: 0.3, detection: 0.2} }   # tools: Shapeshift ganks / push; 7.42: Pack Hunter marks reveal invisible targets they hit (after the first hit only - weak detection)
+  lycan:           {pos: [3,1], reliance: {summon_clearable: 0.5, snowball_dependent: 0.6, attack_reliant: 0.5, bkb_reliant: 0.6}, tool: {early_pressure: 0.8, pickoff: 0.5, physical_burst: 0.5, armor_reduction: 0.3, detection: 0.2} }   # tools: Shapeshift ganks / push; 7.42: Pack Hunter marks reveal invisible targets they hit (after the first hit only - weak detection); 7.42a: marks only within 1200 of Lycan and dispellable - stays weak
   broodmother:     {pos: [3,1], reliance: {summon_clearable: 0.9, snowball_dependent: 0.6, sustain_dependent: 0.5, melee_commit: 0.4}, tool: {early_pressure: 0.7, pickoff: 0.6, lockdown_root: 0.4} }   # tools: Spinner's Snare root; spiderlings pressure
   sand_king:       { pos: [3,4], reliance: {channeling_ultimate: 0.7, relies_on_invisibility: 0.3, spell_reliant: 0.5}, tool: {magic_burst: 0.6, aoe_clear: 0.8, true_strike: 0.2, lockdown_early: 0.7, interrupt: 0.4} }   # ADR-062: aoe_clear 0.3 -> 0.8 - Sand Storm, Caustic Finale, Epicenter
   enigma:          { pos: [3,4], reliance: {summon_clearable: 0.6, channeling_ultimate: 1.0, low_mobility: 0.5}, tool: {aoe_clear: 0.7, bkb_piercing_disable: 0.9, health_based_damage: 0.5} }

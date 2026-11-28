@@ -217,7 +217,10 @@ async function main(): Promise<void> {
     `- KB reviewed for patch: **${tax.meta?.patch ?? "not set"}**${tax.meta?.reviewed ? ` (reviewed ${tax.meta.reviewed})` : ""}`,
     `- baseline: ${prev ? `dotaconstants ${prev.dotaconstants}, patch ${prev.patch}, accepted ${prev.acceptedAt.slice(0, 10)}` : "**none yet** (this run creates it)"}`,
   );
-  if (tax.meta?.patch && tax.meta.patch !== lastPatch.name) {
+  // dotaconstants lags lettered patches by days: a KB reviewed for 7.42a is current
+  // while the package still ends at 7.42 (ADR-067).
+  const covers = (kb: string, dc: string) => kb === dc || (kb.startsWith(dc) && /^[a-z]$/.test(kb.slice(dc.length)));
+  if (tax.meta?.patch && !covers(tax.meta.patch, lastPatch.name)) {
     actions.push(`KB was reviewed for ${tax.meta.patch}, constants are at ${lastPatch.name}: run the review (B5-B7)`);
   }
   if (!tax.meta?.patch) actions.push("set `meta.patch` / `meta.reviewed` in taxonomy.yaml after the review (B7)");

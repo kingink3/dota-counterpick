@@ -12,8 +12,8 @@ import type { Module } from "./types.js";
 export const MACRO: Module = {
   id: "macro",
   title: "Macro",
-  patch: "7.42",
-  checked: "2026-11-20",
+  patch: "7.42a",
+  checked: "2026-11-28",
   lessons: [
     // ------------------------------------------------------------------ 1 ----
     {
@@ -65,7 +65,7 @@ export const MACRO: Module = {
         {
           h: "Smoke of Deceit",
           p: [
-            "Smoke hides your group until you come close to enemy heroes or towers. Use it to **move unseen** to a gank, to Roshan, or out of a dangerous area. A good smoke ends in a kill or an objective; a smoke into empty jungle wastes it.",
+            "Smoke hides your group until you come close to enemy heroes or towers. Use it to **move unseen** to a gank, to Roshan, or out of a dangerous area. A good smoke ends in a kill or an objective; a smoke into empty jungle wastes it. Since 7.42a, neutral creeps hit by a smoked hero run away instead of fighting back.",
           ],
         },
         {

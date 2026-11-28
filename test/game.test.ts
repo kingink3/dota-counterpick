@@ -51,7 +51,7 @@ test("GameClock: counting down = pre-horn (negative), stalled = paused", () => {
 test("timers: schedule from data/timings.yaml, filtered by role", () => {
   const kb = loadKB();
   const tm = kb.timings!;
-  assert.equal(tm.patch, "7.42");
+  assert.equal(tm.patch, "7.42a");
   for (const e of tm.events) assert.ok(e.source.length > 10, `${e.id} has a source`);
   // 6:40 as a support: stack window at 6:53, shrine at 7:00, power rune not for pos 5
   const sup = upcoming(tm, 400, 5);
