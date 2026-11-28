@@ -48,6 +48,18 @@ async function main(): Promise<void> {
     console.log("stored: the recent matches list");
   }
   const indexPath = join(dir, "index.bin");
+  // a store sealed with an earlier site password cannot be read by anyone holding the
+  // current one: start a new store instead of failing every run (ADR-068). The next
+  // "Check for new matches" refills it while the replays still exist (~2 weeks).
+  const readable = async (f: string): Promise<boolean> => {
+    if (!existsSync(f)) return true;
+    try { await unseal(key, readFileSync(f)); return true; } catch { return false; }
+  };
+  if (!(await readable(indexPath)) || !(await readable(join(dir, "recent.bin")))) {
+    const old = readdirSync(dir).filter((f) => f.endsWith(".bin"));
+    for (const f of old) rmSync(join(dir, f), { force: true });
+    console.log(`store: sealed with an earlier site password - starting a new store (${old.length} old files dropped)`);
+  }
   let index: StoreEntry[] = existsSync(indexPath) ? (JSON.parse(await unseal(key, readFileSync(indexPath))) as StoreEntry[]) : [];
   // --ids <file>: write the stored match ids (for the scheduled run to skip them) and stop
   const idsOut = arg("ids");
