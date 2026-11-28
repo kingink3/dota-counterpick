@@ -364,6 +364,11 @@ test("cast chances skip orbs, toggles and charge abilities (Glaives of Wisdom is
   }
   // no cooldown at any level: readiness cannot be told (Invoker's orbs, charges)
   for (const k of ["invoker_quas", "sniper_shrapnel"]) assert.equal(castChanceAbility(ab(k) as never), false, k);
+  // held / not-for-heroes abilities (ADR-069): Spell Steal is held while the stolen spell is good
+  for (const k of ["rubick_spell_steal", "doom_bringer_devour", "lone_druid_spirit_bear"]) {
+    assert.ok(ab(k), `${k} exists in ids.json`);
+    assert.equal(castChanceAbility(ab(k) as never), false, k);
+  }
   // real spells stay
-  for (const k of ["silencer_last_word", "silencer_curse_of_the_silent", "silencer_global_silence", "lion_impale", "ogre_magi_bloodlust"]) assert.equal(castChanceAbility(ab(k) as never), true, k);
+  for (const k of ["rubick_telekinesis", "rubick_fade_bolt", "silencer_last_word", "silencer_curse_of_the_silent", "silencer_global_silence", "lion_impale", "ogre_magi_bloodlust"]) assert.equal(castChanceAbility(ab(k) as never), true, k);
 });

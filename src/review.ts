@@ -9,7 +9,7 @@ import { disabledAt, type ReplayTimeline } from "./replay.js";
 import { buildPlan, mmss, teamWindow, WINDOW_PP, type ItemPlan, type ItemStats, type ItemTiming } from "./item-plan.js";
 import type { KnowledgeBase } from "./knowledge.js";
 import { archetypeOf, resolve } from "./resolver.js";
-import { analyseBattles, type AbilityInfo, type BattleReport } from "./review-battles.js";
+import { analyseBattles, HELD_ABILITIES, type AbilityInfo, type BattleReport } from "./review-battles.js";
 
 // ---------------------------------------------------------------- input ----
 
@@ -714,7 +714,11 @@ export function reviewMatch(d: MatchData, account: number, ctx: ReviewContext): 
       .filter(([id, lvl]) => !passive(id) && (learns.some((a) => a.abilityId === id && a.isUltimate) || (lvl >= 6 && (maxLevel.get(id) ?? 0) <= 2)))
       .map(([id]) => id),
   );
-  const ultCasts = (pb.abilityUsedEvents ?? []).filter((a) => a.abilityId != null && ultIds.has(a.abilityId)).map((a) => a.time);
+  // a held ultimate (Spell Steal, ADR-069) is used by casting what it took: a hero ability
+  // the hero never learned (the stolen spell) counts as an ultimate cast
+  const heldUlt = [...ultIds].some((id) => HELD_ABILITIES.has(ids.abilities?.[String(id)]?.k ?? ""));
+  const stolen = (id: number) => heldUlt && !firstAt.has(id) && !!ids.abilities?.[String(id)];
+  const ultCasts = (pb.abilityUsedEvents ?? []).filter((a) => a.abilityId != null && (ultIds.has(a.abilityId) || stolen(a.abilityId))).map((a) => a.time);
   const allySlots = new Set(s.players.filter((p) => p.isRadiant === mine.isRadiant && p.playerSlot !== mine.playerSlot).map((p) => p.playerSlot));
   const posOf = (slot: number, t: number) => {
     const evs = d.positions?.players.find((p) => p.playerSlot === slot)?.playbackData?.playerUpdatePositionEvents ?? [];

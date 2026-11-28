@@ -165,12 +165,18 @@ function lastAt<T extends { time: number }>(evs: readonly T[], t: number): T | u
   return best >= 0 ? evs[best] : undefined;
 }
 
+/** Abilities whose cast takes something the hero keeps and uses later, or that do not act on
+ *  heroes in a fight: "ready and not cast" is a choice, not a missed chance (ADR-069).
+ *  Spell Steal - a good stolen spell is held for minutes, and the stolen spell's casts are the
+ *  real use; Devour - creep-only; Summon Spirit Bear - only matters while the bear is dead. */
+export const HELD_ABILITIES: ReadonlySet<string> = new Set(["rubick_spell_steal", "doom_bringer_devour", "lone_druid_spirit_bear"]);
+
 /** Abilities whose "ready and not cast" moments mean something. Not: passives; attack modifiers
  *  (orbs - Glaives of Wisdom, Frost Arrows, Arcane Orb: autocast on every attack, never logged as
  *  a cast); abilities with no cooldown at any level (toggles, charges, Invoker's orbs - "ready"
  *  cannot be told from a cooldown). */
 export function castChanceAbility(a: AbilityInfo): boolean {
-  if (a.f.includes("p") || a.f.includes("o")) return false;
+  if (a.f.includes("p") || a.f.includes("o") || HELD_ABILITIES.has(a.k)) return false;
   return a.cd.length > 0 && Math.max(...a.cd) > 0;
 }
 
